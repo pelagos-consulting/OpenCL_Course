@@ -6,7 +6,7 @@ include ../env
 INC_DIR=../include
 
 # List of applications to target
-TARGETS=cpp_primer.exe
+TARGETS=cpp_primer.exe cpp_test.exe
 
 all: $(TARGETS)
 
