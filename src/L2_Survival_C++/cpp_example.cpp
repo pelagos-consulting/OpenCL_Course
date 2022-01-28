@@ -20,11 +20,13 @@ int main(int argc, char** argv) {
 
     // This is a comment
     char a='s'; // Using char as a character
+    char b = a+1; // Arithmetic with characters
+    printf("b interpreted as an integer: %i\n", b); // print b with the memory interpreted as an integer
+    printf("b interpreted as a character: %c\n", b); // print b with the memory interpreted as a character
 
-    // Arithmetic with chars
-    char b = a+1;
-    printf("%i\n", b); // print b with the memory interpreted as an integer
-    printf("%c\n", b); // print b with the memory interpreted as a character
+    // Making a string from characters
+    char str[] = {'a', 'b', 'c', 'd', '\0'};
+    printf("%s\n", str);
 
     // Declaring floating point value
     float x=5.0;
@@ -32,8 +34,7 @@ int main(int argc, char** argv) {
     long double z=7.0;
 
     // Printing floats
-    printf("%f %f\n", x, y); // Print x and y to the screen with their memory interpreted as floats
-    printf("%i %i\n", y, x); // Print y and x to the screen with their memory interpreted as integers
+    printf("float representation, x = %f y = %f\n", x, y); // Print x and y to the screen with their memory interpreted as floats
 
     // Now fill a 2D array with squares
     int N0=512; // Number of elements in dim 0 
@@ -51,7 +52,7 @@ int main(int argc, char** argv) {
             // Use the dot product to make up the position in the allocation
             int offset = i0*s0 + i1*s1;
     
-            // Fill the allocation
+            // Fill the allocation by calling a function
             arr[offset] = square(i0, i1);
         }
     }
@@ -60,7 +61,7 @@ int main(int argc, char** argv) {
     const char *fname = "image.dat";
     FILE *fp = fopen(fname, "wb");
 
-    // Sanity check using an if statement
+    // Sanity check using an "if" statement
     if (fp != NULL) {
         fwrite(arr, sizeof(float), (size_t)(N0*N1), fp);
     } else {

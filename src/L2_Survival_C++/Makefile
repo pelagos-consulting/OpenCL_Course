@@ -6,7 +6,10 @@ include ../env
 INC_DIR=../include
 
 # List of applications to target
-TARGETS=cpp_primer.exe cpp_test.exe
+TARGETS=cpp_example.exe cpp_buggy.exe
+
+# Override some flags
+CXXFLAGS=-g -O0
 
 all: $(TARGETS)
 

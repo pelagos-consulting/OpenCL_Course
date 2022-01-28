@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg version="1.2" width="165.41mm" height="91.09mm" viewBox="1240 952 16541 9109" preserveAspectRatio="xMidYMid" fill-rule="evenodd" stroke-width="28.222" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg" xmlns:ooo="http://xml.openoffice.org/svg/export" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:presentation="http://sun.com/xmlns/staroffice/presentation" xmlns:smil="http://www.w3.org/2001/SMIL20/" xmlns:anim="urn:oasis:names:tc:opendocument:xmlns:animation:1.0" xml:space="preserve">
+<svg version="1.2" width="165.41mm" height="92.4mm" viewBox="1240 952 16541 9240" preserveAspectRatio="xMidYMid" fill-rule="evenodd" stroke-width="28.222" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg" xmlns:ooo="http://xml.openoffice.org/svg/export" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:presentation="http://sun.com/xmlns/staroffice/presentation" xmlns:smil="http://www.w3.org/2001/SMIL20/" xmlns:anim="urn:oasis:names:tc:opendocument:xmlns:animation:1.0" xml:space="preserve">
  <defs>
   <font id="EmbeddedFont_1" horiz-adv-x="2048">
    <font-face font-family="Liberation Sans embedded" units-per-em="2048" font-weight="normal" font-style="normal" ascent="1852" descent="423"/>
@@ -378,53 +378,57 @@
   </g>
   <g class="OLE2">
    <g id="id45">
-    <rect class="BoundingBox" stroke="none" fill="none" x="6985" y="5019" width="6238" height="1065"/>
+    <rect class="BoundingBox" stroke="none" fill="none" x="6985" y="5019" width="8298" height="1196"/>
     <defs>
      <clipPath id="clip_path_1" clipPathUnits="userSpaceOnUse">
-      <path d="M 6985,5027 L 13229,5027 13229,6085 6985,6085 6985,5027 Z"/>
+      <path d="M 6985,5027 L 15293,5027 15293,6218 6985,6218 6985,5027 Z"/>
      </clipPath>
     </defs>
     <g clip-path="url(#clip_path_1)">
-     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="562px" font-style="italic" font-weight="400"><tspan class="TextPosition" x="7091" y="5786"><tspan fill="rgb(0,0,0)" stroke="none">Value</tspan></tspan></tspan></text>
-     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="OpenSymbol" font-size="562px" font-weight="400"><tspan class="TextPosition" x="8387" y="5786"><tspan fill="rgb(0,0,0)" stroke="none">=</tspan></tspan></tspan></text>
-     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="OpenSymbol" font-size="562px" font-weight="400"><tspan class="TextPosition" x="8811" y="5786"><tspan fill="rgb(0,0,0)" stroke="none">−</tspan></tspan></tspan></text>
-     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="562px" font-weight="400"><tspan class="TextPosition" x="9287" y="5786"><tspan fill="rgb(0,0,0)" stroke="none">2</tspan></tspan></tspan></text>
-     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="337px" font-style="italic" font-weight="400"><tspan class="TextPosition" x="9578" y="5495"><tspan fill="rgb(0,0,0)" stroke="none">N</tspan></tspan></tspan></text>
-     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="OpenSymbol" font-size="337px" font-weight="400"><tspan class="TextPosition" x="9843" y="5495"><tspan fill="rgb(0,0,0)" stroke="none">−</tspan></tspan></tspan></text>
-     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="337px" font-weight="400"><tspan class="TextPosition" x="10134" y="5495"><tspan fill="rgb(0,0,0)" stroke="none">1</tspan></tspan></tspan></text>
-     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="OpenSymbol" font-size="562px" font-weight="400"><tspan class="TextPosition" x="10345" y="5786"><tspan fill="rgb(0,0,0)" stroke="none">+</tspan></tspan></tspan></text>
-     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="OpenSymbol" font-size="820px" font-weight="400"><tspan class="TextPosition" x="10689" y="5839"><tspan fill="rgb(0,0,0)" stroke="none">∑</tspan></tspan></tspan></text>
-     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="337px" font-weight="400"><tspan class="TextPosition" x="11324" y="6024"><tspan fill="rgb(0,0,0)" stroke="none">0</tspan></tspan></tspan></text>
-     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="337px" font-style="italic" font-weight="400"><tspan class="TextPosition" x="11351" y="5310"><tspan fill="rgb(0,0,0)" stroke="none">N</tspan></tspan></tspan></text>
-     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="OpenSymbol" font-size="337px" font-weight="400"><tspan class="TextPosition" x="11615" y="5310"><tspan fill="rgb(0,0,0)" stroke="none">−</tspan></tspan></tspan></text>
-     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="337px" font-weight="400"><tspan class="TextPosition" x="11906" y="5310"><tspan fill="rgb(0,0,0)" stroke="none">2</tspan></tspan></tspan></text>
-     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="562px" font-style="italic" font-weight="400"><tspan class="TextPosition" x="12197" y="5786"><tspan fill="rgb(0,0,0)" stroke="none">B</tspan></tspan></tspan></text>
-     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="337px" font-style="italic" font-weight="400"><tspan class="TextPosition" x="12568" y="5919"><tspan fill="rgb(0,0,0)" stroke="none">i</tspan></tspan></tspan></text>
-     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="562px" font-weight="400"><tspan class="TextPosition" x="12726" y="5786"><tspan fill="rgb(0,0,0)" stroke="none">2</tspan></tspan></tspan></text>
-     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="337px" font-style="italic" font-weight="400"><tspan class="TextPosition" x="13018" y="5495"><tspan fill="rgb(0,0,0)" stroke="none">i</tspan></tspan></tspan></text>
+     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="633px" font-style="italic" font-weight="400"><tspan class="TextPosition" x="7091" y="5866"><tspan fill="rgb(0,0,0)" stroke="none">Value</tspan></tspan></tspan></text>
+     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="OpenSymbol" font-size="633px" font-weight="400"><tspan class="TextPosition" x="8520" y="5866"><tspan fill="rgb(0,0,0)" stroke="none">=</tspan></tspan></tspan></text>
+     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="OpenSymbol" font-size="633px" font-weight="400"><tspan class="TextPosition" x="9022" y="5866"><tspan fill="rgb(0,0,0)" stroke="none">−</tspan></tspan></tspan></text>
+     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="633px" font-style="italic" font-weight="400"><tspan class="TextPosition" x="9551" y="5866"><tspan fill="rgb(0,0,0)" stroke="none">B</tspan></tspan></tspan></text>
+     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="379px" font-style="italic" font-weight="400"><tspan class="TextPosition" x="10001" y="6024"><tspan fill="rgb(0,0,0)" stroke="none">N</tspan></tspan></tspan></text>
+     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="OpenSymbol" font-size="379px" font-weight="400"><tspan class="TextPosition" x="10292" y="6024"><tspan fill="rgb(0,0,0)" stroke="none">−</tspan></tspan></tspan></text>
+     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="379px" font-weight="400"><tspan class="TextPosition" x="10610" y="6024"><tspan fill="rgb(0,0,0)" stroke="none">1</tspan></tspan></tspan></text>
+     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="633px" font-weight="400"><tspan class="TextPosition" x="10874" y="5866"><tspan fill="rgb(0,0,0)" stroke="none">2</tspan></tspan></tspan></text>
+     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="379px" font-style="italic" font-weight="400"><tspan class="TextPosition" x="11192" y="5548"><tspan fill="rgb(0,0,0)" stroke="none">N</tspan></tspan></tspan></text>
+     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="OpenSymbol" font-size="379px" font-weight="400"><tspan class="TextPosition" x="11509" y="5548"><tspan fill="rgb(0,0,0)" stroke="none">−</tspan></tspan></tspan></text>
+     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="379px" font-weight="400"><tspan class="TextPosition" x="11827" y="5548"><tspan fill="rgb(0,0,0)" stroke="none">1</tspan></tspan></tspan></text>
+     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="OpenSymbol" font-size="633px" font-weight="400"><tspan class="TextPosition" x="12039" y="5866"><tspan fill="rgb(0,0,0)" stroke="none">+</tspan></tspan></tspan></text>
+     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="OpenSymbol" font-size="923px" font-weight="400"><tspan class="TextPosition" x="12435" y="5945"><tspan fill="rgb(0,0,0)" stroke="none">∑</tspan></tspan></tspan></text>
+     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="379px" font-weight="400"><tspan class="TextPosition" x="13176" y="6130"><tspan fill="rgb(0,0,0)" stroke="none">0</tspan></tspan></tspan></text>
+     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="379px" font-style="italic" font-weight="400"><tspan class="TextPosition" x="13176" y="5363"><tspan fill="rgb(0,0,0)" stroke="none">N</tspan></tspan></tspan></text>
+     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="OpenSymbol" font-size="379px" font-weight="400"><tspan class="TextPosition" x="13494" y="5363"><tspan fill="rgb(0,0,0)" stroke="none">−</tspan></tspan></tspan></text>
+     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="379px" font-weight="400"><tspan class="TextPosition" x="13811" y="5363"><tspan fill="rgb(0,0,0)" stroke="none">2</tspan></tspan></tspan></text>
+     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="633px" font-style="italic" font-weight="400"><tspan class="TextPosition" x="14155" y="5866"><tspan fill="rgb(0,0,0)" stroke="none">B</tspan></tspan></tspan></text>
+     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="379px" font-style="italic" font-weight="400"><tspan class="TextPosition" x="14552" y="6024"><tspan fill="rgb(0,0,0)" stroke="none">i</tspan></tspan></tspan></text>
+     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="633px" font-weight="400"><tspan class="TextPosition" x="14737" y="5866"><tspan fill="rgb(0,0,0)" stroke="none">2</tspan></tspan></tspan></text>
+     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="379px" font-style="italic" font-weight="400"><tspan class="TextPosition" x="15055" y="5548"><tspan fill="rgb(0,0,0)" stroke="none">i</tspan></tspan></tspan></text>
     </g>
    </g>
   </g>
   <g class="OLE2">
    <g id="id46">
-    <rect class="BoundingBox" stroke="none" fill="none" x="4175" y="8996" width="4381" height="1065"/>
+    <rect class="BoundingBox" stroke="none" fill="none" x="4175" y="8996" width="4889" height="1196"/>
     <defs>
      <clipPath id="clip_path_2" clipPathUnits="userSpaceOnUse">
-      <path d="M 4180,8996 L 8546,8996 8546,10054 4180,10054 4180,8996 Z"/>
+      <path d="M 4180,8996 L 9075,8996 9075,10186 4180,10186 4180,8996 Z"/>
      </clipPath>
     </defs>
     <g clip-path="url(#clip_path_2)">
-     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="562px" font-style="italic" font-weight="400"><tspan class="TextPosition" x="4281" y="9763"><tspan fill="rgb(0,0,0)" stroke="none">Value</tspan></tspan></tspan></text>
-     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="OpenSymbol" font-size="562px" font-weight="400"><tspan class="TextPosition" x="5577" y="9763"><tspan fill="rgb(0,0,0)" stroke="none">=</tspan></tspan></tspan></text>
-     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="OpenSymbol" font-size="820px" font-weight="400"><tspan class="TextPosition" x="6027" y="9816"><tspan fill="rgb(0,0,0)" stroke="none">∑</tspan></tspan></tspan></text>
-     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="337px" font-weight="400"><tspan class="TextPosition" x="6662" y="10001"><tspan fill="rgb(0,0,0)" stroke="none">0</tspan></tspan></tspan></text>
-     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="337px" font-style="italic" font-weight="400"><tspan class="TextPosition" x="6689" y="9287"><tspan fill="rgb(0,0,0)" stroke="none">N</tspan></tspan></tspan></text>
-     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="OpenSymbol" font-size="337px" font-weight="400"><tspan class="TextPosition" x="6953" y="9287"><tspan fill="rgb(0,0,0)" stroke="none">−</tspan></tspan></tspan></text>
-     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="337px" font-weight="400"><tspan class="TextPosition" x="7244" y="9287"><tspan fill="rgb(0,0,0)" stroke="none">1</tspan></tspan></tspan></text>
-     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="562px" font-style="italic" font-weight="400"><tspan class="TextPosition" x="7535" y="9763"><tspan fill="rgb(0,0,0)" stroke="none">B</tspan></tspan></tspan></text>
-     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="337px" font-style="italic" font-weight="400"><tspan class="TextPosition" x="7906" y="9896"><tspan fill="rgb(0,0,0)" stroke="none">i</tspan></tspan></tspan></text>
-     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="562px" font-weight="400"><tspan class="TextPosition" x="8064" y="9763"><tspan fill="rgb(0,0,0)" stroke="none">2</tspan></tspan></tspan></text>
-     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="337px" font-style="italic" font-weight="400"><tspan class="TextPosition" x="8355" y="9472"><tspan fill="rgb(0,0,0)" stroke="none">i</tspan></tspan></tspan></text>
+     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="633px" font-style="italic" font-weight="400"><tspan class="TextPosition" x="4281" y="9843"><tspan fill="rgb(0,0,0)" stroke="none">Value</tspan></tspan></tspan></text>
+     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="OpenSymbol" font-size="633px" font-weight="400"><tspan class="TextPosition" x="5710" y="9843"><tspan fill="rgb(0,0,0)" stroke="none">=</tspan></tspan></tspan></text>
+     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="OpenSymbol" font-size="923px" font-weight="400"><tspan class="TextPosition" x="6239" y="9922"><tspan fill="rgb(0,0,0)" stroke="none">∑</tspan></tspan></tspan></text>
+     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="379px" font-weight="400"><tspan class="TextPosition" x="6953" y="10107"><tspan fill="rgb(0,0,0)" stroke="none">0</tspan></tspan></tspan></text>
+     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="379px" font-style="italic" font-weight="400"><tspan class="TextPosition" x="6980" y="9340"><tspan fill="rgb(0,0,0)" stroke="none">N</tspan></tspan></tspan></text>
+     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="OpenSymbol" font-size="379px" font-weight="400"><tspan class="TextPosition" x="7271" y="9340"><tspan fill="rgb(0,0,0)" stroke="none">−</tspan></tspan></tspan></text>
+     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="379px" font-weight="400"><tspan class="TextPosition" x="7588" y="9340"><tspan fill="rgb(0,0,0)" stroke="none">1</tspan></tspan></tspan></text>
+     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="633px" font-style="italic" font-weight="400"><tspan class="TextPosition" x="7932" y="9843"><tspan fill="rgb(0,0,0)" stroke="none">B</tspan></tspan></tspan></text>
+     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="379px" font-style="italic" font-weight="400"><tspan class="TextPosition" x="8355" y="10001"><tspan fill="rgb(0,0,0)" stroke="none">i</tspan></tspan></tspan></text>
+     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="633px" font-weight="400"><tspan class="TextPosition" x="8541" y="9843"><tspan fill="rgb(0,0,0)" stroke="none">2</tspan></tspan></tspan></text>
+     <text class="SVGTextShape"><tspan class="TextParagraph" font-family="Liberation Serif, serif" font-size="379px" font-style="italic" font-weight="400"><tspan class="TextPosition" x="8858" y="9525"><tspan fill="rgb(0,0,0)" stroke="none">i</tspan></tspan></tspan></text>
     </g>
    </g>
   </g>
