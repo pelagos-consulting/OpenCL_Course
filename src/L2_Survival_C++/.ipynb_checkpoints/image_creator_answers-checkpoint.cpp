@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
     printf("b interpreted as a character: %c\n", b); // print b with the memory interpreted as a character
 
     // Making a string from characters
-    char str[] = {'a', 'b', 'c', 'd'};
+    char str[] = {'a', 'b', 'c', 'd', '\0'};
     printf("%s\n", str);
 
     // Declaring floating point value
@@ -47,8 +47,8 @@ int main(int argc, char** argv) {
     // Make up array and fill it using nested for loops
     float *arr = (float*)calloc((size_t)(N0*N1), sizeof(float));
 
-    for (int i0=0; i0 < N1; i0++) {
-        for (int i1=0; i1 < N0; i1++) {
+    for (int i0=0; i0 < N0; i0++) {
+        for (int i1=0; i1 < N1; i1++) {
             // Use the dot product to make up the position in the allocation
             int offset = i0*s0 + i1*s1;
     

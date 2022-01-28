@@ -6,7 +6,7 @@ include ../env
 INC_DIR=../include
 
 # List of applications to target
-TARGETS=cpp_example.exe cpp_buggy.exe
+TARGETS=image_creator.exe image_creator_answers.exe
 
 # Override some flags
 CXXFLAGS=-g -O0
