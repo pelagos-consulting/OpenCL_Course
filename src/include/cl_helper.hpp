@@ -1,4 +1,6 @@
 #include <iostream>
+#include <cstdio>
+#include <cstdlib>
 #include <map>
 
 #ifdef __APPLE__
@@ -9,7 +11,7 @@
 
 #define OCL_EXIT -20
 
-// Lookup table for error codes
+// Make a lookup table for error codes
 std::map<cl_int, std::string> error_codes {
     {CL_SUCCESS, "CL_SUCCESS"},
     {CL_BUILD_PROGRAM_FAILURE, "CL_BUILD_PROGRAM_FAILURE"},
@@ -109,6 +111,7 @@ cl_command_queue* h_create_command_queues(
 
     cl_command_queue *command_queues = (cl_command_queue*)calloc(num_command_queues, sizeof(cl_command_queue));
 
+    // Allocate command queues in a Round-Robin fashion
     for (cl_uint n=0; n<num_command_queues; n++) {
         command_queues[n] = clCreateCommandQueue(
             contexts[n % num_devices],
@@ -120,6 +123,18 @@ cl_command_queue* h_create_command_queues(
     }
             
     return command_queues;
+}
+
+// Function to release command queues
+void h_release_command_queues(cl_command_queue *command_queues, cl_uint num_command_queues) {
+    // Release command queues
+    for (cl_uint n = 0; n<num_command_queues; n++) {
+        h_errchk(clFinish(command_queues[n]), "Finishing up command queues");
+        h_errchk(clReleaseCommandQueue(command_queues[n]), "Releasing command queues");
+    }
+
+    // Now destroy the command queues
+    free(command_queues);
 }
 
 // Function to build a program from a single device and context
@@ -169,34 +184,40 @@ cl_program h_build_program(const char* source, cl_context context, cl_device_id 
     return program;
 }
 
-
-// Function to release command queues
-void h_release_command_queues(cl_command_queue *command_queues, cl_uint num_command_queues) {
-    // Release command queues
-    for (cl_uint n = 0; n<num_command_queues; n++) {
-        h_errchk(clFinish(command_queues[n]), "Finishing up command queues");
-        h_errchk(clReleaseCommandQueue(command_queues[n]), "Releasing command queues");
+void h_write_binary(void* data, const char* filename, size_t nbytes) {
+    // Write binary data to file
+    FILE *fp = fopen(filename, "wb");
+    if (fp == NULL) {
+        printf("Error in writing OpenCL source file %s", filename);
+        exit(OCL_EXIT);
     }
-
-    // Now destroy the command queues
-    free(command_queues);
+    
+    // Write the data to file
+    fwrite(data, nbytes, 1, fp);
+    
+    // Close the file
+    fclose(fp);
 }
 
-void* h_read_file(const char* filename, const char* mode, size_t *nbytes) {
-
-    FILE *fp = fopen(filename, mode);
+void* h_read_binary(const char* filename, size_t *nbytes) {
+    // Open the file for reading and use fread to read in the file
+    // Add a termination character to the end just in case we are reading a string
+    FILE *fp = fopen(filename, "rb");
     if (fp == NULL) {
         printf("Error in reading OpenCL source file %s", filename);
         exit(OCL_EXIT);
     }
+    
+    // Seek to the end of the file
     fseek(fp, 0, SEEK_END);
+    
     // Extract the number of bytes in this file
     *nbytes = ftell(fp);
 
     // Rewind the file
     rewind(fp);
 
-    // Buffer to read from
+    // Create the Buffer to read into
     void *buffer = calloc((*nbytes)+1, 1);
     
     // Null Termination, in case this gets converted to string
@@ -247,7 +268,7 @@ void h_acquire_devices(
     // Return code for running things
     cl_int ret_code = CL_SUCCESS;
     
-    // Get platforms
+    // Get all valid platforms
     cl_uint num_platforms;
     cl_platform_id *platform_ids = NULL;
     h_errchk(clGetPlatformIDs(0, NULL, &num_platforms), "Fetching number of platforms");
