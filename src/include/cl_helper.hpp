@@ -76,10 +76,10 @@ std::map<cl_int, std::string> error_codes {
 void h_errchk(cl_int errcode, std::string message) {
     if (errcode!=CL_SUCCESS) {
         if (error_codes.count(errcode)>0) {
-            printf("Error, Opencl call failed at \"%s\" with error code %s (%d)\n", 
+            std::printf("Error, Opencl call failed at \"%s\" with error code %s (%d)\n", 
                     message.c_str(), error_codes[errcode].c_str(), errcode);
         } else {
-            printf("Error, OpenCL call failed at \"%s\" with error code %d\n", 
+            std::printf("Error, OpenCL call failed at \"%s\" with error code %d\n", 
                     message.c_str(), errcode);
         }
         exit(OCL_EXIT);
@@ -176,7 +176,7 @@ cl_program h_build_program(const char* source, cl_context context, cl_device_id 
                                         elements,
                                         buildlog,
                                         NULL), "Filling the build log");
-        printf("Build log is %s\n", buildlog);
+        std::printf("Build log is %s\n", buildlog);
         free(buildlog);
         exit(OCL_EXIT);
     }
@@ -186,33 +186,33 @@ cl_program h_build_program(const char* source, cl_context context, cl_device_id 
 
 void h_write_binary(void* data, const char* filename, size_t nbytes) {
     // Write binary data to file
-    FILE *fp = fopen(filename, "wb");
+    std::FILE *fp = std::fopen(filename, "wb");
     if (fp == NULL) {
-        printf("Error in writing OpenCL source file %s", filename);
+        std::printf("Error in writing OpenCL source file %s", filename);
         exit(OCL_EXIT);
     }
     
     // Write the data to file
-    fwrite(data, nbytes, 1, fp);
+    std::fwrite(data, nbytes, 1, fp);
     
     // Close the file
-    fclose(fp);
+    std::fclose(fp);
 }
 
 void* h_read_binary(const char* filename, size_t *nbytes) {
-    // Open the file for reading and use fread to read in the file
-    // Add a termination character to the end just in case we are reading a string
-    FILE *fp = fopen(filename, "rb");
+    // Open the file for reading and use std::fread to read in the file
+    // Add a termination character at the end just in case we are reading to a string
+    std::FILE *fp = std::fopen(filename, "rb");
     if (fp == NULL) {
-        printf("Error in reading OpenCL source file %s", filename);
+        std::printf("Error in reading OpenCL source file %s", filename);
         exit(OCL_EXIT);
     }
     
     // Seek to the end of the file
-    fseek(fp, 0, SEEK_END);
+    std::fseek(fp, 0, SEEK_END);
     
     // Extract the number of bytes in this file
-    *nbytes = ftell(fp);
+    *nbytes = std::ftell(fp);
 
     // Rewind the file
     rewind(fp);
@@ -223,14 +223,13 @@ void* h_read_binary(const char* filename, size_t *nbytes) {
     // Null Termination, in case this gets converted to string
     char* source = (char*)buffer;
     source[*nbytes] = '\0';
-    fread(buffer, 1, *nbytes, fp);
-    fclose(fp);
+    std::fread(buffer, 1, *nbytes, fp);
+    std::fclose(fp);
     return buffer;
 }
 
 // Function to report information on a compute device
 void h_report_on_device(cl_device_id device) {
-    using namespace std;
 
     // Report some information on the device
     size_t nbytes_name;
@@ -239,18 +238,18 @@ void h_report_on_device(cl_device_id device) {
     h_errchk(clGetDeviceInfo(device, CL_DEVICE_NAME, nbytes_name, name, NULL),"Device name");
     int textwidth=16;
 
-    printf("\t%20s %s \n","name:", name);
+    std::printf("\t%20s %s \n","name:", name);
 
     cl_ulong mem_size;
     h_errchk(clGetDeviceInfo(device, CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(cl_ulong), &mem_size,
     NULL),"Global mem size");
 
-    printf("\t%20s %d MB\n","global memory size:",mem_size/(1000000));
+    std::printf("\t%20s %d MB\n","global memory size:",mem_size/(1000000));
 
     h_errchk(clGetDeviceInfo(device, CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(cl_ulong), &mem_size,
     NULL),"Max mem alloc size");
    
-    printf("\t%20s %d MB\n","max buffer size:", mem_size/(1000000));
+    std::printf("\t%20s %d MB\n","max buffer size:", mem_size/(1000000));
     delete [] name;
 }
 
@@ -296,7 +295,7 @@ void h_acquire_devices(
     }
     
     if (num_devices == 0) {
-        printf("Failed to find a suitable compute device\n");
+        std::printf("Failed to find a suitable compute device\n");
         exit(OCL_EXIT);
     }
 

@@ -1,5 +1,5 @@
 /* Code to perform a Matrix multiplication using OpenCL
-Written by Dr Toby M Potter
+Written by Dr Toby M. Potter
 */
 
 #include <cassert>
@@ -8,15 +8,17 @@ Written by Dr Toby M Potter
 #include <chrono>
 #include <iostream>
 
+// Define the size of the arrays to be computed
+#define NCOLS_A 1024
+#define NROWS_C 1024
+#define NCOLS_C 1024
+
 // Bring in helper header to manage boilerplate code
 #include "cl_helper.hpp"
 
 int main(int argc, char**argv) {
-    // Use the Chrono namespace?
-    using namespace std::chrono;
-
     // Start the clock
-    high_resolution_clock::time_point time1 = high_resolution_clock::now();
+    auto time1 = std::chrono::high_resolution_clock::now();
     
     // Useful for checking OpenCL errors
     cl_int errcode;
@@ -60,90 +62,70 @@ int main(int argc, char**argv) {
     
     // We are going to do a simple array multiplication for this example, 
     // using raw binary files for input and output
-    size_t nrows=1024;
-    size_t ncols=1024;
-    size_t element_size=sizeof(float);
-    size_t nelements=nrows*ncols;
-    size_t nbytes;
+    cl_uint N1_A = NCOLS_A, N0_C = NROWS_C, N1_C = NCOLS_C;
+    size_t nbytes_A, nbytes_B, nbytes_C;
 
-    // Read the input data into arrays
-    float* array_A = (float*)h_read_binary("array_A.dat", &nbytes);
-    float* array_B = (float*)h_read_binary("array_B.dat", &nbytes);
-    float* array_C_answer = (float*)h_read_binary("array_C_answer.dat", &nbytes);
-    
+    // Read the input data into arrays and sanity check
+    float* array_A = (float*)h_read_binary("array_A.dat", &nbytes_A);
+    float* array_B = (float*)h_read_binary("array_B.dat", &nbytes_B);
+
     // Sanity check on incoming data
-    assert(nbytes==nelements*sizeof(float));
+    
+    // A is of size (N0_C, N1_A)
+    assert(nbytes_A==N0_C*N1_A*sizeof(float));
+    // B is of size (N1_A, N1_C)    
+    assert(nbytes_B==N1_A*N1_C*sizeof(float));
+    // C is of size (N0_C, N1_C)
+    nbytes_C==N0_C*N1_C*sizeof(float);
     
     // Make an array to store the result in array_C
-    float* array_C = (float*)calloc(nbytes, 1);
+    float* array_C = (float*)calloc(nbytes_C, 1);
     
     // Make buffers for bringing data in and out of the computation
-    cl_mem buffer_A = clCreateBuffer(context, CL_MEM_READ_WRITE, nbytes, NULL, &errcode);
-    errchk(errcode, "Creating buffer_A");
-    cl_mem buffer_B = clCreateBuffer(context, CL_MEM_READ_WRITE, nbytes, NULL, &errcode);
-    errchk(errcode, "Creating buffer_B");
-    cl_mem buffer_C = clCreateBuffer(context, CL_MEM_READ_WRITE, nbytes, NULL, &errcode);
-    errchk(errcode, "Creating buffer_C");
+    cl_mem buffer_A = clCreateBuffer(context, CL_MEM_READ_WRITE, nbytes_A, NULL, &errcode);
+    h_errchk(errcode, "Creating buffer_A");
+    cl_mem buffer_B = clCreateBuffer(context, CL_MEM_READ_WRITE, nbytes_B, NULL, &errcode);
+    h_errchk(errcode, "Creating buffer_B");
+    cl_mem buffer_C = clCreateBuffer(context, CL_MEM_READ_WRITE, nbytes_C, NULL, &errcode);
+    h_errchk(errcode, "Creating buffer_C");
 
-    // Now specify the kernel source.
-    const char* kernel_source="\n\
-        // standard matrix multiply kernel \n\
-        __kernel void mat_mult (    __global float* A, \n\
-                                    __global float* B, \n\
-                                    __global float* C, \n\
-                                    int nrows_A, \n\
-                                    int nrows_B) { \n\
-            \n\
-            // i0 and i1 represent the coordinates in C \n\
-            // We assume Fortran ordering for the matrices \n\
-            size_t i0=get_global_id(0); \n\
-            size_t i1=get_global_id(1); \n\
-            float temp=0.0; \n\
-            // Loop over columns of A and rows of B \n\
-            for (int n=0; n<nrows_B; n++) { \
-                // C has the same number of rows as A, \n\
-                // and the same number of columns as B \n\
-                // i0 is the row index of A \n\
-                // i1 is the column index of B \n\
-                temp+=A[n*nrows_A+i0]*B[i1*nrows_B+n]; \n\
-            } \n\
-            // Number of rows in C is same as number of rows in A \n\
-            C[i1*nrows_A+i0]=temp; \n\
-        } \n\
-    ";
+    // Now specify the kernel source and read it in
+    size_t nbytes_src = 0;
+    const char* kernel_source = (const char*)h_read_binary("kernels_mat_mult.c", &nbytes_src);
 
     // Turn this source code into a program
     cl_program program = h_build_program(kernel_source, context, device);
         
     // Create a kernel from the built program
     cl_kernel kernel=clCreateKernel(program, "mat_mult", &errcode);
-    errchk(errcode, "Creating Kernel");
+    h_errchk(errcode, "Creating Kernel");
     
     // Now run the kernel
     
     // Set arguments to the kernel
-    errchk(clSetKernelArg(kernel, 0, sizeof(cl_mem), &buffer_A ),"setting kernel argument 0");
-    errchk(clSetKernelArg(kernel, 1, sizeof(cl_mem), &buffer_B ),"setting kernel argument 1");
-    errchk(clSetKernelArg(kernel, 2, sizeof(cl_mem), &buffer_C ),"setting kernel argument 2");
-    errchk(clSetKernelArg(kernel, 3, sizeof(int), &nrows ),"setting kernel argument 3");
-    errchk(clSetKernelArg(kernel, 4, sizeof(int), &nrows ),"setting kernel argument 4");
+    h_errchk(clSetKernelArg(kernel, 0, sizeof(cl_mem), &buffer_A ),"setting kernel argument 0");
+    h_errchk(clSetKernelArg(kernel, 1, sizeof(cl_mem), &buffer_B ),"setting kernel argument 1");
+    h_errchk(clSetKernelArg(kernel, 2, sizeof(cl_mem), &buffer_C ),"setting kernel argument 2");
+    h_errchk(clSetKernelArg(kernel, 3, sizeof(cl_uint), &N1_A ),"setting kernel argument 3");
+    h_errchk(clSetKernelArg(kernel, 4, sizeof(cl_uint), &N0_C ),"setting kernel argument 4");
+    h_errchk(clSetKernelArg(kernel, 3, sizeof(cl_uint), &N1_C ),"setting kernel argument 5");
 
     // Write memory to buffer_A and buffer_B from the host
-    errchk(clEnqueueWriteBuffer(command_queue,
+    h_errchk(clEnqueueWriteBuffer(command_queue,
                             buffer_A,
                             CL_TRUE,
                             0,
-                            nbytes,
+                            nbytes_A,
                             array_A,
                             0,
                             NULL,
                             NULL), "Writing to buffer_A from host");
 
-    errchk(clEnqueueWriteBuffer(command_queue,
+    h_errchk(clEnqueueWriteBuffer(command_queue,
                             buffer_B,
                             CL_TRUE,
                             0,
-                            nbytes,
+                            nbytes_B,
                             array_B,
                             0,
                             NULL,
@@ -151,12 +133,12 @@ int main(int argc, char**argv) {
     
     // Number of dimensions in the kernel
     cl_uint work_dim=2;
-    const size_t global_work_size[]={ nrows, ncols };
-    const size_t local_work_size[]={ nrows, ncols };
+    const size_t global_work_size[]={ N0_C, N1_C };
+    const size_t local_work_size[]={ 16, 16 };
     cl_event kernel_event;
     
     // Now enqueue the kernel
-    errchk(clEnqueueNDRangeKernel(command_queue,
+    h_errchk(clEnqueueNDRangeKernel(command_queue,
                                     kernel,
                                     work_dim,
                                     0,
@@ -167,26 +149,30 @@ int main(int argc, char**argv) {
                                     &kernel_event), "Running the kernel");
 
     // Read memory from the buffer to the host
-    errchk(clEnqueueReadBuffer(command_queue,
+    h_errchk(clEnqueueReadBuffer(command_queue,
                             buffer_C,
                             CL_TRUE,
                             0,
-                            nbytes,
+                            nbytes_C,
                             array_C,
                             1,
                             &kernel_event,
                             NULL), "Copying matrix C from device to host");
 
-    // Write out the answer to file
-    h_write_binary(array_C, "array_C.dat", nbytes);
+    // Write out the result to file
+    h_write_binary(array_C, "array_C.dat", nbytes_C);
+    
+    // Read the answer from disk
+    float* array_C_answer = (float*)h_read_binary("array_C_answer.dat", &nbytes_C);
 
     // Check the difference between the original and the computed matrix product
     // using the Root Mean Squared indicator
+    cl_long nelements = (cl_long)N0_C*(cl_long)N1_C;
     double rms=0.0;
     for (int i=0; i<nelements; i++ ) {
         rms+=(array_C[i]-array_C_answer[i])*(array_C[i]-array_C_answer[i]);
     }
-    rms/=nelements;
+    rms/=(double)nelements;
     rms=sqrt(rms);
     printf("RMS difference is %g\n", rms);
 
@@ -207,8 +193,8 @@ int main(int argc, char**argv) {
         platforms);
 
     // Stop the clock
-    high_resolution_clock::time_point time2 = high_resolution_clock::now();
-    duration<double> elapsed_time = duration_cast<duration<double>>(time2-time1);
+    auto time2 = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time = std::chrono::duration_cast<std::chrono::duration<double>>(time2-time1);
     std::cout << "Elapsed time is " << elapsed_time.count() << "seconds" << std::endl;
 }
 
