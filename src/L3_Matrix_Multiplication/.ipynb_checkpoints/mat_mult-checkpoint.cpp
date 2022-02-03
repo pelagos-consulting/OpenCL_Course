@@ -66,20 +66,20 @@ int main(int argc, char**argv) {
     size_t nbytes_A, nbytes_B, nbytes_C;
 
     // Read the input data into arrays and sanity check
-    float* array_A = (float*)h_read_binary("array_A.dat", &nbytes_A);
-    float* array_B = (float*)h_read_binary("array_B.dat", &nbytes_B);
+    cl_float* array_A = (cl_float*)h_read_binary("array_A.dat", &nbytes_A);
+    cl_float* array_B = (cl_float*)h_read_binary("array_B.dat", &nbytes_B);
 
     // Sanity check on incoming data
     
     // A is of size (N0_C, N1_A)
-    assert(nbytes_A==N0_C*N1_A*sizeof(float));
+    assert(nbytes_A==N0_C*N1_A*sizeof(cl_float));
     // B is of size (N1_A, N1_C)    
-    assert(nbytes_B==N1_A*N1_C*sizeof(float));
+    assert(nbytes_B==N1_A*N1_C*sizeof(cl_float));
     // C is of size (N0_C, N1_C)
-    nbytes_C==N0_C*N1_C*sizeof(float);
+    nbytes_C=N0_C*N1_C*sizeof(cl_float);
     
     // Make an array to store the result in array_C
-    float* array_C = (float*)calloc(nbytes_C, 1);
+    cl_float* array_C = (cl_float*)calloc(nbytes_C, 1);
     
     // Make buffers for bringing data in and out of the computation
     cl_mem buffer_A = clCreateBuffer(context, CL_MEM_READ_WRITE, nbytes_A, NULL, &errcode);
@@ -163,16 +163,16 @@ int main(int argc, char**argv) {
     h_write_binary(array_C, "array_C.dat", nbytes_C);
     
     // Read the answer from disk
-    float* array_C_answer = (float*)h_read_binary("array_C_answer.dat", &nbytes_C);
+    cl_float* array_C_answer = (cl_float*)h_read_binary("array_C_answer.dat", &nbytes_C);
 
     // Check the difference between the original and the computed matrix product
     // using the Root Mean Squared indicator
     cl_long nelements = (cl_long)N0_C*(cl_long)N1_C;
-    double rms=0.0;
+    cl_double rms=0.0;
     for (int i=0; i<nelements; i++ ) {
         rms+=(array_C[i]-array_C_answer[i])*(array_C[i]-array_C_answer[i]);
     }
-    rms/=(double)nelements;
+    rms/=(cl_double)nelements;
     rms=sqrt(rms);
     printf("RMS difference is %g\n", rms);
 
@@ -194,7 +194,7 @@ int main(int argc, char**argv) {
 
     // Stop the clock
     auto time2 = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed_time = std::chrono::duration_cast<std::chrono::duration<double>>(time2-time1);
+    std::chrono::duration<cl_double> elapsed_time = std::chrono::duration_cast<std::chrono::duration<cl_double>>(time2-time1);
     std::cout << "Elapsed time is " << elapsed_time.count() << "seconds" << std::endl;
 }
 
