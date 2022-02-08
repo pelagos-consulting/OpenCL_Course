@@ -1,0 +1,13 @@
+
+# OpenCL library locations
+OPENCL_INC_DIR=/usr/local/cuda/include
+OPENCL_LIB_DIR=/usr/local/cuda/lib64
+
+# Compiler locations
+CXX=g++
+CC=gcc
+
+# Library flags for OpenCL
+OPENCL_LIB_FLAGS="-lOpenCL"
+
+CXXFLAGS=-g -O2 -fopenmp
