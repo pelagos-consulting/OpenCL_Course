@@ -25,10 +25,10 @@ CXXFLAGS=-g -O2 -fopenmp
 ifeq ($(detected_OS), Darwin)
     CXX=clang++
     CXXFLAGS=-framework OpenCL -std=c++11 -g -O2 -Xclang -fopenmp
-    OPENCL_INC_DIR=""
-    OPENCL_LIB_DIR=""
+    OPENCL_INC_DIR="./"
+    OPENCL_LIB_DIR="./"
     OPENCL_LIB_FLAGS=""
-fi
+endif
 
 # Flags for Linux
 ifeq ($(detected_OS), Linux)
@@ -37,7 +37,7 @@ ifeq ($(detected_OS), Linux)
     OPENCL_INC_DIR=/usr/local/cuda/include
     OPENCL_LIB_DIR=/usr/local/cuda/lib64
     OPENCL_LIB_FLAGS=-lOpenCL -lomp
-fi
+endif
 
 
 

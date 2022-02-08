@@ -9,8 +9,8 @@ Written by Dr Toby M. Potter
 #include <iostream>
 
 // Define the size of the arrays to be computed
-#define NCOLS_A 1024
-#define NROWS_C 1024
+#define NCOLS_A 256
+#define NROWS_C 512
 #define NCOLS_C 1024
 
 // Bring in helper header to manage boilerplate code
@@ -62,6 +62,11 @@ int main(int argc, char**argv) {
     
     // We are going to do a simple array multiplication for this example, 
     // using raw binary files for input and output
+    
+    // A is of size (N0_C, N1_A)
+    // B is of size (N1_A, N1_C)    
+    // C is of size (N0_C, N1_C)
+    
     cl_uint N1_A = NCOLS_A, N0_C = NROWS_C, N1_C = NCOLS_C;
     size_t nbytes_A, nbytes_B, nbytes_C;
 
@@ -70,12 +75,8 @@ int main(int argc, char**argv) {
     cl_float* array_B = (cl_float*)h_read_binary("array_B.dat", &nbytes_B);
 
     // Sanity check on incoming data
-    
-    // A is of size (N0_C, N1_A)
-    assert(nbytes_A==N0_C*N1_A*sizeof(cl_float));
-    // B is of size (N1_A, N1_C)    
+    assert(nbytes_A==N0_C*N1_A*sizeof(cl_float));   
     assert(nbytes_B==N1_A*N1_C*sizeof(cl_float));
-    // C is of size (N0_C, N1_C)
     nbytes_C=N0_C*N1_C*sizeof(cl_float);
     
     // Make an array to store the result in array_C
