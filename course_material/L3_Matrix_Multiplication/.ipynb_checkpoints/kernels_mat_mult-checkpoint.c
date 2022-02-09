@@ -20,7 +20,7 @@ __kernel void mat_mult (__global float* A,
     // Guard mechanism
     if ((i0<N0_C) && (i1<N1_C)) {
         // Loop over columns of A and rows of B 
-        for (unsigned int n=0; n<N1_A; n++) { 
+        for (size_t n=0; n<N1_A; n++) { 
             // C has the same number of rows as A, 
             // and the same number of columns as B 
             // i0 is the row index of A 
@@ -28,6 +28,6 @@ __kernel void mat_mult (__global float* A,
             temp+=A[i0*N1_A+n]*B[n*N1_C+i1]; 
         } 
         // Number of rows in C is same as number of rows in A
-        C[i0*N1_C+i1]=temp; 
+        C[i0*N1_C+i1]=temp;
     }
 } 

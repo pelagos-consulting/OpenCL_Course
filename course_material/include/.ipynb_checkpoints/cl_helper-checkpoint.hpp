@@ -232,24 +232,56 @@ void* h_read_binary(const char* filename, size_t *nbytes) {
 void h_report_on_device(cl_device_id device) {
 
     // Report some information on the device
+    
+    // The name
     size_t nbytes_name;
     h_errchk(clGetDeviceInfo(device, CL_DEVICE_NAME, 0, NULL, &nbytes_name),"Device name bytes");
-    char* name=new char[nbytes_name];
+    char* name=new char[nbytes_name+1];
+    name[nbytes_name] = '\0';
     h_errchk(clGetDeviceInfo(device, CL_DEVICE_NAME, nbytes_name, name, NULL),"Device name");
     int textwidth=16;
-
     std::printf("\t%20s %s \n","name:", name);
 
+    // The global memory and max buffer sizes
     cl_ulong mem_size;
     h_errchk(clGetDeviceInfo(device, CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(cl_ulong), &mem_size,
     NULL),"Global mem size");
-
-    std::printf("\t%20s %d MB\n","global memory size:",mem_size/(1000000));
-
+    std::printf("\t%20s %llu MB\n","global memory size:",mem_size/(1000000));
+    
     h_errchk(clGetDeviceInfo(device, CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(cl_ulong), &mem_size,
     NULL),"Max mem alloc size");
-   
-    std::printf("\t%20s %d MB\n","max buffer size:", mem_size/(1000000));
+    std::printf("\t%20s %llu MB\n","max buffer size:", mem_size/(1000000));
+    
+    // Get the maximum number of work items in a work group
+    cl_uint max_work_dims;
+    h_errchk(
+        clGetDeviceInfo(device, 
+                        CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, 
+                        sizeof(cl_uint), 
+                        &max_work_dims, 
+                        NULL),
+        "Max number of dimensions for local size."
+    );
+    
+    // Get the maximum number of work items in a work group
+    size_t* max_size = new size_t[max_work_dims];
+    h_errchk(
+        clGetDeviceInfo(device, 
+                        CL_DEVICE_MAX_WORK_ITEM_SIZES, 
+                        max_work_dims*sizeof(size_t), 
+                        max_size, 
+                        NULL),
+        "Max size for work items."
+    );
+    
+    // Print it out
+    std::printf("\t%20s (", "max local size:");
+    for (int n=0; n<max_work_dims-1; n++) {
+        std::printf("%zu,", max_size[n]);
+    }
+    std::printf("%zu)\n", max_size[max_work_dims-1]);
+    
+    delete [] max_size;
     delete [] name;
 }
 

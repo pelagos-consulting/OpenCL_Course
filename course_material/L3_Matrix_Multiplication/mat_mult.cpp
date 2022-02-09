@@ -9,8 +9,8 @@ Written by Dr Toby M. Potter
 #include <iostream>
 
 // Define the size of the arrays to be computed
-#define NCOLS_A 1024
-#define NROWS_C 1024
+#define NCOLS_A 256
+#define NROWS_C 512
 #define NCOLS_C 1024
 
 // Bring in helper header to manage boilerplate code
@@ -44,7 +44,7 @@ int main(int argc, char**argv) {
     // Number of command queues to generate
     cl_uint num_command_queues = num_devices;
     
-    // Allocate command queues
+    // Create the command queues
     cl_command_queue* command_queues = h_create_command_queues(
         devices,
         contexts,
