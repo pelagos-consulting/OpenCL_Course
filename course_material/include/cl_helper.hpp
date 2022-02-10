@@ -184,6 +184,22 @@ cl_program h_build_program(const char* source, cl_context context, cl_device_id 
     return program;
 }
 
+void h_fit_global_size(const size_t* global_size, const size_t* local_size, size_t work_dim) {
+    // Fit global size so that an integer number of local sizes fits within it in any dimension
+    
+    // Make a readable pointer out of the constant one
+    size_t* new_global = (size_t*)global_size;
+    
+    // Make sure global size is large enough
+    for (int n=0; n<work_dim; n++) {
+        assert(global_size[n]>0);
+        assert(global_size[n]>=local_size[n]);
+        if (global_size[n] % local_size[n]) {
+            new_global[n] = ((global_size[n]/local_size[n])+1)*local_size[n];
+        } 
+    }
+}
+
 void h_write_binary(void* data, const char* filename, size_t nbytes) {
     // Write binary data to file
     std::FILE *fp = std::fopen(filename, "wb");

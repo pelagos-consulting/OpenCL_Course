@@ -10,8 +10,8 @@ Written by Dr Toby M. Potter
 
 // Define the size of the arrays to be computed
 #define NCOLS_A 256
-#define NROWS_C 512
-#define NCOLS_C 1024
+#define NROWS_C 520
+#define NCOLS_C 1032
 
 // Bring in helper header to manage boilerplate code
 #include "cl_helper.hpp"
@@ -104,9 +104,7 @@ int main(int argc, char**argv) {
     cl_kernel kernel=clCreateKernel(program, "mat_mult", &errcode);
     h_errchk(errcode, "Creating Kernel");
     
-    // Now run the kernel
-    
-    // Set arguments to the kernel
+    // Set arguments to the kernel (not thread safe)
     h_errchk(clSetKernelArg(kernel, 0, sizeof(cl_mem), &buffer_A ),"setting kernel argument 0");
     h_errchk(clSetKernelArg(kernel, 1, sizeof(cl_mem), &buffer_B ),"setting kernel argument 1");
     h_errchk(clSetKernelArg(kernel, 2, sizeof(cl_mem), &buffer_C ),"setting kernel argument 2");
@@ -136,9 +134,18 @@ int main(int argc, char**argv) {
                             NULL), "Writing to buffer_B from host");
     
     // Number of dimensions in the kernel
-    cl_uint work_dim=2;
-    const size_t global_work_size[]={ N0_C, N1_C };
+    size_t work_dim=2;
+    
+    // Desired local size
     const size_t local_work_size[]={ 16, 1 };
+    
+    // Desired global_size
+    const size_t global_work_size[]={ N0_C, N1_C };
+    
+    // Enlarge the global size so that an integer number of local sizes fits within it
+    h_fit_global_size(global_work_size, local_work_size, work_dim);
+    
+    // Event for the kernel
     cl_event kernel_event;
     
     // Now enqueue the kernel
@@ -165,26 +172,11 @@ int main(int argc, char**argv) {
 
     // Write out the result to file
     h_write_binary(array_C, "array_C.dat", nbytes_C);
-    
-    // Read the answer from disk
-    cl_float* array_C_answer = (cl_float*)h_read_binary("array_C_answer.dat", &nbytes_C);
-
-    // Check the difference between the original and the computed matrix product
-    // using the Root Mean Squared indicator
-    cl_long nelements = (cl_long)N0_C*(cl_long)N1_C;
-    cl_double rms=0.0;
-    for (int i=0; i<nelements; i++ ) {
-        rms+=(array_C[i]-array_C_answer[i])*(array_C[i]-array_C_answer[i]);
-    }
-    rms/=(cl_double)nelements;
-    rms=sqrt(rms);
-    printf("RMS difference is %g\n", rms);
 
     // Clean up memory that was allocated on the read   
     free(array_A);
     free(array_B);
     free(array_C);
-    free(array_C_answer);
     
     // Clean up command queues
     h_release_command_queues(command_queues, num_command_queues);
@@ -196,7 +188,7 @@ int main(int argc, char**argv) {
         contexts,
         platforms);
 
-    // Stop the clock
+    // Stop the clock and get time elapsed
     auto time2 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<cl_double> elapsed_time = std::chrono::duration_cast<std::chrono::duration<cl_double>>(time2-time1);
     std::cout << "Elapsed time is " << elapsed_time.count() << "seconds" << std::endl;
