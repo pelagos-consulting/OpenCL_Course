@@ -16,7 +16,7 @@ Written by Dr Toby M. Potter
 // Bring in helper header to manage boilerplate code
 #include "cl_helper.hpp"
 
-int main(int argc, char**argv) {
+int main(int argc, char** argv) {
     // Start the clock
     auto time1 = std::chrono::high_resolution_clock::now();
     

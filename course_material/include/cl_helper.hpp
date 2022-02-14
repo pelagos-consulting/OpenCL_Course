@@ -12,7 +12,7 @@
 #define OCL_EXIT -20
 
 // Make a lookup table for error codes
-std::map<cl_int, std::string> error_codes {
+std::map<cl_int, const char*> error_codes {
     {CL_SUCCESS, "CL_SUCCESS"},
     {CL_BUILD_PROGRAM_FAILURE, "CL_BUILD_PROGRAM_FAILURE"},
     {CL_COMPILE_PROGRAM_FAILURE, "CL_COMPILE_PROGRAM_FAILURE"},
@@ -73,15 +73,18 @@ std::map<cl_int, std::string> error_codes {
 };
 
 // Function to check error code
-void h_errchk(cl_int errcode, std::string message) {
+void h_errchk(cl_int errcode, const char *message) {
     if (errcode!=CL_SUCCESS) {
+        // Is the error code in the map
         if (error_codes.count(errcode)>0) {
             std::printf("Error, Opencl call failed at \"%s\" with error code %s (%d)\n", 
-                    message.c_str(), error_codes[errcode].c_str(), errcode);
+                    message, error_codes[errcode], errcode);
         } else {
+            // We don't know how to handle the error code, so just print it
             std::printf("Error, OpenCL call failed at \"%s\" with error code %d\n", 
-                    message.c_str(), errcode);
+                    message, errcode);
         }
+        // We have failed one way or the other, so just exit
         exit(OCL_EXIT);
     }
 };
