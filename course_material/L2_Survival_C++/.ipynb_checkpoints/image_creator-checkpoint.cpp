@@ -16,17 +16,17 @@ int main(int argc, char** argv) {
         int c_i=2;          // 32 bit          
         unsigned int d_i=3; // 32 bit
         long e_i = 5;       // 64 bit
-    } 
+    }
 
     // This is a comment
     char a='s'; // Using char as a character
     char b = a+1; // Arithmetic with characters
-    printf("b interpreted as an integer: %i\n", b); // print b with the memory interpreted as an integer
-    printf("b interpreted as a character: %c\n", b); // print b with the memory interpreted as a character
+    std::printf("b interpreted as an integer: %i\n", b); // print b with the memory interpreted as an integer
+    std::printf("b interpreted as a character: %c\n", b); // print b with the memory interpreted as a character
 
     // Making a string from characters
     char str[] = {'a', 'b', 'c', 'd'};
-    printf("%s\n", str);
+    std::printf("%s\n", str);
 
     // Declaring floating point value
     float x=5.0;
@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
     long double z=7.0;
 
     // Printing floats
-    printf("float representation, x = %f y = %f\n", x, y); // Print x and y to the screen with their memory interpreted as floats
+    std::printf("float representation, x = %f y = %f\n", x, y); // Print x and y to the screen with their memory interpreted as floats
 
     // Now fill a 2D array with squares
     int N0=512; // Number of elements in dim 0 
@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
     if (fp != NULL) {
         fwrite(arr, sizeof(float), (size_t)(N0*N1), fp);
     } else {
-        printf("File %s could not be opened\n", fname);
+        std::printf("File %s could not be opened\n", fname);
     }
 
     // Close the file and free the array

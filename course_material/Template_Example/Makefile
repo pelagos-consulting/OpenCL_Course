@@ -6,10 +6,7 @@ include ../env
 INC_DIR=../include
 
 # List of applications to target
-TARGETS=image_creator.exe image_creator_answers.exe opencl_types.exe
-
-# Override some flags
-#CXXFLAGS=-g
+TARGETS=template.exe
 
 all: $(TARGETS)
 
