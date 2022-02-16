@@ -24,11 +24,11 @@ int main(int argc, char** argv) {
     cl_int errcode;
 
     // Create handles to platforms, devices, and contexts
-    cl_uint num_platforms;
-    cl_uint num_devices;
-    cl_platform_id *platforms = NULL;
-    cl_device_id *devices = NULL;
-    cl_context *contexts = NULL;
+    cl_uint num_platforms; // Number of discovered platforms 
+    cl_uint num_devices; // Number of discovered devices
+    cl_platform_id *platforms = NULL; // Allocation of platforms
+    cl_device_id *devices = NULL; // Allocation of devices
+    cl_context *contexts = NULL; // Allocation of contexts
 
     // Discover platforms and devices and create contexts
     cl_device_type target_device=CL_DEVICE_TYPE_ALL;

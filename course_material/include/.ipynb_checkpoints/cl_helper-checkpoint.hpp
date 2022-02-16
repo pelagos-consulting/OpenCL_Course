@@ -318,78 +318,94 @@ void h_acquire_devices(
     // Return code for running things
     cl_int ret_code = CL_SUCCESS;
     
-    // Get all valid platforms
-    cl_uint num_platforms;
+    //// Get all valid platforms ////
+    cl_uint num_platforms; 
     cl_platform_id *platform_ids = NULL;
+    
+    // First call to clGetPlatformIDs - get the number of platforms
     h_errchk(clGetPlatformIDs(0, NULL, &num_platforms), "Fetching number of platforms");
+    
+    // Allocate memory for platform id's
     platform_ids = (cl_platform_id*)calloc(num_platforms, sizeof(cl_platform_id));
+    
+    // Second call to clGetPlatformIDs - fill the platforms
     h_errchk(clGetPlatformIDs(num_platforms, platform_ids, NULL), "Fetching platforms");
         
     // Fetch the total number of compatible devices
     cl_uint num_devices=0;
     
-    // Get the total number of devices
+    // Loop over each platform and get the total number
+    // of devices that match device_type
     for (cl_uint n=0; n < num_platforms; n++) {
-
-        cl_uint ndevices;
+        // Temporary number of devices
+        cl_uint ndevs;
+        // Get number of devices in the platform
         ret_code = clGetDeviceIDs(
             platform_ids[n],
             device_type,
             0,
             NULL,
-            &ndevices);
+            &ndevs);
 
         if (ret_code != CL_DEVICE_NOT_FOUND) {
             h_errchk(ret_code, "Getting number of devices");
-            num_devices += ndevices;
+            num_devices += ndevs;
         }
     }
     
+    // Check to make sure we have more than one suitable device
     if (num_devices == 0) {
         std::printf("Failed to find a suitable compute device\n");
         exit(OCL_EXIT);
     }
 
-    // Allocate memory for device ID's and contexts
+    // Allocate flat 1D allocations for device ID's and contexts,
+    // both allocations have the same number of elements
     cl_device_id *device_ids = (cl_device_id*)calloc(num_devices, sizeof(cl_device_id));
     cl_context *contexts = (cl_context*)calloc(num_devices, sizeof(cl_context));
     
+    // Temporary pointers
     cl_device_id *device_ids_ptr = device_ids;
     cl_context *contexts_ptr = contexts;
     
-    // Fill device ID's array
+    // Now fill device ID's array
     for (cl_uint n=0; n < num_platforms; n++) {
-        cl_uint ndevices;
+        // Temporary number of devices
+        cl_uint ndevs;
 
+        // Get the number of devices in a platform
         ret_code = clGetDeviceIDs(
             platform_ids[n],
             device_type,
             0,
             NULL,
-            &ndevices);
+            &ndevs);
 
         if (ret_code != CL_DEVICE_NOT_FOUND) {
+            // Check to see if any other error was generated
             h_errchk(ret_code, "Getting number of devices for the platform");
             
-            // Fill devices
+            // Fill the array with the next set of found devices
             h_errchk(clGetDeviceIDs(
                 platform_ids[n],
                 device_type,
-                ndevices,
+                ndevs,
                 device_ids_ptr,
                 NULL), "Filling devices");
             
             // Create a context for every device found
-            for (cl_uint c=0; c<ndevices; c++ ) {
+            for (cl_uint c=0; c<ndevs; c++ ) {
                 // Context properties
                 const cl_context_properties prop[] = { CL_CONTEXT_PLATFORM, 
                                                       (cl_context_properties)platform_ids[n], 
                                                       0 };
                 
                 // Create a context with 1 device in it
-                const cl_device_id dev_id = *(device_ids_ptr+c);
+                const cl_device_id dev_id = device_ids_ptr[c];
                 cl_uint ndev = 1;
                 
+                // Fill the contexts array at this point 
+                // with a newly created context
                 *contexts_ptr = clCreateContext(
                     prop, 
                     ndev, 
@@ -402,8 +418,9 @@ void h_acquire_devices(
                 contexts_ptr++;
             }
             
-            // Advance device_id's pointer
-            device_ids_ptr += ndevices;
+            // Advance device_id's pointer 
+            // by the number of devices discovered
+            device_ids_ptr += ndevs;
         }
     }   
 
