@@ -122,7 +122,7 @@ cl_command_queue* h_create_command_queues(
             queue_properties,
             &ret_code    
         );
-        h_errchk(ret_code, "Creating a context");        
+        h_errchk(ret_code, "Creating a command queue");        
     }
             
     return command_queues;
@@ -368,7 +368,7 @@ void h_acquire_devices(
     cl_device_id *device_ids_ptr = device_ids;
     cl_context *contexts_ptr = contexts;
     
-    // Now fill device ID's array
+    // Now loop over platforms and fill device ID's array
     for (cl_uint n=0; n < num_platforms; n++) {
         // Temporary number of devices
         cl_uint ndevs;
@@ -395,7 +395,7 @@ void h_acquire_devices(
             
             // Create a context for every device found
             for (cl_uint c=0; c<ndevs; c++ ) {
-                // Context properties
+                // Context properties, this can be tricky
                 const cl_context_properties prop[] = { CL_CONTEXT_PLATFORM, 
                                                       (cl_context_properties)platform_ids[n], 
                                                       0 };
