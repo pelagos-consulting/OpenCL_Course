@@ -101,6 +101,7 @@ cl_command_queue* h_create_command_queues(
         cl_bool out_of_order_enable,
         cl_bool profiling_enable) {
     
+    // Return code for error checking
     cl_int ret_code;   
 
     // Manage bit fields
@@ -112,9 +113,10 @@ cl_command_queue* h_create_command_queues(
         queue_properties = queue_properties | CL_QUEUE_PROFILING_ENABLE;    
     }
 
+    // Allocate memory for the command queues
     cl_command_queue *command_queues = (cl_command_queue*)calloc(num_command_queues, sizeof(cl_command_queue));
 
-    // Allocate command queues in a Round-Robin fashion
+    // Fill command queues in a Round-Robin fashion
     for (cl_uint n=0; n<num_command_queues; n++) {
         command_queues[n] = clCreateCommandQueue(
             contexts[n % num_devices],

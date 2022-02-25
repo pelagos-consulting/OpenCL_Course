@@ -44,14 +44,20 @@ int main(int argc, char** argv) {
     // Number of command queues to generate
     cl_uint num_command_queues = num_devices;
     
+    // Do we enable out-of-order execution 
+    cl_bool ordering = CL_FALSE;
+    
+    // Do we enable profiling?
+    cl_bool profiling = CL_FALSE;
+    
     // Create the command queues
     cl_command_queue* command_queues = h_create_command_queues(
         devices,
         contexts,
         num_devices,
         num_command_queues,
-        CL_FALSE,
-        CL_FALSE
+        ordering,
+        profiling
     );
 
     // Choose the first available context and compute device to use
