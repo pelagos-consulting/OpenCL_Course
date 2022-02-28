@@ -60,7 +60,8 @@ int main(int argc, char** argv) {
         profiling
     );
 
-    // Choose the first available context and compute device to use
+    // Choose the first available context 
+    // and compute device to use
     cl_uint dev_index = 0;
     cl_context context = contexts[dev_index];
     cl_command_queue command_queue = command_queues[dev_index];

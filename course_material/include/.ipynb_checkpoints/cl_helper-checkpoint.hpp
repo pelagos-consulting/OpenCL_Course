@@ -94,17 +94,25 @@ cl_command_queue* h_create_command_queues(
         // Create a list of command queues
         // with selectable properties
         // Assumes that contexts is as long as devices
+        
+        // Array of OpenCL device id's
         cl_device_id *devices,
-        cl_context *contexts, 
-        cl_uint num_devices, 
+        // Array of OpenCL contexts
+        cl_context *contexts,
+        // How long is devices and contexts?
+        cl_uint num_devices,
+        // How many command queues should we create?
         cl_uint num_command_queues,
+        // Do we enable out-of-order execution?
         cl_bool out_of_order_enable,
+        // Do we enable profiling of commands 
+        // sent to the command queues
         cl_bool profiling_enable) {
     
     // Return code for error checking
     cl_int ret_code;   
 
-    // Manage bit fields
+    // Manage bit fields for the command queue properties
     cl_command_queue_properties queue_properties = 0;
     if (out_of_order_enable == CL_TRUE) {
         queue_properties = queue_properties | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;    
@@ -251,29 +259,60 @@ void* h_read_binary(const char* filename, size_t *nbytes) {
 
 // Function to report information on a compute device
 void h_report_on_device(cl_device_id device) {
-
     // Report some information on the device
     
-    // The name
+    // Fetch the name of the compute device
     size_t nbytes_name;
-    h_errchk(clGetDeviceInfo(device, CL_DEVICE_NAME, 0, NULL, &nbytes_name),"Device name bytes");
+    
+    // First call is to fetch 
+    // the number of bytes taken up by the name
+    h_errchk(
+        clGetDeviceInfo(device, 
+                        CL_DEVICE_NAME, 
+                        0, 
+                        NULL, 
+                        &nbytes_name),
+        "Device name bytes"
+    );
+    // Allocate memory for the name
     char* name=new char[nbytes_name+1];
+    // Don't forget the NULL character terminator
     name[nbytes_name] = '\0';
-    h_errchk(clGetDeviceInfo(device, CL_DEVICE_NAME, nbytes_name, name, NULL),"Device name");
-    int textwidth=16;
+    // Second call is to fill the allocated name
+    h_errchk(
+        clGetDeviceInfo(device, 
+                        CL_DEVICE_NAME, 
+                        nbytes_name, 
+                        name, 
+                        NULL),
+        "Device name"
+    );
     std::printf("\t%20s %s \n","name:", name);
 
-    // The global memory and max buffer sizes
+    // Fetch the global memory size
     cl_ulong mem_size;
-    h_errchk(clGetDeviceInfo(device, CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(cl_ulong), &mem_size,
-    NULL),"Global mem size");
+    h_errchk(
+        clGetDeviceInfo(device, 
+                        CL_DEVICE_GLOBAL_MEM_SIZE, 
+                        sizeof(cl_ulong), 
+                        &mem_size, 
+                        NULL),
+        "Global mem size"
+    );
     std::printf("\t%20s %llu MB\n","global memory size:",mem_size/(1000000));
     
-    h_errchk(clGetDeviceInfo(device, CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(cl_ulong), &mem_size,
-    NULL),"Max mem alloc size");
+    // Fetch the maximum size of a global memory allocation
+    h_errchk(
+        clGetDeviceInfo(device, 
+                        CL_DEVICE_MAX_MEM_ALLOC_SIZE, 
+                        sizeof(cl_ulong), 
+                        &mem_size, 
+                        NULL),
+        "Max mem alloc size"
+    );
     std::printf("\t%20s %llu MB\n","max buffer size:", mem_size/(1000000));
     
-    // Get the maximum number of work items in a work group
+    // Get the maximum number of dimensions supported
     cl_uint max_work_dims;
     h_errchk(
         clGetDeviceInfo(device, 
@@ -284,7 +323,8 @@ void h_report_on_device(cl_device_id device) {
         "Max number of dimensions for local size."
     );
     
-    // Get the maximum number of work items in a work group
+    // Get the max number of work items along
+    // dimensions of a work group
     size_t* max_size = new size_t[max_work_dims];
     h_errchk(
         clGetDeviceInfo(device, 
@@ -295,7 +335,8 @@ void h_report_on_device(cl_device_id device) {
         "Max size for work items."
     );
     
-    // Print it out
+    // Print out the maximum extent of 
+    // items in a workgroup
     std::printf("\t%20s (", "max local size:");
     for (int n=0; n<max_work_dims-1; n++) {
         std::printf("%zu,", max_size[n]);
