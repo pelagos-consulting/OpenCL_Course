@@ -217,7 +217,7 @@ void h_write_binary(void* data, const char* filename, size_t nbytes) {
     // Write binary data to file
     std::FILE *fp = std::fopen(filename, "wb");
     if (fp == NULL) {
-        std::printf("Error in writing OpenCL source file %s", filename);
+        std::printf("Error in writing file %s", filename);
         exit(OCL_EXIT);
     }
     
@@ -230,10 +230,9 @@ void h_write_binary(void* data, const char* filename, size_t nbytes) {
 
 void* h_read_binary(const char* filename, size_t *nbytes) {
     // Open the file for reading and use std::fread to read in the file
-    // Add a termination character at the end just in case we are reading to a string
     std::FILE *fp = std::fopen(filename, "rb");
     if (fp == NULL) {
-        std::printf("Error in reading OpenCL source file %s", filename);
+        std::printf("Error in reading file %s", filename);
         exit(OCL_EXIT);
     }
     
@@ -243,15 +242,19 @@ void* h_read_binary(const char* filename, size_t *nbytes) {
     // Extract the number of bytes in this file
     *nbytes = std::ftell(fp);
 
-    // Rewind the file
-    rewind(fp);
+    // Rewind the file pointer
+    std::rewind(fp);
 
-    // Create the Buffer to read into
+    // Create a buffer to read into
+    // Add an extra Byte for a null termination character
+    // just in case we are reading to a string
     void *buffer = calloc((*nbytes)+1, 1);
     
-    // Null Termination, in case this gets converted to string
+    // Set the NULL termination character
     char* source = (char*)buffer;
     source[*nbytes] = '\0';
+    
+    // Read the file into the buffer and close
     std::fread(buffer, 1, *nbytes, fp);
     std::fclose(fp);
     return buffer;
@@ -343,6 +346,19 @@ void h_report_on_device(cl_device_id device) {
     }
     std::printf("%zu)\n", max_size[max_work_dims-1]);
     
+    // Get the maximum number of work items in a work group
+    size_t max_work_group_size;
+    h_errchk(
+        clGetDeviceInfo(device, 
+                        CL_DEVICE_MAX_WORK_GROUP_SIZE, 
+                        sizeof(size_t), 
+                        &max_work_group_size, 
+                        NULL),
+        "Max number of work-items a workgroup."
+    );
+    std::printf("\t%20s %zu\n", "max work-items:", max_work_group_size);
+    
+    // Clean up
     delete [] max_size;
     delete [] name;
 }

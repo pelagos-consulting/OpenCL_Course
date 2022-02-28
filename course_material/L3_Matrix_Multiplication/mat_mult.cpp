@@ -92,12 +92,26 @@ int main(int argc, char** argv) {
     // Make an array to store the result in array_C
     cl_float* array_C = (cl_float*)calloc(nbytes_C, 1);
     
-    // Make buffers for bringing data in and out of the computation
-    cl_mem buffer_A = clCreateBuffer(context, CL_MEM_READ_WRITE, nbytes_A, NULL, &errcode);
+    // Make Buffers on the compute device for matrices A, B, and C
+    cl_mem buffer_A = clCreateBuffer(context, 
+                                     CL_MEM_READ_WRITE, 
+                                     nbytes_A, 
+                                     NULL, 
+                                     &errcode);
     h_errchk(errcode, "Creating buffer_A");
-    cl_mem buffer_B = clCreateBuffer(context, CL_MEM_READ_WRITE, nbytes_B, NULL, &errcode);
+    
+    cl_mem buffer_B = clCreateBuffer(context, 
+                                     CL_MEM_READ_WRITE, 
+                                     nbytes_B, 
+                                     NULL, 
+                                     &errcode);
     h_errchk(errcode, "Creating buffer_B");
-    cl_mem buffer_C = clCreateBuffer(context, CL_MEM_READ_WRITE, nbytes_C, NULL, &errcode);
+    
+    cl_mem buffer_C = clCreateBuffer(context, 
+                                     CL_MEM_READ_WRITE, 
+                                     nbytes_C, 
+                                     NULL, 
+                                     &errcode);
     h_errchk(errcode, "Creating buffer_C");
 
     // Now specify the kernel source and read it in
