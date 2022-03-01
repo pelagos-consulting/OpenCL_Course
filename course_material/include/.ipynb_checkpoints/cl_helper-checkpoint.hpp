@@ -110,7 +110,7 @@ cl_command_queue* h_create_command_queues(
         cl_bool profiling_enable) {
     
     // Return code for error checking
-    cl_int ret_code;   
+    cl_int errcode;   
 
     // Manage bit fields for the command queue properties
     cl_command_queue_properties queue_properties = 0;
@@ -130,9 +130,9 @@ cl_command_queue* h_create_command_queues(
             contexts[n % num_devices],
             devices[n % num_devices],
             queue_properties,
-            &ret_code    
+            &errcode    
         );
-        h_errchk(ret_code, "Creating a command queue");        
+        h_errchk(errcode, "Creating a command queue");        
     }
             
     return command_queues;
@@ -153,42 +153,56 @@ void h_release_command_queues(cl_command_queue *command_queues, cl_uint num_comm
 // Function to build a program from a single device and context
 cl_program h_build_program(const char* source, cl_context context, cl_device_id device) {
 
-    cl_int ret_code;
+    // Error code for checking programs
+    cl_int errcode;
 
+    // Create a program from the source code
     cl_program program = clCreateProgramWithSource(
             context,
             1,
             (const char**)(&source),
             NULL,
-            &ret_code);
-        h_errchk(ret_code, "Creating OpenCL program");
+            &errcode
+    );
+    h_errchk(errcode, "Creating OpenCL program");
 
-    // Try to build the program, print a log otherwise
-    ret_code = clBuildProgram(program, 
+    // Try to compile the program, print a log otherwise
+    errcode = clBuildProgram(program, 
                 1, 
                 &device,
                 NULL,
                 NULL,
-                NULL);
+                NULL
+    );
 
-    if (ret_code!=CL_SUCCESS) {
-        size_t elements;
+    // If the compilation process failed then fetch a build log
+    if (errcode!=CL_SUCCESS) {
+        // Number of characters in the build log
+        size_t nchars;
+        
+        // Query the size of the build log
         h_errchk(clGetProgramBuildInfo( program,
                                         device,
                                         CL_PROGRAM_BUILD_LOG,
                                         0,
                                         NULL,
-                                        &elements),"Checking build log");
+                                        &nchars),"Checking build log");
 
         // Make up the build log string
-        char* buildlog=(char*)calloc(elements, 1);
+        char* buildlog=(char*)calloc(nchars+1, sizeof(char));
 
+        // Query the build log 
         h_errchk(clGetProgramBuildInfo( program,
                                         device,
                                         CL_PROGRAM_BUILD_LOG,
-                                        elements,
+                                        nchars,
                                         buildlog,
                                         NULL), "Filling the build log");
+        
+        // Insert a NULL character at the end of the string
+        buildlog[nchars] = '\0';
+        
+        // Print the build log
         std::printf("Build log is %s\n", buildlog);
         free(buildlog);
         exit(OCL_EXIT);
@@ -375,7 +389,7 @@ void h_acquire_devices(
         cl_context **contexts_out) {
 
     // Return code for running things
-    cl_int ret_code = CL_SUCCESS;
+    cl_int errcode = CL_SUCCESS;
     
     //// Get all valid platforms ////
     cl_uint num_platforms; 
@@ -399,15 +413,15 @@ void h_acquire_devices(
         // Temporary number of devices
         cl_uint ndevs;
         // Get number of devices in the platform
-        ret_code = clGetDeviceIDs(
+        errcode = clGetDeviceIDs(
             platform_ids[n],
             device_type,
             0,
             NULL,
             &ndevs);
 
-        if (ret_code != CL_DEVICE_NOT_FOUND) {
-            h_errchk(ret_code, "Getting number of devices");
+        if (errcode != CL_DEVICE_NOT_FOUND) {
+            h_errchk(errcode, "Getting number of devices");
             num_devices += ndevs;
         }
     }
@@ -433,16 +447,16 @@ void h_acquire_devices(
         cl_uint ndevs;
 
         // Get the number of devices in a platform
-        ret_code = clGetDeviceIDs(
+        errcode = clGetDeviceIDs(
             platform_ids[n],
             device_type,
             0,
             NULL,
             &ndevs);
 
-        if (ret_code != CL_DEVICE_NOT_FOUND) {
+        if (errcode != CL_DEVICE_NOT_FOUND) {
             // Check to see if any other error was generated
-            h_errchk(ret_code, "Getting number of devices for the platform");
+            h_errchk(errcode, "Getting number of devices for the platform");
             
             // Fill the array with the next set of found devices
             h_errchk(clGetDeviceIDs(
@@ -471,9 +485,9 @@ void h_acquire_devices(
                     &dev_id,
                     NULL,
                     NULL,
-                    &ret_code
+                    &errcode
                 );
-                h_errchk(ret_code, "Creating a context");
+                h_errchk(errcode, "Creating a context");
                 contexts_ptr++;
             }
             

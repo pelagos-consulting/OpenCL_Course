@@ -116,7 +116,10 @@ int main(int argc, char** argv) {
 
     // Now specify the kernel source and read it in
     size_t nbytes_src = 0;
-    const char* kernel_source = (const char*)h_read_binary("kernels_mat_mult.c", &nbytes_src);
+    const char* kernel_source = (const char*)h_read_binary(
+        "kernels_mat_mult.c", 
+        &nbytes_src
+    );
 
     // Turn this source code into a program
     cl_program program = h_build_program(kernel_source, context, device);
@@ -126,12 +129,30 @@ int main(int argc, char** argv) {
     h_errchk(errcode, "Creating Kernel");
     
     // Set arguments to the kernel (not thread safe)
-    h_errchk(clSetKernelArg(kernel, 0, sizeof(cl_mem), &buffer_A ),"setting kernel argument 0");
-    h_errchk(clSetKernelArg(kernel, 1, sizeof(cl_mem), &buffer_B ),"setting kernel argument 1");
-    h_errchk(clSetKernelArg(kernel, 2, sizeof(cl_mem), &buffer_C ),"setting kernel argument 2");
-    h_errchk(clSetKernelArg(kernel, 3, sizeof(cl_uint), &N1_A ),"setting kernel argument 3");
-    h_errchk(clSetKernelArg(kernel, 4, sizeof(cl_uint), &N0_C ),"setting kernel argument 4");
-    h_errchk(clSetKernelArg(kernel, 5, sizeof(cl_uint), &N1_C ),"setting kernel argument 5");
+    h_errchk(
+        clSetKernelArg(kernel, 0, sizeof(cl_mem), &buffer_A ),
+        "setting kernel argument 0"
+    );
+    h_errchk(
+        clSetKernelArg(kernel, 1, sizeof(cl_mem), &buffer_B ),
+        "setting kernel argument 1"
+    );
+    h_errchk(
+        clSetKernelArg(kernel, 2, sizeof(cl_mem), &buffer_C ),
+        "setting kernel argument 2"
+    );
+    h_errchk(
+        clSetKernelArg(kernel, 3, sizeof(cl_uint), &N1_A ),
+        "setting kernel argument 3"
+    );
+    h_errchk(
+        clSetKernelArg(kernel, 4, sizeof(cl_uint), &N0_C ),
+        "setting kernel argument 4"
+    );
+    h_errchk(
+        clSetKernelArg(kernel, 5, sizeof(cl_uint), &N1_C ),
+        "setting kernel argument 5"
+    );
 
     // Write memory to buffer_A and buffer_B from the host
     h_errchk(clEnqueueWriteBuffer(command_queue,
