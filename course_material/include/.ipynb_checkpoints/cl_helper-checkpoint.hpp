@@ -221,7 +221,7 @@ void h_fit_global_size(const size_t* global_size, const size_t* local_size, size
     for (int n=0; n<work_dim; n++) {
         assert(global_size[n]>0);
         assert(global_size[n]>=local_size[n]);
-        if (global_size[n] % local_size[n]) {
+        if ((global_size[n] % local_size[n]) > 0) {
             new_global[n] = ((global_size[n]/local_size[n])+1)*local_size[n];
         } 
     }

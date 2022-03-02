@@ -190,13 +190,16 @@ int main(int argc, char** argv) {
     size_t work_dim=2;
     
     // Desired local size
-    const size_t local_work_size[]={ 16, 1 };
+    const size_t local_size[]={ 16, 1 };
     
     // Desired global_size
-    const size_t global_work_size[]={ N0_C, N1_C };
+    const size_t global_size[]={ N0_C, N1_C };
     
     // Enlarge the global size so that an integer number of local sizes fits within it
-    h_fit_global_size(global_work_size, local_work_size, work_dim);
+    h_fit_global_size(global_size, 
+                      local_size, 
+                      work_dim
+    );
     
     // Event for the kernel
     cl_event kernel_event;
@@ -207,14 +210,20 @@ int main(int argc, char** argv) {
                                 kernel,
                                 work_dim,
                                 NULL,
-                                global_work_size,
-                                local_work_size,
+                                global_size,
+                                local_size,
                                 0,
                                 NULL,
                                 &kernel_event), 
         "Running the kernel"
     );
 
+    // Wait on the kernel to finish
+    h_errchk(
+        clWaitForEvents(1, &kernel_event),
+        "Waiting on the kernel"
+    );
+    
     // Read memory from the buffer to the host
     h_errchk(
         clEnqueueReadBuffer(command_queue,
@@ -228,7 +237,7 @@ int main(int argc, char** argv) {
                             NULL), 
              "Copying matrix C from device to host"
     );
-
+    
     // Write out the result to file
     h_write_binary(array_C, "array_C.dat", nbytes_C);
 
