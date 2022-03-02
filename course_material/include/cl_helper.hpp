@@ -140,10 +140,20 @@ cl_command_queue* h_create_command_queues(
 
 // Function to release command queues
 void h_release_command_queues(cl_command_queue *command_queues, cl_uint num_command_queues) {
-    // Release command queues
+    // Finish and Release all command queues
     for (cl_uint n = 0; n<num_command_queues; n++) {
-        h_errchk(clFinish(command_queues[n]), "Finishing up command queues");
-        h_errchk(clReleaseCommandQueue(command_queues[n]), "Releasing command queues");
+        // Wait for all commands in the 
+        // command queues to finish
+        h_errchk(
+            clFinish(command_queues[n]), 
+            "Finishing up command queues"
+        );
+        
+        // Now release the command queue
+        h_errchk(
+            clReleaseCommandQueue(command_queues[n]), 
+            "Releasing command queues"
+        );
     }
 
     // Now destroy the command queues
@@ -513,11 +523,20 @@ void h_release_devices(
         cl_context* contexts,
         cl_platform_id *platforms) {
     
-    // Free contexts
+    // Release contexts and devices
     for (cl_uint n = 0; n<num_devices; n++) {
-        h_errchk(clReleaseContext(contexts[n]), "Releasing contexts");
+        h_errchk(
+            clReleaseContext(contexts[n]), 
+            "Releasing context"
+        );
+
+        h_errchk(
+            clReleaseDevice(devices[n]), 
+            "Releasing device"
+        );
     }
 
+    // Free all arrays allocated with h_acquire_devices
     free(contexts);
     free(devices);
     free(platforms);

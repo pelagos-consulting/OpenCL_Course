@@ -5,7 +5,6 @@ Written by Dr Toby M. Potter
 #include <cassert>
 #include <cmath>
 #include <sys/stat.h>
-#include <chrono>
 #include <iostream>
 
 // Define the size of the arrays to be computed
@@ -17,8 +16,6 @@ Written by Dr Toby M. Potter
 #include "cl_helper.hpp"
 
 int main(int argc, char** argv) {
-    // Start the clock
-    auto time1 = std::chrono::high_resolution_clock::now();
     
     // Useful for checking OpenCL errors
     cl_int errcode;
@@ -241,24 +238,37 @@ int main(int argc, char** argv) {
     // Write out the result to file
     h_write_binary(array_C, "array_C.dat", nbytes_C);
 
+    // Free the OpenCL buffers
+    h_errchk(
+        clReleaseMemObject(buffer_A),
+        "releasing buffer A"
+    );
+    h_errchk(
+        clReleaseMemObject(buffer_B),
+        "releasing buffer B"
+    );
+    h_errchk(
+        clReleaseMemObject(buffer_B),
+        "releasing buffer C"
+    );
+    
     // Clean up memory that was allocated on the read   
     free(array_A);
     free(array_B);
     free(array_C);
     
     // Clean up command queues
-    h_release_command_queues(command_queues, num_command_queues);
+    h_release_command_queues(
+        command_queues, 
+        num_command_queues
+    );
     
     // Clean up devices, queues, and contexts
     h_release_devices(
         devices,
         num_devices,
         contexts,
-        platforms);
-
-    // Stop the clock and get time elapsed
-    auto time2 = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<cl_double> elapsed_time = std::chrono::duration_cast<std::chrono::duration<cl_double>>(time2-time1);
-    std::cout << "Elapsed time is " << elapsed_time.count() << "seconds" << std::endl;
+        platforms
+    );
 }
 
