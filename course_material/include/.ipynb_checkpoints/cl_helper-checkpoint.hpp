@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <map>
+#include <cassert>
 
 #ifdef __APPLE__
     #include "OpenCL/opencl.h"
@@ -536,6 +537,7 @@ void h_release_devices(
         );
     }
 
+    // Free all arrays allocated with h_acquire_devices
     free(contexts);
     free(devices);
     free(platforms);

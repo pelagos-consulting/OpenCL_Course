@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <map>
+#include <cassert>
 
 #ifdef __APPLE__
     #include "OpenCL/opencl.h"
