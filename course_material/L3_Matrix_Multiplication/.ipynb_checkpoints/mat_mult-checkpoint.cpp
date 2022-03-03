@@ -20,12 +20,23 @@ int main(int argc, char** argv) {
     // Useful for checking OpenCL errors
     cl_int errcode;
 
-    // Create handles to platforms, devices, and contexts
-    cl_uint num_platforms; // Number of discovered platforms 
-    cl_uint num_devices; // Number of discovered devices
-    cl_platform_id *platforms = NULL; // Allocation of platforms
-    cl_device_id *devices = NULL; // Allocation of devices
-    cl_context *contexts = NULL; // Allocation of contexts
+    // Create handles to platforms, 
+    // devices, and contexts
+
+    // Number of platforms discovered
+    cl_uint num_platforms;
+
+    // Number of devices discovered
+    cl_uint num_devices;
+
+    // Pointer to an array of platforms
+    cl_platform_id *platforms = NULL;
+
+    // Pointer to an array of devices
+    cl_device_id *devices = NULL;
+
+    // Pointer to an array of contexts
+    cl_context *contexts = NULL;
 
     // Discover platforms and devices and create contexts
     cl_device_type target_device=CL_DEVICE_TYPE_ALL;
@@ -192,7 +203,8 @@ int main(int argc, char** argv) {
     // Desired global_size
     const size_t global_size[]={ N0_C, N1_C };
     
-    // Enlarge the global size so that an integer number of local sizes fits within it
+    // Enlarge the global size so that 
+    // an integer number of local sizes fits within it
     h_fit_global_size(global_size, 
                       local_size, 
                       work_dim

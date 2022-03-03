@@ -6,7 +6,7 @@ include ../env
 INC_DIR=../include
 
 # List of applications to target
-TARGETS=mat_mult.exe
+TARGETS=mat_mult.exe mat_squared.exe
 
 all: $(TARGETS)
 
