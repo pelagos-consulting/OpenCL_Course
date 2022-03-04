@@ -90,6 +90,135 @@ void h_errchk(cl_int errcode, const char *message) {
     }
 };
 
+// Function to create lists of contexts and devices that map to available hardware
+void h_acquire_devices(
+        // Input parameter
+        cl_device_type device_type,
+        // Output parameters
+        cl_platform_id **platform_ids_out,
+        cl_uint *num_platforms_out,
+        cl_device_id **device_ids_out,
+        cl_uint *num_devices_out, 
+        cl_context **contexts_out) {
+
+    // Return code for running things
+    cl_int errcode = CL_SUCCESS;
+    
+    //// Get all valid platforms ////
+    cl_uint num_platforms; 
+    cl_platform_id *platform_ids = NULL;
+    
+    // First call to clGetPlatformIDs - get the number of platforms
+    h_errchk(clGetPlatformIDs(0, NULL, &num_platforms), "Fetching number of platforms");
+    
+    // Allocate memory for platform id's
+    platform_ids = (cl_platform_id*)calloc(num_platforms, sizeof(cl_platform_id));
+    
+    // Second call to clGetPlatformIDs - fill the platforms
+    h_errchk(clGetPlatformIDs(num_platforms, platform_ids, NULL), "Fetching platforms");
+        
+    // Fetch the total number of compatible devices
+    cl_uint num_devices=0;
+    
+    // Loop over each platform and get the total number
+    // of devices that match device_type
+    for (cl_uint n=0; n < num_platforms; n++) {
+        // Temporary number of devices
+        cl_uint ndevs;
+        // Get number of devices in the platform
+        errcode = clGetDeviceIDs(
+            platform_ids[n],
+            device_type,
+            0,
+            NULL,
+            &ndevs);
+
+        if (errcode != CL_DEVICE_NOT_FOUND) {
+            h_errchk(errcode, "Getting number of devices");
+            num_devices += ndevs;
+        }
+    }
+    
+    // Check to make sure we have more than one suitable device
+    if (num_devices == 0) {
+        std::printf("Failed to find a suitable compute device\n");
+        exit(OCL_EXIT);
+    }
+
+    // Allocate flat 1D allocations for device ID's and contexts,
+    // both allocations have the same number of elements
+    cl_device_id *device_ids = (cl_device_id*)calloc(num_devices, sizeof(cl_device_id));
+    cl_context *contexts = (cl_context*)calloc(num_devices, sizeof(cl_context));
+    
+    // Temporary pointers
+    cl_device_id *device_ids_ptr = device_ids;
+    cl_context *contexts_ptr = contexts;
+    
+    // Now loop over platforms and fill device ID's array
+    for (cl_uint n=0; n < num_platforms; n++) {
+        // Temporary number of devices
+        cl_uint ndevs;
+
+        // Get the number of devices in a platform
+        errcode = clGetDeviceIDs(
+            platform_ids[n],
+            device_type,
+            0,
+            NULL,
+            &ndevs);
+
+        if (errcode != CL_DEVICE_NOT_FOUND) {
+            // Check to see if any other error was generated
+            h_errchk(errcode, "Getting number of devices for the platform");
+            
+            // Fill the array with the next set of found devices
+            h_errchk(clGetDeviceIDs(
+                platform_ids[n],
+                device_type,
+                ndevs,
+                device_ids_ptr,
+                NULL), "Filling devices");
+            
+            // Create a context for every device found
+            for (cl_uint c=0; c<ndevs; c++ ) {
+                // Context properties, this can be tricky
+                const cl_context_properties prop[] = { CL_CONTEXT_PLATFORM, 
+                                                      (cl_context_properties)platform_ids[n], 
+                                                      0 };
+                
+                // Create a context with 1 device in it
+                const cl_device_id dev_id = device_ids_ptr[c];
+                cl_uint ndev = 1;
+                
+                // Fill the contexts array at this point 
+                // with a newly created context
+                *contexts_ptr = clCreateContext(
+                    prop, 
+                    ndev, 
+                    &dev_id,
+                    NULL,
+                    NULL,
+                    &errcode
+                );
+                h_errchk(errcode, "Creating a context");
+                contexts_ptr++;
+            }
+            
+            // Advance device_id's pointer 
+            // by the number of devices discovered
+            device_ids_ptr += ndevs;
+        }
+    }   
+
+    // Fill in output information here to 
+    // avoid problems with understanding
+    *platform_ids_out = platform_ids;
+    *num_platforms_out = num_platforms;
+    *device_ids_out = device_ids;
+    *num_devices_out = num_devices;
+    *contexts_out = contexts;
+}
+
 // Function to create command queues
 cl_command_queue* h_create_command_queues(
         // Create a list of command queues
@@ -139,27 +268,7 @@ cl_command_queue* h_create_command_queues(
     return command_queues;
 }
 
-// Function to release command queues
-void h_release_command_queues(cl_command_queue *command_queues, cl_uint num_command_queues) {
-    // Finish and Release all command queues
-    for (cl_uint n = 0; n<num_command_queues; n++) {
-        // Wait for all commands in the 
-        // command queues to finish
-        h_errchk(
-            clFinish(command_queues[n]), 
-            "Finishing up command queues"
-        );
-        
-        // Now release the command queue
-        h_errchk(
-            clReleaseCommandQueue(command_queues[n]), 
-            "Releasing command queues"
-        );
-    }
 
-    // Now destroy the command queues
-    free(command_queues);
-}
 
 // Function to build a program from a single device and context
 cl_program h_build_program(const char* source, cl_context context, cl_device_id device) {
@@ -388,133 +497,26 @@ void h_report_on_device(cl_device_id device) {
     delete [] name;
 }
 
-// Function to create lists of contexts and devices that map to available hardware
-void h_acquire_devices(
-        // Input parameter
-        cl_device_type device_type,
-        // Output parameters
-        cl_platform_id **platform_ids_out,
-        cl_uint *num_platforms_out,
-        cl_device_id **device_ids_out,
-        cl_uint *num_devices_out, 
-        cl_context **contexts_out) {
-
-    // Return code for running things
-    cl_int errcode = CL_SUCCESS;
-    
-    //// Get all valid platforms ////
-    cl_uint num_platforms; 
-    cl_platform_id *platform_ids = NULL;
-    
-    // First call to clGetPlatformIDs - get the number of platforms
-    h_errchk(clGetPlatformIDs(0, NULL, &num_platforms), "Fetching number of platforms");
-    
-    // Allocate memory for platform id's
-    platform_ids = (cl_platform_id*)calloc(num_platforms, sizeof(cl_platform_id));
-    
-    // Second call to clGetPlatformIDs - fill the platforms
-    h_errchk(clGetPlatformIDs(num_platforms, platform_ids, NULL), "Fetching platforms");
+// Function to release command queues
+void h_release_command_queues(cl_command_queue *command_queues, cl_uint num_command_queues) {
+    // Finish and Release all command queues
+    for (cl_uint n = 0; n<num_command_queues; n++) {
+        // Wait for all commands in the 
+        // command queues to finish
+        h_errchk(
+            clFinish(command_queues[n]), 
+            "Finishing up command queues"
+        );
         
-    // Fetch the total number of compatible devices
-    cl_uint num_devices=0;
-    
-    // Loop over each platform and get the total number
-    // of devices that match device_type
-    for (cl_uint n=0; n < num_platforms; n++) {
-        // Temporary number of devices
-        cl_uint ndevs;
-        // Get number of devices in the platform
-        errcode = clGetDeviceIDs(
-            platform_ids[n],
-            device_type,
-            0,
-            NULL,
-            &ndevs);
-
-        if (errcode != CL_DEVICE_NOT_FOUND) {
-            h_errchk(errcode, "Getting number of devices");
-            num_devices += ndevs;
-        }
-    }
-    
-    // Check to make sure we have more than one suitable device
-    if (num_devices == 0) {
-        std::printf("Failed to find a suitable compute device\n");
-        exit(OCL_EXIT);
+        // Now release the command queue
+        h_errchk(
+            clReleaseCommandQueue(command_queues[n]), 
+            "Releasing command queues"
+        );
     }
 
-    // Allocate flat 1D allocations for device ID's and contexts,
-    // both allocations have the same number of elements
-    cl_device_id *device_ids = (cl_device_id*)calloc(num_devices, sizeof(cl_device_id));
-    cl_context *contexts = (cl_context*)calloc(num_devices, sizeof(cl_context));
-    
-    // Temporary pointers
-    cl_device_id *device_ids_ptr = device_ids;
-    cl_context *contexts_ptr = contexts;
-    
-    // Now loop over platforms and fill device ID's array
-    for (cl_uint n=0; n < num_platforms; n++) {
-        // Temporary number of devices
-        cl_uint ndevs;
-
-        // Get the number of devices in a platform
-        errcode = clGetDeviceIDs(
-            platform_ids[n],
-            device_type,
-            0,
-            NULL,
-            &ndevs);
-
-        if (errcode != CL_DEVICE_NOT_FOUND) {
-            // Check to see if any other error was generated
-            h_errchk(errcode, "Getting number of devices for the platform");
-            
-            // Fill the array with the next set of found devices
-            h_errchk(clGetDeviceIDs(
-                platform_ids[n],
-                device_type,
-                ndevs,
-                device_ids_ptr,
-                NULL), "Filling devices");
-            
-            // Create a context for every device found
-            for (cl_uint c=0; c<ndevs; c++ ) {
-                // Context properties, this can be tricky
-                const cl_context_properties prop[] = { CL_CONTEXT_PLATFORM, 
-                                                      (cl_context_properties)platform_ids[n], 
-                                                      0 };
-                
-                // Create a context with 1 device in it
-                const cl_device_id dev_id = device_ids_ptr[c];
-                cl_uint ndev = 1;
-                
-                // Fill the contexts array at this point 
-                // with a newly created context
-                *contexts_ptr = clCreateContext(
-                    prop, 
-                    ndev, 
-                    &dev_id,
-                    NULL,
-                    NULL,
-                    &errcode
-                );
-                h_errchk(errcode, "Creating a context");
-                contexts_ptr++;
-            }
-            
-            // Advance device_id's pointer 
-            // by the number of devices discovered
-            device_ids_ptr += ndevs;
-        }
-    }   
-
-    // Fill in output information here to 
-    // avoid problems with understanding
-    *platform_ids_out = platform_ids;
-    *num_platforms_out = num_platforms;
-    *device_ids_out = device_ids;
-    *num_devices_out = num_devices;
-    *contexts_out = contexts;
+    // Now destroy the command queues
+    free(command_queues);
 }
 
 // Function to release devices and contexts
