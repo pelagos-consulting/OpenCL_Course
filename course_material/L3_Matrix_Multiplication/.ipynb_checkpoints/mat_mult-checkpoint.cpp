@@ -260,7 +260,7 @@ int main(int argc, char** argv) {
         "releasing buffer B"
     );
     h_errchk(
-        clReleaseMemObject(buffer_B),
+        clReleaseMemObject(buffer_C),
         "releasing buffer C"
     );
     

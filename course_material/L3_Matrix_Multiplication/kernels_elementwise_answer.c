@@ -1,11 +1,12 @@
 // standard matrix multiply kernel 
-__kernel void mat_squared (
-                        __global float* C, 
+__kernel void mat_elementwise (
                         __global float* D, 
-                        unsigned int N0_C,
-                        unsigned int N1_C) { 
+                        __global float* E,
+                        __global float* F, 
+                        unsigned int N0_F,
+                        unsigned int N1_F) { 
             
-    // C is of size (N0_C, N1_C)
+    // F is of size (N0_F, N1_F)
     
     // i0 and i1 represent the coordinates in Matrix C 
     // We assume row-major ordering for the matrices 
@@ -14,12 +15,12 @@ __kernel void mat_squared (
 
     // Guard mechanism to make sure we do not go
     // outside the boundaries of matrix C 
-    if ((i0<N0_C) && (i1<N1_C)) {
+    if ((i0<N0_F) && (i1<N1_F)) {
         
         // Create an offset
-        size_t offset = i0*N1_C+i1;
+        size_t offset = i0*N1_F+i1;
         
         // Number of rows in C is same as number of rows in A
-        D[offset]=C[offset]*C[offset];
+        F[offset]=D[offset]*E[offset];
     }
 } 
