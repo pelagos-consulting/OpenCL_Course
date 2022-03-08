@@ -5,7 +5,6 @@ Written by Dr Toby M. Potter
 #include <cassert>
 #include <cmath>
 #include <sys/stat.h>
-#include <chrono>
 #include <iostream>
 
 // Define the size of the arrays to be computed
@@ -17,18 +16,27 @@ Written by Dr Toby M. Potter
 #include "cl_helper.hpp"
 
 int main(int argc, char** argv) {
-    // Start the clock
-    auto time1 = std::chrono::high_resolution_clock::now();
     
     // Useful for checking OpenCL errors
     cl_int errcode;
 
-    // Create handles to platforms, devices, and contexts
-    cl_uint num_platforms; // Number of discovered platforms 
-    cl_uint num_devices; // Number of discovered devices
-    cl_platform_id *platforms = NULL; // Allocation of platforms
-    cl_device_id *devices = NULL; // Allocation of devices
-    cl_context *contexts = NULL; // Allocation of contexts
+    // Create handles to platforms, 
+    // devices, and contexts
+
+    // Number of platforms discovered
+    cl_uint num_platforms;
+
+    // Number of devices discovered
+    cl_uint num_devices;
+
+    // Pointer to an array of platforms
+    cl_platform_id *platforms = NULL;
+
+    // Pointer to an array of devices
+    cl_device_id *devices = NULL;
+
+    // Pointer to an array of contexts
+    cl_context *contexts = NULL;
 
     // Discover platforms and devices and create contexts
     cl_device_type target_device=CL_DEVICE_TYPE_ALL;
@@ -195,7 +203,8 @@ int main(int argc, char** argv) {
     // Desired global_size
     const size_t global_size[]={ N0_C, N1_C };
     
-    // Enlarge the global size so that an integer number of local sizes fits within it
+    // Enlarge the global size so that 
+    // an integer number of local sizes fits within it
     h_fit_global_size(global_size, 
                       local_size, 
                       work_dim
@@ -241,24 +250,37 @@ int main(int argc, char** argv) {
     // Write out the result to file
     h_write_binary(array_C, "array_C.dat", nbytes_C);
 
+    // Free the OpenCL buffers
+    h_errchk(
+        clReleaseMemObject(buffer_A),
+        "releasing buffer A"
+    );
+    h_errchk(
+        clReleaseMemObject(buffer_B),
+        "releasing buffer B"
+    );
+    h_errchk(
+        clReleaseMemObject(buffer_C),
+        "releasing buffer C"
+    );
+    
     // Clean up memory that was allocated on the read   
     free(array_A);
     free(array_B);
     free(array_C);
     
     // Clean up command queues
-    h_release_command_queues(command_queues, num_command_queues);
+    h_release_command_queues(
+        command_queues, 
+        num_command_queues
+    );
     
     // Clean up devices, queues, and contexts
     h_release_devices(
         devices,
         num_devices,
         contexts,
-        platforms);
-
-    // Stop the clock and get time elapsed
-    auto time2 = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<cl_double> elapsed_time = std::chrono::duration_cast<std::chrono::duration<cl_double>>(time2-time1);
-    std::cout << "Elapsed time is " << elapsed_time.count() << "seconds" << std::endl;
+        platforms
+    );
 }
 
