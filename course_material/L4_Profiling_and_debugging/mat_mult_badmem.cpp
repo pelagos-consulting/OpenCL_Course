@@ -8,9 +8,9 @@ Written by Dr Toby M. Potter
 #include <iostream>
 
 // Define the size of the arrays to be computed
-#define NCOLS_A 256
-#define NROWS_C 520
-#define NCOLS_C 1032
+#define NCOLS_A 72
+#define NROWS_C 72
+#define NCOLS_C 72
 
 // Bring in helper header to manage boilerplate code
 #include "cl_helper.hpp"
@@ -68,15 +68,17 @@ int main(int argc, char** argv) {
         profiling
     );
 
+    // Report on all devices
+    for (int n=0; n<num_devices; n++) {
+        h_report_on_device(devices[n]);
+    }
+    
     // Choose the first available context 
     // and compute device to use
     cl_uint dev_index = 0;
     cl_context context = contexts[dev_index];
     cl_command_queue command_queue = command_queues[dev_index];
     cl_device_id device = devices[dev_index];
-    
-    // Report on the device in use
-    h_report_on_device(device);
     
     // We are going to do a simple array multiplication for this example, 
     // using raw binary files for input and output
@@ -125,7 +127,7 @@ int main(int argc, char** argv) {
     // Now specify the kernel source and read it in
     size_t nbytes_src = 0;
     const char* kernel_source = (const char*)h_read_binary(
-        "kernels_mat_mult.c", 
+        "kernels_mat_mult_badmem.c", 
         &nbytes_src
     );
 
