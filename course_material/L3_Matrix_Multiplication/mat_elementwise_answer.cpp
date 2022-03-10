@@ -160,6 +160,8 @@ int main(int argc, char** argv) {
     // Do we enable a blocking write?
     cl_bool blocking=CL_TRUE;
     
+    // Answer
+    
     h_errchk(
         clEnqueueWriteBuffer(command_queue,
                             buffer_D,
