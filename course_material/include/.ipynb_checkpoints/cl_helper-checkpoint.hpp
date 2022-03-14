@@ -268,30 +268,12 @@ cl_command_queue* h_create_command_queues(
     return command_queues;
 }
 
-// Function to release command queues
-void h_release_command_queues(cl_command_queue *command_queues, cl_uint num_command_queues) {
-    // Finish and Release all command queues
-    for (cl_uint n = 0; n<num_command_queues; n++) {
-        // Wait for all commands in the 
-        // command queues to finish
-        h_errchk(
-            clFinish(command_queues[n]), 
-            "Finishing up command queues"
-        );
-        
-        // Now release the command queue
-        h_errchk(
-            clReleaseCommandQueue(command_queues[n]), 
-            "Releasing command queues"
-        );
-    }
-
-    // Now destroy the command queues
-    free(command_queues);
-}
 
 // Function to build a program from a single device and context
-cl_program h_build_program(const char* source, cl_context context, cl_device_id device) {
+cl_program h_build_program(const char* source, 
+                           cl_context context, 
+                           cl_device_id device,
+                           const char* compiler_options) {
 
     // Error code for checking programs
     cl_int errcode;
@@ -310,7 +292,7 @@ cl_program h_build_program(const char* source, cl_context context, cl_device_id 
     errcode = clBuildProgram(program, 
                 1, 
                 &device,
-                NULL,
+                compiler_options,
                 NULL,
                 NULL
     );
@@ -515,6 +497,28 @@ void h_report_on_device(cl_device_id device) {
     // Clean up
     delete [] max_size;
     delete [] name;
+}
+
+// Function to release command queues
+void h_release_command_queues(cl_command_queue *command_queues, cl_uint num_command_queues) {
+    // Finish and Release all command queues
+    for (cl_uint n = 0; n<num_command_queues; n++) {
+        // Wait for all commands in the 
+        // command queues to finish
+        h_errchk(
+            clFinish(command_queues[n]), 
+            "Finishing up command queues"
+        );
+        
+        // Now release the command queue
+        h_errchk(
+            clReleaseCommandQueue(command_queues[n]), 
+            "Releasing command queues"
+        );
+    }
+
+    // Now destroy the command queues
+    free(command_queues);
 }
 
 // Function to release devices and contexts

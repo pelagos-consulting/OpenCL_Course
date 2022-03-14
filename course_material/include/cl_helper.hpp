@@ -269,9 +269,11 @@ cl_command_queue* h_create_command_queues(
 }
 
 
-
 // Function to build a program from a single device and context
-cl_program h_build_program(const char* source, cl_context context, cl_device_id device) {
+cl_program h_build_program(const char* source, 
+                           cl_context context, 
+                           cl_device_id device,
+                           const char* compiler_options) {
 
     // Error code for checking programs
     cl_int errcode;
@@ -290,7 +292,7 @@ cl_program h_build_program(const char* source, cl_context context, cl_device_id 
     errcode = clBuildProgram(program, 
                 1, 
                 &device,
-                NULL,
+                compiler_options,
                 NULL,
                 NULL
     );

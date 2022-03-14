@@ -6,7 +6,7 @@ include ../env
 INC_DIR=../include
 
 # List of applications to target
-TARGETS=mat_mult_badmem.exe mat_mult.exe mat_mult_memcheck.exe
+TARGETS=mat_mult_badmem.exe mat_mult.exe mat_mult_memcheck.exe mat_mult_printf.exe mat_mult_badmem_gdb.exe
 
 all: $(TARGETS)
 
