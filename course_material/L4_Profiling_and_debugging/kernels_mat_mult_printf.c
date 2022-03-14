@@ -19,7 +19,7 @@ __kernel void mat_mult (__global float* A,
     // Comment out the guard mechanism 
     // to make sure we do not go
     // outside the boundaries of matrix C
-    if (i1>N1_C-1) {
+    if ((i1>N1_C-1) && (i0==0)) {
         printf("i1 is %d\n", i1);
     }
     
