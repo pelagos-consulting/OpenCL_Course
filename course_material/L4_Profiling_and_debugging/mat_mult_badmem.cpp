@@ -132,7 +132,7 @@ int main(int argc, char** argv) {
     );
 
     // Turn this source code into a program
-    cl_program program = h_build_program(kernel_source, context, device);
+    cl_program program = h_build_program(kernel_source, context, device, "");
         
     // Create a kernel from the built program
     cl_kernel kernel=clCreateKernel(program, "mat_mult", &errcode);
