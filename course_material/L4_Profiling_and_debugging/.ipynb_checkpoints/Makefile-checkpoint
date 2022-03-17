@@ -10,6 +10,9 @@ TARGETS=mat_mult_badmem.exe mat_mult.exe mat_mult_memcheck.exe mat_mult_printf.e
 
 all: $(TARGETS)
 
+# Override CXXFLAGS
+CXXFLAGS=-g -O0 -fopenmp
+
 # General compilation step
 %.exe: %.cpp
 	$(CXX) $(CXXFLAGS) -I$(OPENCL_INC_DIR) -I$(INC_DIR) -L$(OPENCL_LIB_DIR) $<\

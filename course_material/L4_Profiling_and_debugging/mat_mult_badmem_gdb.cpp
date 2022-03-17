@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
     
     // Choose the first available context 
     // and compute device to use
-    cl_uint dev_index = 0;
+    cl_uint dev_index = 3;
     cl_context context = contexts[dev_index];
     cl_command_queue command_queue = command_queues[dev_index];
     cl_device_id device = devices[dev_index];
@@ -137,7 +137,8 @@ int main(int argc, char** argv) {
         context, 
         device,
         // Put debugging information here
-        ""
+        // -g and -s flags are Intel-specifc
+        "-g -s kernels_mat_mult_badmem.c -cl-opt-disable"
     );
         
     // Create a kernel from the built program
