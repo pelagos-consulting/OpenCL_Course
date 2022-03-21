@@ -6,12 +6,9 @@ include ../env
 INC_DIR=../include
 
 # List of applications to target
-TARGETS=mat_mult_badmem.exe mat_mult.exe mat_mult_memcheck.exe mat_mult_printf.exe mat_mult_badmem_gdb.exe
+TARGETS=mat_mult_profiling.exe
 
 all: $(TARGETS)
-
-# Override CXXFLAGS
-CXXFLAGS=-g -O0 -fopenmp
 
 # General compilation step
 %.exe: %.cpp

@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <map>
 #include <cassert>
+#include <cstring>
 
 #ifdef __APPLE__
     #include "OpenCL/opencl.h"
@@ -331,6 +332,66 @@ cl_program h_build_program(const char* source,
     }
 
     return program;
+}
+
+cl_double h_get_io_rate_MBs(cl_double time_ms, size_t nbytes) {
+    // Get the IO rate in MB/s for bytes read or written
+    return (cl_double)nbytes * 1.0e-3 / time_ms;
+}
+
+cl_double h_get_event_time_ms(
+        cl_event *event, 
+        const char* message, 
+        size_t* nbytes) {
+    
+    // Make sure the event has finished
+    h_errchk(clWaitForEvents(1, event), message);
+    
+    // Start and end times
+    cl_ulong t1, t2;
+        
+    // Fetch the start and end times in nanoseconds
+    h_errchk(
+        clGetEventProfilingInfo(
+            *event,
+            CL_PROFILING_COMMAND_START,
+            sizeof(cl_ulong),
+            &t1,
+            NULL
+        ),
+        "Fetching start time for event"
+    );
+
+    h_errchk(
+        clGetEventProfilingInfo(
+            *event,
+            CL_PROFILING_COMMAND_END,
+            sizeof(cl_ulong),
+            &t2,
+            NULL
+        ),
+        "Fetching end time for event"
+    );
+    
+    // Convert the time into milliseconds
+    cl_double elapsed = (cl_double)(t2-t1)*(cl_double)1.0e-6;
+        
+    // Print the timing message if necessary
+    if (strlen(message)>0) {
+        std::printf("Time for event \"%s\": %.3f ms", message, elapsed);
+        
+        // Print transfer rate if nbytes is not NULL
+        if (nbytes != NULL) {
+            cl_double io_rate_MBs = h_get_io_rate_MBs(
+                elapsed, 
+                *nbytes
+            );
+            std::printf(" (%.2f MB/s)", io_rate_MBs);
+        }
+        std::printf("\n");
+    }
+    
+    return elapsed;
 }
 
 void h_fit_global_size(const size_t* global_size, const size_t* local_size, size_t work_dim) {
