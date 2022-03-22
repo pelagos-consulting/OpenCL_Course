@@ -8,7 +8,7 @@
 #ifdef __APPLE__
     #include "OpenCL/opencl.h"
 #else
-    #include "CL/cl.hpp"
+    #include "CL/opencl.h"
 #endif
 
 #define OCL_EXIT -20

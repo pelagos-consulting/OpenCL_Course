@@ -49,6 +49,11 @@ int main(int argc, char** argv) {
                      &num_devices,
                      &contexts);
     
+    // Report on all devices
+    for (int n=0; n<num_devices; n++) {
+        h_report_on_device(devices[n]);
+    }
+    
     // Number of command queues to generate
     cl_uint num_command_queues = num_devices;
     
@@ -70,7 +75,7 @@ int main(int argc, char** argv) {
 
     // Choose the first available context 
     // and compute device to use
-    cl_uint dev_index = 0;
+    cl_uint dev_index = 3;
     cl_context context = contexts[dev_index];
     cl_command_queue command_queue = command_queues[dev_index];
     cl_device_id device = devices[dev_index];

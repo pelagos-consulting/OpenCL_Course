@@ -9,10 +9,6 @@ endif
 
 # Default flags
 
-# OpenCL library locations
-OPENCL_INC_DIR=/usr/local/cuda/include
-OPENCL_LIB_DIR=/usr/local/cuda/lib64
-
 # Compiler locations
 CXX=g++
 CC=gcc
@@ -34,8 +30,8 @@ endif
 ifeq ($(detected_OS), Linux)
     CXX=g++
     CXXFLAGS=-std=c++11 -g -O2 -fopenmp
-    OPENCL_INC_DIR=/usr/local/cuda/include
-    OPENCL_LIB_DIR=/usr/local/cuda/lib64
+    OPENCL_INC_DIR=/usr/include
+    OPENCL_LIB_DIR=/usr/lib64
     OPENCL_LIB_FLAGS=-lOpenCL -lomp
 endif
 
