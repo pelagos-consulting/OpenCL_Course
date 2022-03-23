@@ -4,6 +4,6 @@ pmc : Wavefronts VALUInsts SALUInsts SFetchInsts
 pmc : TCC_HIT[0], TCC_MISS[0]
 # Filter by dispatches range, GPU index and kernel names
 # supported range formats: "3:9", "3:", "3"
-range: 1 : 4
-gpu: 0 1 2 3 4
+range: 0:
+gpu: 0
 kernel: mat_mult

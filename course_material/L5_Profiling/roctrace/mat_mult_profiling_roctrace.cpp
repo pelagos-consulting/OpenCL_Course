@@ -6,6 +6,9 @@ Written by Dr Toby M. Potter
 #include <cmath>
 #include <sys/stat.h>
 #include <iostream>
+#include <pthread.h>
+#include "roctracer_ext.h"
+#include <roctx.h>
 
 // Define the size of the arrays to be computed
 #define NCOLS_A 256
@@ -75,7 +78,7 @@ int main(int argc, char** argv) {
 
     // Choose the first available context 
     // and compute device to use
-    cl_uint dev_index = 2;
+    cl_uint dev_index = 3;
     cl_context context = contexts[dev_index];
     cl_command_queue command_queue = command_queues[dev_index];
     cl_device_id device = devices[dev_index];
