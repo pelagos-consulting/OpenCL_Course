@@ -10,6 +10,8 @@ TARGETS=mat_mult_profiling.exe
 
 all: $(TARGETS)
 
+CXXFLAGS=-g -O2 -fopenmp
+
 # General compilation step
 %.exe: %.cpp
 	$(CXX) $(CXXFLAGS) -I$(OPENCL_INC_DIR) -I$(INC_DIR) -L$(OPENCL_LIB_DIR) $<\

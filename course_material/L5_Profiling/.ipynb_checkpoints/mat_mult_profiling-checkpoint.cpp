@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
 
     // Pointer to an array of contexts
     cl_context *contexts = NULL;
-
+    
     // Discover platforms and devices and create contexts
     cl_device_type target_device=CL_DEVICE_TYPE_ALL;
     
@@ -57,6 +57,12 @@ int main(int argc, char** argv) {
     // Number of command queues to generate
     cl_uint num_command_queues = num_devices;
     
+    // Choose the first available context 
+    // and compute device to use
+    cl_uint dev_index = 0;
+    cl_context context = contexts[dev_index];
+    cl_device_id device = devices[dev_index];
+    
     // Do we enable out-of-order execution 
     cl_bool ordering = CL_FALSE;
     
@@ -73,12 +79,8 @@ int main(int argc, char** argv) {
         profiling
     );
 
-    // Choose the first available context 
-    // and compute device to use
-    cl_uint dev_index = 2;
-    cl_context context = contexts[dev_index];
+    // Choose the command queue to use
     cl_command_queue command_queue = command_queues[dev_index];
-    cl_device_id device = devices[dev_index];
     
     // Report on the device in use
     h_report_on_device(device);
@@ -166,7 +168,7 @@ int main(int argc, char** argv) {
         clSetKernelArg(kernel, 5, sizeof(cl_uint), &N1_C ),
         "setting kernel argument 5"
     );
-
+    
     // Write memory from the host
     // to buffer_A and buffer_B on the compute device
     
