@@ -54,8 +54,8 @@
 51 TAUEVENT 0 "Command Line | ./mat_mult_profiling.exe" TriggerValue
 52 TAUEVENT 0 "Executable | /home/toby/Pelagos/Projects/OpenCL_Course/course_material/L5_Profiling/mat_mult_profiling.exe" TriggerValue
 53 TAUEVENT 0 "Hostname | rocky" TriggerValue
-54 TAUEVENT 0 "Local Time | 2022-03-25T17:52:06+08:00" TriggerValue
-55 TAUEVENT 0 "Memory Size | 131834808 kB" TriggerValue
+54 TAUEVENT 0 "Local Time | 2022-03-28T12:01:37+08:00" TriggerValue
+55 TAUEVENT 0 "Memory Size | 131834800 kB" TriggerValue
 56 TAUEVENT 0 "Node Name | rocky" TriggerValue
 57 TAUEVENT 0 "OMP_CHUNK_SIZE | 0" TriggerValue
 58 TAUEVENT 0 "OMP_DEFAULT_DEVICE | 0" TriggerValue
@@ -75,7 +75,7 @@
 72 TAUEVENT 0 "OS Version | #1 SMP PREEMPT Fri Mar 11 12:33:34 UTC 2022 (80acc65)" TriggerValue
 73 TAUEVENT 0 "OpenMP Version | 4.5" TriggerValue
 74 TAUEVENT 0 "OpenMP Version String | 201511" TriggerValue
-75 TAUEVENT 0 "Starting Timestamp | 1648201925933160" TriggerValue
+75 TAUEVENT 0 "Starting Timestamp | 1648440097008674" TriggerValue
 76 TAUEVENT 0 "TAU Architecture | default" TriggerValue
 77 TAUEVENT 0 "TAU Config |  -c++=g++ -cc=gcc -fortran=gfortran -ompt -iowrapper -bfd=download -dwarf=download -otf=/opt/otf2/2.1 -unwind=download -pdt=/opt/pdtoolkit-3.25.1 -prefix=/opt/tau/2.31 -cuda=/usr/local/cuda" TriggerValue
 78 TAUEVENT 0 "TAU Makefile | /opt/tau/2.31/x86_64/lib/Makefile.tau-ompt-cupti-pdt-openmp" TriggerValue
@@ -125,10 +125,10 @@
 122 TAUEVENT 0 "TAU_TRACK_SIGNALS | off" TriggerValue
 123 TAUEVENT 0 "TAU_TRACK_UNIFIED_MEMORY | off" TriggerValue
 124 TAUEVENT 0 "TAU_VERBOSE_RANK | -1" TriggerValue
-125 TAUEVENT 0 "Timestamp | 1648201926082059" TriggerValue
-126 TAUEVENT 0 "UTC Time | 2022-03-25T09:52:06Z" TriggerValue
-127 TAUEVENT 0 "pid | 66722" TriggerValue
-128 TAUEVENT 0 "tid | 66722" TriggerValue
+125 TAUEVENT 0 "Timestamp | 1648440097154315" TriggerValue
+126 TAUEVENT 0 "UTC Time | 2022-03-28T04:01:37Z" TriggerValue
+127 TAUEVENT 0 "pid | 30457" TriggerValue
+128 TAUEVENT 0 "tid | 30457" TriggerValue
 129 TAUEVENT 0 "username | toby" TriggerValue
 60000 TRACER 0 "EV_INIT" none
 60001 TRACER 0 "FLUSH" EntryExit
