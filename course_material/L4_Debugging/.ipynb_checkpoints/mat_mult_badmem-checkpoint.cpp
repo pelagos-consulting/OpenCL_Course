@@ -127,7 +127,7 @@ int main(int argc, char** argv) {
     // Now specify the kernel source and read it in
     size_t nbytes_src = 0;
     const char* kernel_source = (const char*)h_read_binary(
-        "kernels_mat_mult_badmem.c", 
+        "kernels_mat_mult.c", 
         &nbytes_src
     );
 
@@ -135,7 +135,7 @@ int main(int argc, char** argv) {
     cl_program program = h_build_program(kernel_source, context, device, "");
         
     // Create a kernel from the built program
-    cl_kernel kernel=clCreateKernel(program, "mat_mult", &errcode);
+    cl_kernel kernel=clCreateKernel(program, "mat_mult_badmem", &errcode);
     h_errchk(errcode, "Creating Kernel");
     
     // Set arguments to the kernel (not thread safe)

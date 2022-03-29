@@ -127,7 +127,7 @@ int main(int argc, char** argv) {
     // Now specify the kernel source and read it in
     size_t nbytes_src = 0;
     const char* kernel_source = (const char*)h_read_binary(
-        "kernels_mat_mult_badmem.c", 
+        "kernels_mat_mult.c", 
         &nbytes_src
     );
 
@@ -138,12 +138,12 @@ int main(int argc, char** argv) {
         device,
         // Put debugging information here
         // -g and -s flags are Intel-specifc
-        //"-g -s kernels_mat_mult_badmem.c -cl-opt-disable"
-        "-g -cl-opt-disable"
+        "-g -s kernels_mat_mult.c -cl-opt-disable"
+        //"-g -cl-opt-disable"
     );
         
     // Create a kernel from the built program
-    cl_kernel kernel=clCreateKernel(program, "mat_mult", &errcode);
+    cl_kernel kernel=clCreateKernel(program, "mat_mult_badmem", &errcode);
     h_errchk(errcode, "Creating Kernel");
     
     // Set arguments to the kernel (not thread safe)

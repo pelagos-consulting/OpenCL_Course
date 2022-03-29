@@ -6,12 +6,16 @@ include ../env
 INC_DIR=../include
 
 # List of applications to target
-TARGETS=mat_mult_badmem.exe mat_mult.exe mat_mult_memcheck.exe mat_mult_printf.exe mat_mult_badmem_gdb.exe
+TARGETS=mat_mult.exe mat_mult_memcheck.exe mat_mult_badmem.exe mat_mult_printf.cpp mat_mult_badmem_gdb.exe mat_elementwise_buggy.exe
 
-all: $(TARGETS)
+all: $(TARGETS) 
 
 # Override CXXFLAGS
 CXXFLAGS=-g -O0 -fopenmp
+
+# Kernel dependencies
+mat_elementwise_buggy.exe: kernels_elementwise.c
+$(wildcard mat_mult*.exe): kernels_mat_mult.c
 
 # General compilation step
 %.exe: %.cpp
