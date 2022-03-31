@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
     cl_bool ordering = CL_FALSE;
     
     // Do we enable profiling?
-    cl_bool profiling = CL_FALSE;
+    cl_bool profiling = CL_TRUE;
     
     // Create the command queues
     cl_command_queue* command_queues = h_create_command_queues(
@@ -96,7 +96,7 @@ int main(int argc, char** argv) {
     // Make an array to store the result in array_F
     cl_float* array_F = (cl_float*)calloc(nbytes_F, 1);
     
-    // Make Buffers on the compute device for matrices D, E, and F
+    // Make Buffers on the compute device for matrices A, B, and C
     cl_mem buffer_D = clCreateBuffer(context, 
                                      CL_MEM_READ_WRITE, 
                                      nbytes_D, 
@@ -121,7 +121,7 @@ int main(int argc, char** argv) {
     // Now specify the kernel source and read it in
     size_t nbytes_src = 0;
     const char* kernel_source = (const char*)h_read_binary(
-        "kernels_elementwise_answer.c", 
+        "kernels_elementwise.c", 
         &nbytes_src
     );
 
@@ -154,15 +154,16 @@ int main(int argc, char** argv) {
         "setting kernel argument 4"
     );
 
+    // Event to store profiling information
+    cl_event io_event;
+    
     // Write memory from the host
     // to buffer_D and buffer_E on the compute device
     
     // Do we enable a blocking write?
     cl_bool blocking=CL_TRUE;
     
-    //// Insert code here to upload arrays D and E //// 
-    //// to Buffers D and E                        ////
-    
+    // Upload arrays D and R to buffers D and E
     h_errchk(
         clEnqueueWriteBuffer(command_queue,
                             buffer_D,
@@ -172,10 +173,16 @@ int main(int argc, char** argv) {
                             array_D,
                             0,
                             NULL,
-                            NULL), 
+                            &io_event), 
         "Writing to buffer_D from host"
     );
-
+    // Get profiling information on the IO event
+    h_get_event_time_ms(
+        &io_event,
+        "Uploading Buffer D",
+        &nbytes_D
+    );
+    
     h_errchk(
         clEnqueueWriteBuffer(command_queue,
                             buffer_E,
@@ -185,17 +192,21 @@ int main(int argc, char** argv) {
                             array_E,
                             0,
                             NULL,
-                            NULL), 
+                            &io_event), 
         "Writing to buffer_E from host"
     );
-    
-    //// End insert code                           ////
+    // Get profiling information on the IO event
+    h_get_event_time_ms(
+        &io_event,
+        "Uploading Buffer E",
+        &nbytes_E
+    );
     
     // Number of dimensions in the kernel
     size_t work_dim=2;
     
     // Desired local size
-    const size_t local_size[]={ 16, 1 };
+    const size_t local_size[]={ 4, 16 };
     
     // Desired global_size
     const size_t global_size[]={ N0_F, N1_F };
@@ -230,6 +241,13 @@ int main(int argc, char** argv) {
         "Waiting on the kernel"
     );
     
+    // Get profiling information on the kernel event
+    h_get_event_time_ms(
+        &kernel_event,
+        "Kernel execution",
+        NULL
+    );
+    
     // Read memory from the buffer to the host
     h_errchk(
         clEnqueueReadBuffer(command_queue,
@@ -241,7 +259,14 @@ int main(int argc, char** argv) {
                             1,
                             &kernel_event,
                             NULL), 
-             "Copying matrix C from device to host"
+             "Copying matrix F from device to host"
+    );
+    
+    // Get profiling information on the IO event
+    h_get_event_time_ms(
+        &io_event,
+        "Downloading Buffer F",
+        &nbytes_F
     );
     
     // Write out the result to file

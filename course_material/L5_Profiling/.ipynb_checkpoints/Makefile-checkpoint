@@ -6,11 +6,11 @@ include ../env
 INC_DIR=../include
 
 # List of applications to target
-TARGETS=mat_mult_profiling.exe
+TARGETS=mat_mult_profiling.exe mat_elementwise.exe mat_elementwise_answers.exe
 
 all: $(TARGETS)
 
-CXXFLAGS=-pg -O2 -fopenmp
+CXXFLAGS=-g -O2 -fopenmp
 
 # General compilation step
 %.exe: %.cpp

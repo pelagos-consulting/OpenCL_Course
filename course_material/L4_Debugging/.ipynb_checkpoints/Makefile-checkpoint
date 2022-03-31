@@ -13,10 +13,6 @@ all: $(TARGETS)
 # Override CXXFLAGS
 CXXFLAGS=-g -O0 -fopenmp
 
-# Kernel dependencies
-mat_elementwise_buggy.exe: kernels_elementwise.c
-$(wildcard mat_mult*.exe): kernels_mat_mult.c
-
 # General compilation step
 %.exe: %.cpp
 	$(CXX) $(CXXFLAGS) -I$(OPENCL_INC_DIR) -I$(INC_DIR) -L$(OPENCL_LIB_DIR) $<\

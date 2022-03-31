@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
     // Do we enable out-of-order execution 
     cl_bool ordering = CL_FALSE;
     
-    // Do we enable profiling?
+    // Change this option to enable profiling
     cl_bool profiling = CL_FALSE;
     
     // Create the command queues
@@ -121,7 +121,7 @@ int main(int argc, char** argv) {
     // Now specify the kernel source and read it in
     size_t nbytes_src = 0;
     const char* kernel_source = (const char*)h_read_binary(
-        "kernels_elementwise_answer.c", 
+        "kernels_elementwise.c", 
         &nbytes_src
     );
 
@@ -160,9 +160,7 @@ int main(int argc, char** argv) {
     // Do we enable a blocking write?
     cl_bool blocking=CL_TRUE;
     
-    //// Insert code here to upload arrays D and E //// 
-    //// to Buffers D and E                        ////
-    
+    // Upload arrays D and R to buffers D and E    
     h_errchk(
         clEnqueueWriteBuffer(command_queue,
                             buffer_D,
@@ -176,6 +174,8 @@ int main(int argc, char** argv) {
         "Writing to buffer_D from host"
     );
 
+    /// Bonus: insert timing code here ///
+    
     h_errchk(
         clEnqueueWriteBuffer(command_queue,
                             buffer_E,
@@ -189,13 +189,13 @@ int main(int argc, char** argv) {
         "Writing to buffer_E from host"
     );
     
-    //// End insert code                           ////
+    /// Bonus: insert timing code here ///
     
     // Number of dimensions in the kernel
     size_t work_dim=2;
     
     // Desired local size
-    const size_t local_size[]={ 16, 1 };
+    const size_t local_size[]={ 4, 16 };
     
     // Desired global_size
     const size_t global_size[]={ N0_F, N1_F };
@@ -230,6 +230,11 @@ int main(int argc, char** argv) {
         "Waiting on the kernel"
     );
     
+    /// Insert timing code here ///
+    
+    
+    /// ///
+    
     // Read memory from the buffer to the host
     h_errchk(
         clEnqueueReadBuffer(command_queue,
@@ -243,6 +248,8 @@ int main(int argc, char** argv) {
                             NULL), 
              "Copying matrix C from device to host"
     );
+    
+    /// Bonus: insert timing code here ///
     
     // Write out the result to file
     h_write_binary(array_F, "array_F.dat", nbytes_F);

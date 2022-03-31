@@ -96,7 +96,7 @@ int main(int argc, char** argv) {
     // Make an array to store the result in array_F
     cl_float* array_F = (cl_float*)calloc(nbytes_F, 1);
     
-    // Make Buffers on the compute device for matrices A, B, and C
+    // Make Buffers on the compute device for matrices D, E, and F
     cl_mem buffer_D = clCreateBuffer(context, 
                                      CL_MEM_READ_WRITE, 
                                      nbytes_D, 
