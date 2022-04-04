@@ -34,10 +34,3 @@ ifeq ($(detected_OS), Linux)
     OPENCL_LIB_DIR=/usr/lib64
     OPENCL_LIB_FLAGS=-lOpenCL -lomp
 endif
-
-
-
-
-
-
-
