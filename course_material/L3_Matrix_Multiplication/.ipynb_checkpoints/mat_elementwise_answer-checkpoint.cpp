@@ -16,6 +16,10 @@ Written by Dr Toby M. Potter
 
 int main(int argc, char** argv) {
     
+    // Parse arguments and set the target device
+    cl_device_type target_device;
+    cl_uint dev_index = h_parse_args(argc, argv, &target_device);
+    
     // Useful for checking OpenCL errors
     cl_int errcode;
 
@@ -36,9 +40,6 @@ int main(int argc, char** argv) {
 
     // Pointer to an array of contexts
     cl_context *contexts = NULL;
-
-    // Discover platforms and devices and create contexts
-    cl_device_type target_device=CL_DEVICE_TYPE_ALL;
     
     // Helper function to acquire devices
     h_acquire_devices(target_device,
@@ -69,7 +70,7 @@ int main(int argc, char** argv) {
 
     // Choose the first available context 
     // and compute device to use
-    cl_uint dev_index = 0;
+    assert(dev_index < num_devices);
     cl_context context = contexts[dev_index];
     cl_command_queue command_queue = command_queues[dev_index];
     cl_device_id device = devices[dev_index];
