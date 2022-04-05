@@ -1,4 +1,4 @@
-kernels_mat_mult_badmem.c # File containing OpenCL program (can be OpenCL C or SPIR)
+kernels_mat_mult.c # File containing OpenCL program (can be OpenCL C or SPIR)
 mat_mult_badmem    # Name of the kernel to run
 72 80 1     # NDRange
 4 16 1      # Work-group size
