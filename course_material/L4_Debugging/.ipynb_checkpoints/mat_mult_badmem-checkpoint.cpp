@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
     
     // Choose the first available context 
     // and compute device to use
-    cl_uint dev_index = 0;
+    cl_uint dev_index = 2;
     cl_context context = contexts[dev_index];
     cl_command_queue command_queue = command_queues[dev_index];
     cl_device_id device = devices[dev_index];
