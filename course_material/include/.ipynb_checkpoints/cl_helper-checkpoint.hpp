@@ -8,10 +8,11 @@
 #ifdef __APPLE__
     #include "OpenCL/opencl.h"
 #else
-    #include "CL/cl.hpp"
+    #include "CL/opencl.h"
 #endif
 
 #define OCL_EXIT -20
+#define CL_TARGET_OPENCL_VERSION 120
 
 // Make a lookup table for error codes
 std::map<cl_int, const char*> error_codes {
@@ -73,6 +74,47 @@ std::map<cl_int, const char*> error_codes {
     {CL_OUT_OF_RESOURCES, "CL_OUT_OF_RESOURCES"},
     {CL_PROFILING_INFO_NOT_AVAILABLE, "CL_PROFILING_INFO_NOT_AVAILABLE"},
 };
+
+void h_show_options(const char* name) {
+    std::printf("Usage: %s <options> <DEVICE_INDEX>\n", name);
+    std::printf("Options:\n"); 
+    std::printf("\t-gpu,--gpu\t use a GPU\n");
+    std::printf("\t-cpu,--cpu\t use a CPU\n");
+    std::printf("\tDEVICE_INDEX is a number > 0\n"); 
+}
+
+cl_uint h_parse_args(int argc, char** argv, cl_device_type *device_type) {
+    
+    // Default device index
+    cl_uint dev_index = 0;
+    
+    // All devices by default
+    *device_type = CL_DEVICE_TYPE_ALL;
+    
+    // Check all other arguments
+    for (int i=1; i<argc; i++) {
+        const char* arg = (const char*)argv[i];
+        
+        // Check for help
+        if ((std::strcmp(arg, "-h")==0) || (std::strcmp(arg, "--help")==0)) {
+            h_show_options(argv[0]);
+            exit(0);
+        // Check for GPU args
+        } else if ((std::strcmp(arg, "-gpu")==0) || (std::strcmp(arg, "--gpu")==0)) {
+            *device_type = CL_DEVICE_TYPE_GPU;
+        // Check for CPU args
+        } else if ((std::strcmp(arg, "-cpu")==0) || (std::strcmp(arg, "--cpu")==0)) {
+            *device_type = CL_DEVICE_TYPE_CPU;
+        // Check for device index
+        } else {
+            dev_index = (cl_uint)std::atoi(arg);
+        }
+    }
+    
+    // Make sure the index is sane
+    assert(dev_index>=0);
+    return(dev_index);
+}
 
 // Function to check error code
 void h_errchk(cl_int errcode, const char *message) {
