@@ -5,6 +5,9 @@
 #include <cassert>
 #include <cstring>
 
+// Define target OpenCL version
+#define CL_TARGET_OPENCL_VERSION 300
+
 // Apple-specific header instructions
 #ifdef __APPLE__
     #include "OpenCL/opencl.h"
@@ -12,9 +15,9 @@
     #include "CL/opencl.h"
 #endif
 
-// Exit code for crashing out
+// Exit code to use when crashing out
 #define OCL_EXIT -20
-#define CL_TARGET_OPENCL_VERSION 300
+
 
 // Make a lookup table for error codes
 std::map<cl_int, const char*> error_codes {
@@ -78,6 +81,7 @@ std::map<cl_int, const char*> error_codes {
 };
 
 void h_show_options(const char* name) {
+    // Display a helpful error message
     std::printf("Usage: %s <options> <DEVICE_INDEX>\n", name);
     std::printf("Options:\n"); 
     std::printf("\t-gpu,--gpu\t use a GPU\n");
@@ -85,7 +89,9 @@ void h_show_options(const char* name) {
     std::printf("\tDEVICE_INDEX is a number > 0\n"); 
 }
 
-cl_uint h_parse_args(int argc, char** argv, cl_device_type *device_type) {
+cl_uint h_parse_args(int argc, 
+                     char** argv, 
+                     cl_device_type *device_type) {
     
     // Default device index
     cl_uint dev_index = 0;

@@ -4,7 +4,6 @@ Written by Dr Toby M. Potter
 
 #include <cassert>
 #include <cmath>
-#include <sys/stat.h>
 #include <iostream>
 
 // Define the size of the arrays to be computed
