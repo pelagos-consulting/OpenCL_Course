@@ -11,7 +11,7 @@ TARGETS=mat_mult.exe mat_mult_memcheck.exe mat_mult_badmem.exe mat_mult_printf.e
 all: $(TARGETS) 
 
 # Override CXXFLAGS
-CXXFLAGS=-g -ggdb -O0 -fopenmp
+CXXFLAGS := $(CXXFLAGS) -O0
 
 # General compilation step
 %.exe: %.cpp
