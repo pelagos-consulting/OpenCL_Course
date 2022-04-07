@@ -94,7 +94,7 @@ __kernel void mat_mult_printf (__global float* A,
     // to make sure we do not go
     // outside the boundaries of matrix C
     if ((i1>N1_C-1) && (i0==0)) {
-        printf("i1 is %d\n", i1);
+        printf("i1 is %d\n", (int)i1);
     }
     
     //if ((i0<N0_C) && (i1<N1_C)) {

@@ -140,6 +140,7 @@ int main(int argc, char** argv) {
         // Put debugging information here
         // -g and -s flags are Intel-specifc
         "-g -s kernels_mat_mult.c -cl-opt-disable"
+        // These flags work with AMD
         //"-g -cl-opt-disable"
     );
         
