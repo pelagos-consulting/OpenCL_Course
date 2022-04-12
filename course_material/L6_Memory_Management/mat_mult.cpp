@@ -97,18 +97,18 @@ int main(int argc, char** argv) {
     assert(nbytes_A==N0_C*N1_A*sizeof(cl_float));   
     assert(nbytes_B==N1_A*N1_C*sizeof(cl_float));
     nbytes_C=N0_C*N1_C*sizeof(cl_float);
-    
-    // Make an array to store the result in array_C
-    cl_float* array_C = (cl_float*)calloc(nbytes_C, 1);
-    
+        
     // Make Buffers on the compute device for matrices A, B, and C
+    
+    // Make buffer_A using the memory of array_A as a backing store
     cl_mem buffer_A = clCreateBuffer(context, 
-                                     CL_MEM_READ_WRITE, 
+                                     CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 
                                      nbytes_A, 
-                                     NULL, 
+                                     (void*)array_A, 
                                      &errcode);
     h_errchk(errcode, "Creating buffer_A");
     
+    // Create buffer B in the normal manner
     cl_mem buffer_B = clCreateBuffer(context, 
                                      CL_MEM_READ_WRITE, 
                                      nbytes_B, 
@@ -116,10 +116,9 @@ int main(int argc, char** argv) {
                                      &errcode);
     h_errchk(errcode, "Creating buffer_B");
     
-    
-    // Allocate 
+    // Allocate buffer C from pinned host memory
     cl_mem buffer_C = clCreateBuffer(context, 
-                                     CL_MEM_READ_WRITE, 
+                                     CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, 
                                      nbytes_C, 
                                      NULL, 
                                      &errcode);
@@ -171,30 +170,60 @@ int main(int argc, char** argv) {
     // Do we enable a blocking write?
     cl_bool blocking=CL_TRUE;
     
-    h_errchk(
-        clEnqueueWriteBuffer(command_queue,
-                            buffer_A,
-                            blocking,
-                            0,
-                            nbytes_A,
-                            array_A,
-                            0,
-                            NULL,
-                            NULL), 
-        "Writing to buffer_A from host"
-    );
+    // Don't need to copy buffer_A across because we use host_pointer
+    
+    //h_errchk(
+    //    clEnqueueWriteBuffer(command_queue,
+    //                        buffer_A,
+    //                        blocking,
+    //                        0,
+    //                        nbytes_A,
+    //                        array_A,
+    //                        0,
+    //                        NULL,
+    //                        NULL), 
+    //    "Writing to buffer_A from host"
+    //);
 
+    // Do a rectangular copy from host to memory in buffer_B
+    
+    // B is of size (N1_A, N1_C)    
+    size_t offset=0, row_id=0, slice_id = 0;
+    
+    // Make up the origin
+    const size_t buffer_origin[] = {offset, row_id, slice_id};
+    const size_t host_origin[] = {offset, row_id, slice_id};
+    
+    // Length (in bytes of a row)
+    size_t buffer_row_pitch = N1_C * sizeof(cl_float); 
+    size_t host_row_pitch = buffer_row_pitch;
+    
+    // Number of bytes in a slice, we aren't going to use it 
+    size_t buffer_slice_pitch = N1_A * buffer_row_pitch;
+    size_t host_slice_pitch = N1_A * host_row_pitch;        
+        
+    /// Size of the region to copy   
+    const size_t region[] = {buffer_row_pitch, N1_A, 1};
+     
+    // Enqueue the rectangular copy
     h_errchk(
-        clEnqueueWriteBuffer(command_queue,
-                            buffer_B,
-                            blocking,
-                            0,
-                            nbytes_B,
-                            array_B,
-                            0,
-                            NULL,
-                            NULL), 
-        "Writing to buffer_B from host"
+        clEnqueueWriteBufferRect(
+            command_queue,
+            buffer_B,
+            CL_TRUE,
+            buffer_origin,
+            host_origin,
+            region,
+            buffer_row_pitch,
+            buffer_slice_pitch,
+            host_row_pitch,
+            host_slice_pitch,
+            array_B
+            0,
+            NULL,
+            NULL
+        ),
+        "Rectangular copy to buffer_B from host"
     );
     
     // Number of dimensions in the kernel
@@ -236,23 +265,37 @@ int main(int argc, char** argv) {
         "Waiting on the kernel"
     );
     
-    // Read memory from the buffer to the host
-    h_errchk(
-        clEnqueueReadBuffer(command_queue,
-                            buffer_C,
-                            blocking,
-                            0,
-                            nbytes_C,
-                            array_C,
-                            1,
-                            &kernel_event,
-                            NULL), 
-             "Copying matrix C from device to host"
+    // Map the buffer_C back to the host so we can write it to disk
+    cl_float* array_C = (cl_float*)clEnqueueMapBuffer(
+        command_queue,
+        buffer_C,
+        CL_TRUE,
+        CL_MAP_READ,
+        0,
+        nbytes_C,
+        0,
+        NULL,
+        NULL,
+        &errcode
     );
+    
+    h_errchk(errcode, "Mapping matrix C from device to host");
     
     // Write out the result to file
     h_write_binary(array_C, "array_C.dat", nbytes_C);
 
+    // Unmap buffer_C so we can release it
+    h_errchk(
+        clEnqueueUnmapMemObject(
+            command_queue,
+            buffer_C,
+            (void*)array_C,
+            0,
+            NULL,
+            NULL
+        )
+    );
+    
     // Free the OpenCL buffers
     h_errchk(
         clReleaseMemObject(buffer_A),
@@ -270,7 +313,6 @@ int main(int argc, char** argv) {
     // Clean up memory that was allocated on the read   
     free(array_A);
     free(array_B);
-    free(array_C);
     
     // Clean up command queues
     h_release_command_queues(

@@ -116,6 +116,8 @@ int main(int argc, char** argv) {
                                      &errcode);
     h_errchk(errcode, "Creating buffer_B");
     
+    
+    // Allocate 
     cl_mem buffer_C = clCreateBuffer(context, 
                                      CL_MEM_READ_WRITE, 
                                      nbytes_C, 
