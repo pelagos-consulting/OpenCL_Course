@@ -8,9 +8,9 @@ Written by Dr Toby M. Potter
 #include <iostream>
 
 // Define the size of the arrays to be computed
-#define NCOLS_A 72
-#define NROWS_C 72
-#define NCOLS_C 72
+#define NCOLS_A 256
+#define NROWS_C 520
+#define NCOLS_C 1032
 
 // Bring in helper header to manage boilerplate code
 #include "cl_helper.hpp"
@@ -100,28 +100,34 @@ int main(int argc, char** argv) {
         
     // Make Buffers on the compute device for matrices A, B, and C
     
-    // Make buffer_A using the memory of array_A as a backing store
-    cl_mem buffer_A = clCreateBuffer(context, 
-                                     CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 
-                                     nbytes_A, 
-                                     (void*)array_A, 
-                                     &errcode);
+    // Make buffer_A using array_A as a backing store
+    cl_mem buffer_A = clCreateBuffer(
+        context, 
+        CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 
+        nbytes_A, 
+        (void*)array_A, 
+        &errcode
+    );
     h_errchk(errcode, "Creating buffer_A");
     
     // Create buffer B in the normal manner
-    cl_mem buffer_B = clCreateBuffer(context, 
-                                     CL_MEM_READ_WRITE, 
-                                     nbytes_B, 
-                                     NULL, 
-                                     &errcode);
+    cl_mem buffer_B = clCreateBuffer(
+        context, 
+        CL_MEM_READ_WRITE, 
+        nbytes_B, 
+        NULL, 
+        &errcode
+    );
     h_errchk(errcode, "Creating buffer_B");
     
     // Allocate buffer C from pinned host memory
-    cl_mem buffer_C = clCreateBuffer(context, 
-                                     CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, 
-                                     nbytes_C, 
-                                     NULL, 
-                                     &errcode);
+    cl_mem buffer_C = clCreateBuffer(
+        context, 
+        CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, 
+        nbytes_C, 
+        NULL, 
+        &errcode
+    );
     h_errchk(errcode, "Creating buffer_C");
 
     // Now specify the kernel source and read it in
@@ -170,40 +176,29 @@ int main(int argc, char** argv) {
     // Do we enable a blocking write?
     cl_bool blocking=CL_TRUE;
     
-    // Don't need to copy buffer_A across because we use host_pointer
-    
-    //h_errchk(
-    //    clEnqueueWriteBuffer(command_queue,
-    //                        buffer_A,
-    //                        blocking,
-    //                        0,
-    //                        nbytes_A,
-    //                        array_A,
-    //                        0,
-    //                        NULL,
-    //                        NULL), 
-    //    "Writing to buffer_A from host"
-    //);
+    // We don't need to copy buffer_A across because we use the host_pointer
 
     // Do a rectangular copy from host to memory in buffer_B
     
-    // B is of size (N1_A, N1_C)    
+    // B is of size (N1_A, N1_C)
+    // Offset is in bytes, row_id and slice_id are indices
     size_t offset=0, row_id=0, slice_id = 0;
     
-    // Make up the origin
+    // Make up the origin for host and buffer
     const size_t buffer_origin[] = {offset, row_id, slice_id};
     const size_t host_origin[] = {offset, row_id, slice_id};
     
-    // Length (in bytes of a row)
+    // Length of a row (in bytes)
     size_t buffer_row_pitch = N1_C * sizeof(cl_float); 
     size_t host_row_pitch = buffer_row_pitch;
     
-    // Number of bytes in a slice, we aren't going to use it 
+    // Number of bytes in a slice 
     size_t buffer_slice_pitch = N1_A * buffer_row_pitch;
     size_t host_slice_pitch = N1_A * host_row_pitch;        
         
-    /// Size of the region to copy   
-    const size_t region[] = {buffer_row_pitch, N1_A, 1};
+    /// Size of the region to copy, of course we only copy 1 slice
+    size_t nrows = N1_A, nslices = 1;
+    const size_t region[] = {buffer_row_pitch, nrows, nslices};
      
     // Enqueue the rectangular copy
     h_errchk(
@@ -218,12 +213,12 @@ int main(int argc, char** argv) {
             buffer_slice_pitch,
             host_row_pitch,
             host_slice_pitch,
-            array_B
+            array_B,
             0,
             NULL,
             NULL
         ),
-        "Rectangular copy to buffer_B from host"
+        "Rectangular copy to buffer_B from the host"
     );
     
     // Number of dimensions in the kernel
@@ -278,7 +273,6 @@ int main(int argc, char** argv) {
         NULL,
         &errcode
     );
-    
     h_errchk(errcode, "Mapping matrix C from device to host");
     
     // Write out the result to file
@@ -293,7 +287,8 @@ int main(int argc, char** argv) {
             0,
             NULL,
             NULL
-        )
+        ),
+        "Unmapping array C"
     );
     
     // Free the OpenCL buffers
