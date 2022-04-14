@@ -1,3 +1,14 @@
+
+// Example of a global variable
+#ifdef __opencl_c_program_scope_global_variables
+__global int a_g = 2; 
+__global float b_g[2] = {2.0,1.0}; 
+#endif
+
+// Example of constant memory
+__constant float pi = 3.1415;
+__constant float coeffs[] = {1.0, -2.0, 1.0};
+
 // standard matrix multiply kernel 
 __kernel void mat_mult (__global float* A, 
                         __global float* B, 
@@ -5,7 +16,7 @@ __kernel void mat_mult (__global float* A,
                         unsigned int N1_A, 
                         unsigned int N0_C,
                         unsigned int N1_C) { 
-            
+    
     // C is of size (N0_C, N1_C)
     
     // i0 and i1 represent the coordinates in Matrix C 
