@@ -8,18 +8,39 @@ __global float b_g[2] = {2.0,1.0};
 __constant float pi = 3.1415;
 __constant float coeffs[] = {1.0, -2.0, 1.0};
 
+// Function to get the start and end values
+// for filling a shared memory array
+void get_start_end(
+    size_t local_length, 
+    size_t array_length,
+    size_t local_index,
+    size_t *start,
+    size_t *end) {
+  
+    // Work out the jumps
+    size_t jump=array_length/local_length;
+    if (array_length%local_length) jump++;
+    *start=local_index*jump;
+    *end=(local_index+1)*jump;
+    *end=min(*end,array_length);
+}    
+
 // standard matrix multiply kernel 
 __kernel void mat_mult (__global float* A, 
                         __global float* B, 
                         __global float* C,
-                        __local  float* shared,
+                        __local  float* shared_A,
+                        __local  float* shared_B,
                         unsigned int N1_A, 
                         unsigned int N0_C,
                         unsigned int N1_C) { 
     
-    // C is of size (N0_C, N1_C)
-    // B is of size (N1_A, N1_C)
     // A is of size (N0_C, N1_A)
+    // B is of size (N1_A, N1_C)
+    // C is of size (N0_C, N1_C)
+    
+    // Make a local scratch variable (not actually used)
+    __local float scratch[10];
     
     // i0 and i1 represent the coordinates in Matrix C 
     // We assume row-major ordering for the matrices 
@@ -32,20 +53,33 @@ __kernel void mat_mult (__global float* A,
     
     // Local size
     size_t L0=get_local_size(0);
+    size_t L1=get_local_size(1);
     
-    // Work out the jumps
-    size_t jump=N1_A/L0;
-    if (N1_A%L0) jump++;
-    size_t start = s0*jump;
-    size_t end = (s0+1)*jump;
-    end = min(end,(size_t)N1_A);
+    // start and end
+    size_t start0, end0, start1, end1;
     
+    // Fill shared memory
+    
+    // Get the start1 and end1 lengths
+    get_start_end(L1, N1_A, s1, &start1, &end1);
+    // Fill shared_A with the rows of A
+    if (i0<N0_C) {
+        for (size_t n=start1; n<end1; n++) {
+            shared_A[s0*N1_A+n]=A[i0*N1_A+n]; 
+        }
+    }   
+    
+    // Get the start0 and end0 lengths
+    get_start_end(L0, N1_A, s0, &start0, &end0);
     // Fill the columns of shared with B
     if (i1<N1_C) {
-        for (size_t n=start; n<end; n++) {
-            shared[s1*N1_A+n] = B[n*N1_C+i1]; 
+        for (size_t n=start0; n<end0; n++) {
+            shared_B[s1*N1_A+n]=B[n*N1_C+i1]; 
         }
     }
+    
+    // Enqueue a local barrier
+    barrier(CLK_LOCAL_MEM_FENCE);
     
     // Scratch variable whose allocation uses constant memory
     float temp=0.0*pi; 
@@ -59,10 +93,11 @@ __kernel void mat_mult (__global float* A,
             
             // A is of size (N0_C, N1_A)
             // B is of size (N1_A, N1_C)
+            // C is of size (N0_C, N1_C)
             
             // Loop across row i0 of A
             // and down column i1 of B
-            temp+=A[i0*N1_A+n]*shared[s1*N1_A+n]; 
+            temp+=shared_A[s0*N1_A+n]*shared_B[s1*N1_A+n]; 
         } 
         // Number of rows in C is same as number of rows in A
         C[i0*N1_C+i1]=temp;

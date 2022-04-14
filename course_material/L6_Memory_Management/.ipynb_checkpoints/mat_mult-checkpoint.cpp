@@ -225,21 +225,26 @@ int main(int argc, char** argv) {
         "setting kernel argument 2"
     );
     // Set shared memory in argument 3
+    // Local size is going to be (local_size[0], N1_A)
+    h_errchk(
+        clSetKernelArg(kernel, 3, local_size[0]*N1_A*sizeof(cl_float), NULL ),
+        "setting kernel argument 3"
+    );
     // Local size is going to be (local_size[1], N1_A)
     h_errchk(
-        clSetKernelArg(kernel, 3, local_size[1]*N1_A*sizeof(cl_float), NULL ),
+        clSetKernelArg(kernel, 4, local_size[1]*N1_A*sizeof(cl_float), NULL ),
         "setting kernel argument 3"
     );
     h_errchk(
-        clSetKernelArg(kernel, 4, sizeof(cl_uint), &N1_A ),
+        clSetKernelArg(kernel, 5, sizeof(cl_uint), &N1_A ),
         "setting kernel argument 3"
     );
     h_errchk(
-        clSetKernelArg(kernel, 5, sizeof(cl_uint), &N0_C ),
+        clSetKernelArg(kernel, 6, sizeof(cl_uint), &N0_C ),
         "setting kernel argument 4"
     );
     h_errchk(
-        clSetKernelArg(kernel, 6, sizeof(cl_uint), &N1_C ),
+        clSetKernelArg(kernel, 7, sizeof(cl_uint), &N1_C ),
         "setting kernel argument 5"
     );
     
