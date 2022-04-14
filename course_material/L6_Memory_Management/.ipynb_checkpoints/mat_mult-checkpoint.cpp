@@ -143,32 +143,6 @@ int main(int argc, char** argv) {
     // Create a kernel from the built program
     cl_kernel kernel=clCreateKernel(program, "mat_mult", &errcode);
     h_errchk(errcode, "Creating Kernel");
-    
-    // Set arguments to the kernel (not thread safe)
-    h_errchk(
-        clSetKernelArg(kernel, 0, sizeof(cl_mem), &buffer_A ),
-        "setting kernel argument 0"
-    );
-    h_errchk(
-        clSetKernelArg(kernel, 1, sizeof(cl_mem), &buffer_B ),
-        "setting kernel argument 1"
-    );
-    h_errchk(
-        clSetKernelArg(kernel, 2, sizeof(cl_mem), &buffer_C ),
-        "setting kernel argument 2"
-    );
-    h_errchk(
-        clSetKernelArg(kernel, 3, sizeof(cl_uint), &N1_A ),
-        "setting kernel argument 3"
-    );
-    h_errchk(
-        clSetKernelArg(kernel, 4, sizeof(cl_uint), &N0_C ),
-        "setting kernel argument 4"
-    );
-    h_errchk(
-        clSetKernelArg(kernel, 5, sizeof(cl_uint), &N1_C ),
-        "setting kernel argument 5"
-    );
 
     // Write memory from the host
     // to buffer_A and buffer_B on the compute device
@@ -236,6 +210,39 @@ int main(int argc, char** argv) {
                       local_size, 
                       work_dim
     );
+    
+    // Set arguments to the kernel (not thread safe)
+    h_errchk(
+        clSetKernelArg(kernel, 0, sizeof(cl_mem), &buffer_A ),
+        "setting kernel argument 0"
+    );
+    h_errchk(
+        clSetKernelArg(kernel, 1, sizeof(cl_mem), &buffer_B ),
+        "setting kernel argument 1"
+    );
+    h_errchk(
+        clSetKernelArg(kernel, 2, sizeof(cl_mem), &buffer_C ),
+        "setting kernel argument 2"
+    );
+    // Set shared memory in argument 3
+    // Local size is going to be (local_size[1], N1_A)
+    h_errchk(
+        clSetKernelArg(kernel, 3, local_size[1]*N1_A*sizeof(cl_float), NULL ),
+        "setting kernel argument 3"
+    );
+    h_errchk(
+        clSetKernelArg(kernel, 4, sizeof(cl_uint), &N1_A ),
+        "setting kernel argument 3"
+    );
+    h_errchk(
+        clSetKernelArg(kernel, 5, sizeof(cl_uint), &N0_C ),
+        "setting kernel argument 4"
+    );
+    h_errchk(
+        clSetKernelArg(kernel, 6, sizeof(cl_uint), &N1_C ),
+        "setting kernel argument 5"
+    );
+    
     
     // Event for the kernel
     cl_event kernel_event;
