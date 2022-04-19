@@ -82,7 +82,7 @@ __kernel void mat_mult (__global float* A,
     // Enqueue a local barrier to make sure shared memory is filled
     barrier(CLK_LOCAL_MEM_FENCE);
     
-    // Scratch variable whose allocation uses constant memory
+    // Scratch variable whose allocation uses constant memory pi
     float temp=0.0*pi; 
     
     // Guard mechanism to make sure we do not go
