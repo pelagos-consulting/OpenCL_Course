@@ -8,7 +8,7 @@ __global float b_g[2] = {2.0,1.0};
 __constant float pi = 3.1415;
 __constant float coeffs[] = {1.0, -2.0, 1.0};
 
-// Function to get the start and end values
+// Kernel function to get the start and end values
 // for filling a shared memory array
 void get_start_end(
     size_t local_length, 
@@ -25,7 +25,7 @@ void get_start_end(
     *end=min(*end,array_length);
 }    
 
-// standard matrix multiply kernel 
+// Local memory matrix multiply kernel 
 __kernel void mat_mult (__global float* A, 
                         __global float* B, 
                         __global float* C,
@@ -39,7 +39,8 @@ __kernel void mat_mult (__global float* A,
     // B is of size (N1_A, N1_C)
     // C is of size (N0_C, N1_C)
     
-    // Make a local scratch variable (not actually used)
+    // Make a local scratch array for demonstration purposes
+    // (not actually used)
     __local float scratch[10];
     
     // i0 and i1 represent the coordinates in Matrix C 
@@ -47,7 +48,7 @@ __kernel void mat_mult (__global float* A,
     size_t i0=get_global_id(0); 
     size_t i1=get_global_id(1); 
     
-    // Location in local (shared) memory
+    // Location within the workgroup
     size_t s0=get_local_id(0);
     size_t s1=get_local_id(1);
     
@@ -60,7 +61,7 @@ __kernel void mat_mult (__global float* A,
     
     // Fill shared memory
     
-    // Get the start1 and end1 lengths
+    // Get the start1 and end1 lengths to fill a block
     get_start_end(L1, N1_A, s1, &start1, &end1);
     // Fill shared_A with the rows of A
     if (i0<N0_C) {
@@ -78,7 +79,7 @@ __kernel void mat_mult (__global float* A,
         }
     }
     
-    // Enqueue a local barrier
+    // Enqueue a local barrier to make sure shared memory is filled
     barrier(CLK_LOCAL_MEM_FENCE);
     
     // Scratch variable whose allocation uses constant memory
