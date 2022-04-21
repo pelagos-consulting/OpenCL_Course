@@ -25,6 +25,7 @@ void get_start_end(
     *end=min(*end,array_length);
 }    
 
+
 // Local memory matrix multiply kernel
 // where B has been transposed
 __kernel void mat_mult_local_transp (

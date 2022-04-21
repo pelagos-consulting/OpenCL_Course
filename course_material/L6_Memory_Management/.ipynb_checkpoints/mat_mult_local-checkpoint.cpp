@@ -103,7 +103,7 @@ int main(int argc, char** argv) {
     // Make buffer_A using array_A as a backing store
     cl_mem buffer_A = clCreateBuffer(
         context, 
-        CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 
+        CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, 
         nbytes_A, 
         (void*)array_A, 
         &errcode
@@ -141,7 +141,7 @@ int main(int argc, char** argv) {
     cl_program program = h_build_program(kernel_source, context, device, "");
         
     // Create a kernel from the built program
-    cl_kernel kernel=clCreateKernel(program, "mat_mult", &errcode);
+    cl_kernel kernel=clCreateKernel(program, "mat_mult_local", &errcode);
     h_errchk(errcode, "Creating Kernel");
 
     // Write memory from the host
@@ -247,7 +247,6 @@ int main(int argc, char** argv) {
         clSetKernelArg(kernel, 7, sizeof(cl_uint), &N1_C ),
         "setting kernel argument 5"
     );
-    
     
     // Event for the kernel
     cl_event kernel_event;
