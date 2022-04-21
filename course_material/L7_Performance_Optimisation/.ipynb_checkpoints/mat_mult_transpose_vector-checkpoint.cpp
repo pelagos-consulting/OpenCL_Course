@@ -104,17 +104,17 @@ int main(int argc, char** argv) {
     // Make buffer_A using array_A as a backing store
     cl_mem buffer_A = clCreateBuffer(
         context, 
-        CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 
+        CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, 
         nbytes_A, 
         (void*)array_A, 
         &errcode
     );
     h_errchk(errcode, "Creating buffer_A");
     
-    // Make buffer_B using array_B as a backing store
+    // Make buffer_B using a copy of array_B
     cl_mem buffer_B = clCreateBuffer(
         context, 
-        CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 
+        CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, 
         nbytes_B, 
         (void*)array_B, 
         &errcode

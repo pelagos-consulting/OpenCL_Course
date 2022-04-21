@@ -13,6 +13,7 @@ __kernel void mat_mult (__global float* A,
     size_t i0=get_global_id(0); 
     size_t i1=get_global_id(1); 
     
+    // Scratch variable
     float temp=0.0; 
 
     // Guard mechanism to make sure we do not go

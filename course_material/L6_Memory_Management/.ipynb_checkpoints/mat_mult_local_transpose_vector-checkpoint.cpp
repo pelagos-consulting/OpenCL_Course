@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
     cl_bool ordering = CL_FALSE;
     
     // Do we enable profiling?
-    cl_bool profiling = CL_FALSE;
+    cl_bool profiling = CL_TRUE;
     
     // Create the command queues
     cl_command_queue* command_queues = h_create_command_queues(
@@ -99,33 +99,50 @@ int main(int argc, char** argv) {
     assert(nbytes_B==N1_A*N1_C*sizeof(cl_float));
     nbytes_C=N0_C*N1_C*sizeof(cl_float);
         
-    // Make Buffers on the compute device for matrices A, B, BT, and C
+    // Number of elements we are going to use in a vector
+    cl_uint vector_len = 8;
+    // Integer (floored) number of vectors along axis of length N1_A
+    cl_uint N1_A_v = N1_A/vector_len;
+    // Increase the number of vectors if there is any remainder
+    if (N1_A % vector_len) N1_A_v++;
+    // Resized N1_A for allocation of B and A, may be larger than N1_A
+    cl_uint N1_A_star = N1_A_v*vector_len;
+    
+    // Resized bytes due to enlarged N1_A_star
+    size_t nbytes_A_star = N0_C*N1_A_star*sizeof(cl_float);
+    size_t nbytes_B_star = N1_C*N1_A_star*sizeof(cl_float);    
+    
+    // A_star is of size (N0_C, N1_A_star)
+    // B_star is of size (N1_A_star, N1_C)
+    // BT_star is of size (N1_C, N1_A_star)
+    
+    // Make Buffers on the compute device for matrices A_star, B_star, BT_star, and C
     
     // Make buffer_A using array_A as a backing store
-    cl_mem buffer_A = clCreateBuffer(
+    cl_mem buffer_A_star = clCreateBuffer(
         context, 
-        CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, 
-        nbytes_A, 
-        (void*)array_A, 
+        CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, 
+        nbytes_A_star, 
+        NULL, 
         &errcode
     );
     h_errchk(errcode, "Creating buffer_A");
     
     // Make buffer_B using array_B as a backing store
-    cl_mem buffer_B = clCreateBuffer(
+    cl_mem buffer_B_star = clCreateBuffer(
         context, 
-        CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 
-        nbytes_B, 
-        (void*)array_B, 
+        CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, 
+        nbytes_B_star, 
+        NULL, 
         &errcode
     );
     h_errchk(errcode, "Creating buffer_B");
     
     // Create buffer BT in the normal manner
-    cl_mem buffer_BT = clCreateBuffer(
+    cl_mem buffer_BT_star = clCreateBuffer(
         context, 
-        CL_MEM_READ_WRITE, 
-        nbytes_B, 
+        CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, 
+        nbytes_B_star, 
         NULL, 
         &errcode
     );
@@ -148,6 +165,113 @@ int main(int argc, char** argv) {
         &nbytes_src
     );
 
+    // Zero out buffers A_star and B_star
+    cl_float zero=0.0f;
+    h_errchk(
+        clEnqueueFillBuffer(
+            command_queue,
+            buffer_A_star,
+            &zero,
+            sizeof(cl_float),
+            0,
+            nbytes_A_star,
+            0,
+            NULL,
+            NULL
+        ),
+        "zero out buffer A_star"
+    );       
+    h_errchk(
+        clEnqueueFillBuffer(
+            command_queue,
+            buffer_B_star,
+            &zero,
+            sizeof(cl_float),
+            0,
+            nbytes_B_star,
+            0,
+            NULL,
+            NULL
+        ),
+        "zero out buffer B_star"
+    );
+    
+    // Rectangular copy to A and B
+    
+    // B is of size (N1_A, N1_C)
+    // Offset is in bytes, row_id and slice_id are indices
+    size_t offset=0, row_id=0, slice_id = 0;
+    
+    // Make up the origin for host and buffer, same for both
+    const size_t buffer_origin[] = {offset, row_id, slice_id};
+    const size_t host_origin[] = {offset, row_id, slice_id};
+    
+        // Length of a row in the allocation (in bytes)
+    size_t buffer_row_pitch = N1_A_star * sizeof(cl_float); 
+    size_t host_row_pitch = N1_A * sizeof(cl_float);
+    
+    // Number of bytes in a slice 
+    size_t buffer_slice_pitch = N0_C * buffer_row_pitch;
+    size_t host_slice_pitch = N0_C * host_row_pitch;        
+        
+    /// Size of the region to copy, of course we only copy 1 slice
+    size_t nrows = N0_C, nslices = 1;
+    const size_t region_A[] = {host_row_pitch, nrows, nslices};
+     
+    // Enqueue the rectangular copy
+    h_errchk(
+        clEnqueueWriteBufferRect(
+            command_queue,
+            buffer_A_star,
+            CL_TRUE,
+            buffer_origin,
+            host_origin,
+            region_A,
+            buffer_row_pitch,
+            buffer_slice_pitch,
+            host_row_pitch,
+            host_slice_pitch,
+            array_A,
+            0,
+            NULL,
+            NULL
+        ),
+        "Rectangular copy to buffer_A_star from the host"
+    );
+    
+    // Length of a row (in bytes)
+    buffer_row_pitch = N1_C * sizeof(cl_float); 
+    host_row_pitch = buffer_row_pitch;
+    
+    // Number of bytes in a slice 
+    buffer_slice_pitch = N1_A_star * buffer_row_pitch;
+    host_slice_pitch = N1_A * host_row_pitch;        
+        
+    /// Size of the region to copy, only copy N1_A rows
+    nrows = N1_A;
+    const size_t region_B[] = {host_row_pitch, nrows, nslices};
+     
+    // Enqueue the rectangular copy
+    h_errchk(
+        clEnqueueWriteBufferRect(
+            command_queue,
+            buffer_B_star,
+            CL_TRUE,
+            buffer_origin,
+            host_origin,
+            region_B,
+            buffer_row_pitch,
+            buffer_slice_pitch,
+            host_row_pitch,
+            host_slice_pitch,
+            array_B,
+            0,
+            NULL,
+            NULL
+        ),
+        "Rectangular copy to buffer_B_star from the host"
+    );
+    
     // Turn this source code into a program
     cl_program program = h_build_program(kernel_source, context, device, "");
         
@@ -161,14 +285,14 @@ int main(int argc, char** argv) {
     size_t work_dim=2;
     
     // Desired local size for all
-    const size_t local_size[]={ 4, 16 };
+    const size_t local_size[]={ 8, 8 };
     
     // Create and run the transpose kernel
     cl_kernel kernel_transp=clCreateKernel(program, "transpose", &errcode);
     h_errchk(errcode, "Creating transpose kernel");
     
     // Desired global_size
-    const size_t global_size_transp[]={ N1_A, N1_C };
+    const size_t global_size_transp[]={ N1_A_star, N1_C };
     h_fit_global_size(global_size_transp, 
                       local_size, 
                       work_dim
@@ -176,21 +300,24 @@ int main(int argc, char** argv) {
     
     // Set kernel arguments
     h_errchk(
-        clSetKernelArg(kernel_transp, 0, sizeof(cl_mem), &buffer_B ),
+        clSetKernelArg(kernel_transp, 0, sizeof(cl_mem), &buffer_B_star ),
         "setting transpose kernel argument 0"
     );
     h_errchk(
-        clSetKernelArg(kernel_transp, 1, sizeof(cl_mem), &buffer_BT ),
+        clSetKernelArg(kernel_transp, 1, sizeof(cl_mem), &buffer_BT_star ),
         "setting transpose kernel argument 1"
     );
     h_errchk(
-        clSetKernelArg(kernel_transp, 2, sizeof(cl_uint), &N1_A ),
+        clSetKernelArg(kernel_transp, 2, sizeof(cl_uint), &N1_A_star ),
         "setting transpose kernel argument 2"
     );
     h_errchk(
         clSetKernelArg(kernel_transp, 3, sizeof(cl_uint), &N1_C ),
         "setting transpose kernel argument 3"
     );
+    
+    // Event for the kernel
+    cl_event transp_event;
     
     // Now enqueue the transpose kernel
     h_errchk(
@@ -202,8 +329,15 @@ int main(int argc, char** argv) {
                                 local_size,
                                 0,
                                 NULL,
-                                NULL), 
+                                &transp_event), 
         "Running the transpose kernel"
+    );
+    
+    // Wait on the kernel to finish and time it
+    cl_double run_transp_ms = h_get_event_time_ms(
+        &transp_event, 
+        "Running transpose kernel",
+        NULL
     );
     
     // Create and run the matrix multiplication kernel
@@ -217,9 +351,6 @@ int main(int argc, char** argv) {
     // Desired global_size
     const size_t global_size_mat_mult[]={ N0_C, N1_C };
     
-    cl_uint vector_len = 8;
-    cl_uint N1_A_vector = N1_A/vector_len;
-    
     // Enlarge the global size so that 
     // an integer number of local sizes fits within it
     h_fit_global_size(global_size_mat_mult, 
@@ -229,11 +360,11 @@ int main(int argc, char** argv) {
     
     // Set arguments to the kernel (not thread safe)
     h_errchk(
-        clSetKernelArg(kernel_mat_mult, 0, sizeof(cl_mem), &buffer_A ),
+        clSetKernelArg(kernel_mat_mult, 0, sizeof(cl_mem), &buffer_A_star ),
         "setting kernel argument 0"
     );
     h_errchk(
-        clSetKernelArg(kernel_mat_mult, 1, sizeof(cl_mem), &buffer_BT ),
+        clSetKernelArg(kernel_mat_mult, 1, sizeof(cl_mem), &buffer_BT_star ),
         "setting kernel argument 1"
     );
     h_errchk(
@@ -243,25 +374,35 @@ int main(int argc, char** argv) {
     // Set shared memory in argument 3
     // Local size is going to be (local_size[0], N1_A)
     h_errchk(
-        clSetKernelArg(kernel_mat_mult, 3, local_size[0]*N1_A*sizeof(cl_float), NULL ),
+        clSetKernelArg(
+            kernel_mat_mult, 
+            3, 
+            local_size[0]*N1_A_star*sizeof(cl_float), 
+            NULL
+        ),
         "setting kernel argument 3"
     );
     // Local size is going to be (local_size[1], N1_A)
     h_errchk(
-        clSetKernelArg(kernel_mat_mult, 4, local_size[1]*N1_A*sizeof(cl_float), NULL ),
-        "setting kernel argument 3"
-    );
-    h_errchk(
-        clSetKernelArg(kernel_mat_mult, 5, sizeof(cl_uint), &N1_A_vector ),
-        "setting kernel argument 3"
-    );
-    h_errchk(
-        clSetKernelArg(kernel_mat_mult, 6, sizeof(cl_uint), &N0_C ),
+        clSetKernelArg(
+            kernel_mat_mult, 
+            4, 
+            local_size[1]*N1_A_star*sizeof(cl_float), 
+            NULL
+        ),
         "setting kernel argument 4"
     );
     h_errchk(
-        clSetKernelArg(kernel_mat_mult, 7, sizeof(cl_uint), &N1_C ),
+        clSetKernelArg(kernel_mat_mult, 5, sizeof(cl_uint), &N1_A_v ),
         "setting kernel argument 5"
+    );
+    h_errchk(
+        clSetKernelArg(kernel_mat_mult, 6, sizeof(cl_uint), &N0_C ),
+        "setting kernel argument 6"
+    );
+    h_errchk(
+        clSetKernelArg(kernel_mat_mult, 7, sizeof(cl_uint), &N1_C ),
+        "setting kernel argument 7"
     );
     
     // Event for the kernel
@@ -281,10 +422,11 @@ int main(int argc, char** argv) {
         "Running the kernel"
     );
 
-    // Wait on the kernel to finish
-    h_errchk(
-        clWaitForEvents(1, &kernel_event),
-        "Waiting on the mat_mult kernel"
+    // Wait on the kernel to finish and time it
+    cl_double run_kernel_ms = h_get_event_time_ms(
+        &kernel_event, 
+        "Running mat_mul_transp_vec kernel",
+        NULL
     );
     
     // Map the buffer_C back to the host so we can write it to disk
@@ -320,15 +462,15 @@ int main(int argc, char** argv) {
     
     // Free the OpenCL buffers
     h_errchk(
-        clReleaseMemObject(buffer_A),
+        clReleaseMemObject(buffer_A_star),
         "releasing buffer A"
     );
     h_errchk(
-        clReleaseMemObject(buffer_B),
+        clReleaseMemObject(buffer_B_star),
         "releasing buffer B"
     );
     h_errchk(
-        clReleaseMemObject(buffer_BT),
+        clReleaseMemObject(buffer_BT_star),
         "releasing buffer B"
     );
     h_errchk(
