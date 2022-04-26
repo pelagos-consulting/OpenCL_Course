@@ -87,8 +87,8 @@ int main(int argc, char** argv) {
         NULL
     );
     
-    if (errcode == CL_SUCCESS && (svm & CL_DEVICE_SVM_FINE_GRAIN_BUFFER)) {
-        printf("Device supports fine-grained buffer SVM\n");
+    if (errcode == CL_SUCCESS && (svm & CL_DEVICE_SVM_COARSE_GRAIN_BUFFER)) {
+        printf("Device supports coarse-grained buffer SVM\n");
     } else {
         printf("Sorry, this device can not support coarse-grained buffer SVM\n");
         printf("No solution performed\n");
@@ -115,13 +115,25 @@ int main(int argc, char** argv) {
     nbytes_C=N0_C*N1_C*sizeof(cl_float); 
     
     // Make Buffers on the compute device for matrices A, B, and C
-    cl_mem buffer_A = clCreateBuffer(context, 
-                                     CL_MEM_READ_WRITE, 
-                                     nbytes_A, 
-                                     NULL, 
-                                     &errcode);
-    h_errchk(errcode, "Creating buffer_A");
     
+    // Allocate backing storage for buffer A
+    // Using coarse-grained SVM memory
+    cl_float *backing_A = (cl_float*)clSVMAlloc(
+        context,
+        CL_MEM_READ_WRITE,
+        nbytes_A,
+        0
+    );
+    
+    // Now create a buffer around the SVM allocation
+    cl_mem buffer_A = clCreateBuffer(context, 
+                                     CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 
+                                     nbytes_A, 
+                                     backing_A, 
+                                     &errcode);
+    h_errchk(errcode, "Creating buffer_A from SVM pointer");
+    
+    // Create an OpenCL buffer for buffer_B
     cl_mem buffer_B = clCreateBuffer(context, 
                                      CL_MEM_READ_WRITE, 
                                      nbytes_B, 
@@ -308,6 +320,9 @@ int main(int argc, char** argv) {
     // Clean up memory that was allocated on the read   
     free(array_A);
     free(array_B);
+    
+    // Free backing storage for buffer_A
+    clSVMFree(context, backing_A);
     
     // Clean up command queues
     h_release_command_queues(
