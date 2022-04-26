@@ -87,11 +87,13 @@ int main(int argc, char** argv) {
         NULL
     );
     
-    if ((errcode == CL_INVALID_VALUE) || 
-        (errcode != (CL_SUCCESS && (svm & CL_DEVICE_SVM_COARSE_GRAIN_BUFFER)))) {
-        printf("Sorry, this runtime does not support coarse-grained buffer svm");
+    if (errcode == CL_SUCCESS && (svm & CL_DEVICE_SVM_FINE_GRAIN_BUFFER)) {
+        printf("Device supports fine-grained buffer SVM\n");
+    } else {
+        printf("Sorry, this device can not support coarse-grained buffer SVM\n");
+        printf("No solution performed\n");
         exit(OCL_EXIT);
-    }    
+    } 
     
     // We are going to do a simple array multiplication for this example, 
     // using raw binary files for input and output
@@ -110,9 +112,7 @@ int main(int argc, char** argv) {
     // Sanity check on incoming data
     assert(nbytes_A==N0_C*N1_A*sizeof(cl_float));   
     assert(nbytes_B==N1_A*N1_C*sizeof(cl_float));
-    nbytes_C=N0_C*N1_C*sizeof(cl_float);
-    
- 
+    nbytes_C=N0_C*N1_C*sizeof(cl_float); 
     
     // Make Buffers on the compute device for matrices A, B, and C
     cl_mem buffer_A = clCreateBuffer(context, 
@@ -129,7 +129,7 @@ int main(int argc, char** argv) {
                                      &errcode);
     h_errchk(errcode, "Creating buffer_B");
     
-    // Allocate SVM memory for array C
+    // Allocate coarse-grained SVM memory for array C
     cl_float *array_C = (cl_float*)clSVMAlloc(
         context,
         CL_MEM_WRITE_ONLY,
