@@ -88,10 +88,10 @@ int main(int argc, char** argv) {
     );
     
     if (errcode == CL_SUCCESS && 
-        (svm & CL_DEVICE_SVM_FINE_GRAIN_BUFFER)) {
-        printf("Device supports fine-grained buffer SVM\n");
+        (svm & CL_DEVICE_SVM_FINE_GRAIN_SYSTEM)) {
+        printf("Device supports fine-grained system SVM\n");
     } else {
-        printf("Sorry, this device can not support fine-grained buffer SVM\n");
+        printf("Sorry, this device can not support fine-grained system SVM\n");
         printf("No solution performed\n");
         exit(OCL_EXIT);
     }
@@ -115,6 +115,9 @@ int main(int argc, char** argv) {
     assert(nbytes_B==N1_A*N1_C*sizeof(cl_float));
     nbytes_C=N0_C*N1_C*sizeof(cl_float); 
     
+    // Allocate SVM memory for array C
+    cl_float *array_C = (cl_float*)calloc(N0_C*N1_C, sizeof(cl_float));
+    
     // Make Buffers on the compute device for matrices A, B, and C
     cl_mem buffer_A = clCreateBuffer(context, 
                                      CL_MEM_READ_WRITE, 
@@ -130,14 +133,6 @@ int main(int argc, char** argv) {
                                      &errcode);
     h_errchk(errcode, "Creating buffer_B");
     
-    // Allocate SVM memory for array C
-    cl_float *array_C = (cl_float*)clSVMAlloc(
-        context,
-        CL_MEM_WRITE_ONLY | CL_MEM_SVM_FINE_GRAIN_BUFFER,
-        nbytes_C,
-        0
-    );
-
     // Now specify the kernel source and read it in
     size_t nbytes_src = 0;
     const char* kernel_source = (const char*)h_read_binary(
@@ -267,24 +262,10 @@ int main(int argc, char** argv) {
         "releasing buffer B"
     );
     
-    // Enqueue a free of the SVM buffer
-    h_errchk(
-        clEnqueueSVMFree(
-            command_queue,
-            1,
-            (void**)((void*)(&array_C)),
-            NULL,
-            NULL,
-            0,
-            NULL,
-            NULL
-        ),
-        "Free SVM memory"
-    );
-    
     // Clean up memory that was allocated on the read   
     free(array_A);
     free(array_B);
+    free(array_C);
     
     // Clean up command queues
     h_release_command_queues(

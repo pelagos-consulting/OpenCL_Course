@@ -87,7 +87,8 @@ int main(int argc, char** argv) {
         NULL
     );
     
-    if (errcode == CL_SUCCESS && (svm & CL_DEVICE_SVM_FINE_GRAIN_BUFFER)) {
+    if (errcode == CL_SUCCESS && 
+        (svm & CL_DEVICE_SVM_FINE_GRAIN_BUFFER)) {
         printf("Device supports fine-grained buffer SVM\n");
     } else {
         printf("Sorry, this device can not support fine-grained buffer SVM\n");
@@ -132,7 +133,7 @@ int main(int argc, char** argv) {
     // Allocate SVM memory for array C
     cl_float *array_C = (cl_float*)clSVMAlloc(
         context,
-        CL_MEM_WRITE_ONLY,
+        CL_MEM_WRITE_ONLY | CL_MEM_SVM_FINE_GRAIN_BUFFER,
         nbytes_C,
         0
     );
@@ -250,35 +251,11 @@ int main(int argc, char** argv) {
         "Waiting on the kernel"
     );
     
-    // Map the SVM array
-    h_errchk(
-        clEnqueueSVMMap(
-            command_queue,
-            CL_TRUE,
-            CL_MAP_READ,
-            array_C,
-            nbytes_C,
-            0,
-            NULL,
-            NULL
-        ),
-        "Map the SVM array."
-    );
+    // At this point array_C 
+    // is available for access by the host
     
     // Write out the result to file
     h_write_binary(array_C, "array_C.dat", nbytes_C);
-
-    // Unmap the SVM array
-    h_errchk(
-        clEnqueueSVMUnmap(
-            command_queue,
-            array_C,
-            0,
-            NULL,
-            NULL
-        ),
-        "Unmap the SVM array."
-    );
     
     // Free the OpenCL buffers
     h_errchk(
