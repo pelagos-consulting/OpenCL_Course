@@ -77,7 +77,7 @@ int main(int argc, char** argv) {
     // Report on the device in use
     h_report_on_device(device);
     
-    // Check if the device supports coarse-grained SVM
+    // Check if the device supports fine-grained buffer SVM
     cl_device_svm_capabilities svm;
     errcode = clGetDeviceInfo(
         device,
