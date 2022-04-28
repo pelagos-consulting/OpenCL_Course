@@ -15,7 +15,7 @@ CC=gcc
 
 # Library flags for OpenCL
 OPENCL_LIB_FLAGS="-lOpenCL"
-CXXFLAGS=-g -O2 -fopenmp
+CXXFLAGS=-g -O2 -fopenmp -std=c++11
 
 # Flags for MacOS
 ifeq ($(detected_OS), Darwin)

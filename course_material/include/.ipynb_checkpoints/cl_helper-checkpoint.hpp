@@ -475,6 +475,15 @@ void h_write_binary(void* data, const char* filename, size_t nbytes) {
     std::fclose(fp);
 }
 
+void* h_alloc(size_t nbytes) {
+    // Allocate aligned memory for potential 
+    // use in OpenCL buffers
+    void* buffer = aligned_alloc(sizeof(cl_long16), nbytes);
+    // Zero out contents for safety
+    memset(buffer, '\0', nbytes);
+    return buffer;
+}
+
 void* h_read_binary(const char* filename, size_t *nbytes) {
     // Open the file for reading and use std::fread to read in the file
     std::FILE *fp = std::fopen(filename, "rb");
@@ -495,9 +504,9 @@ void* h_read_binary(const char* filename, size_t *nbytes) {
     // Create a buffer to read into
     // Add an extra Byte for a null termination character
     // just in case we are reading to a string
-    void *buffer = calloc((*nbytes)+1, 1);
+    void *buffer = h_alloc((*nbytes)+1);
     
-    // Set the NULL termination character
+    // Set the NULL termination character for safety
     char* source = (char*)buffer;
     source[*nbytes] = '\0';
     

@@ -115,24 +115,9 @@ int main(int argc, char** argv) {
     assert(nbytes_B==N1_A*N1_C*sizeof(cl_float));
     nbytes_C=N0_C*N1_C*sizeof(cl_float); 
     
-    // Allocate SVM memory for array C
-    cl_float *array_C = (cl_float*)calloc(N0_C*N1_C, sizeof(cl_float));
-    
-    // Make Buffers on the compute device for matrices A, B, and C
-    cl_mem buffer_A = clCreateBuffer(context, 
-                                     CL_MEM_READ_WRITE, 
-                                     nbytes_A, 
-                                     NULL, 
-                                     &errcode);
-    h_errchk(errcode, "Creating buffer_A");
-    
-    cl_mem buffer_B = clCreateBuffer(context, 
-                                     CL_MEM_READ_WRITE, 
-                                     nbytes_B, 
-                                     NULL, 
-                                     &errcode);
-    h_errchk(errcode, "Creating buffer_B");
-    
+    // Allocate aligned memory for array C
+    cl_float *array_C = (cl_float*)h_alloc(N0_C*N1_C*sizeof(cl_float));
+        
     // Now specify the kernel source and read it in
     size_t nbytes_src = 0;
     const char* kernel_source = (const char*)h_read_binary(
@@ -147,14 +132,18 @@ int main(int argc, char** argv) {
     cl_kernel kernel=clCreateKernel(program, "mat_mult", &errcode);
     h_errchk(errcode, "Creating Kernel");
     
-    // Set arguments to the kernel (not thread safe)
+    // Set arguments to the kernel (not thread safe)    
     h_errchk(
-        clSetKernelArg(kernel, 0, sizeof(cl_mem), &buffer_A ),
-        "setting kernel argument 0"
+        clSetKernelArgSVMPointer(
+            kernel, 0, array_A
+        ),
+        "setting kernel argument 2"
     );
     h_errchk(
-        clSetKernelArg(kernel, 1, sizeof(cl_mem), &buffer_B ),
-        "setting kernel argument 1"
+        clSetKernelArgSVMPointer(
+            kernel, 1, array_B
+        ),
+        "setting kernel argument 2"
     );
     h_errchk(
         clSetKernelArgSVMPointer(
@@ -180,32 +169,6 @@ int main(int argc, char** argv) {
     
     // Do we enable a blocking write?
     cl_bool blocking=CL_TRUE;
-    
-    h_errchk(
-        clEnqueueWriteBuffer(command_queue,
-                            buffer_A,
-                            blocking,
-                            0,
-                            nbytes_A,
-                            array_A,
-                            0,
-                            NULL,
-                            NULL), 
-        "Writing to buffer_A from host"
-    );
-
-    h_errchk(
-        clEnqueueWriteBuffer(command_queue,
-                            buffer_B,
-                            blocking,
-                            0,
-                            nbytes_B,
-                            array_B,
-                            0,
-                            NULL,
-                            NULL), 
-        "Writing to buffer_B from host"
-    );
     
     // Number of dimensions in the kernel
     size_t work_dim=2;
@@ -251,16 +214,6 @@ int main(int argc, char** argv) {
     
     // Write out the result to file
     h_write_binary(array_C, "array_C.dat", nbytes_C);
-    
-    // Free the OpenCL buffers
-    h_errchk(
-        clReleaseMemObject(buffer_A),
-        "releasing buffer A"
-    );
-    h_errchk(
-        clReleaseMemObject(buffer_B),
-        "releasing buffer B"
-    );
     
     // Clean up memory that was allocated on the read   
     free(array_A);
