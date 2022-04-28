@@ -50,11 +50,6 @@ int main(int argc, char** argv) {
                      &num_devices,
                      &contexts);
     
-    // Report on all devices
-    for (int n=0; n<num_devices; n++) {
-        h_report_on_device(devices[n]);
-    }
-    
     // Number of command queues to generate
     cl_uint num_command_queues = num_devices;
     

@@ -68,11 +68,6 @@ int main(int argc, char** argv) {
         ordering,
         profiling
     );
-
-    // Report on all devices
-    for (int n=0; n<num_devices; n++) {
-        h_report_on_device(devices[n]);
-    }
     
     // Choose the first available context 
     // and compute device to use
@@ -80,6 +75,9 @@ int main(int argc, char** argv) {
     cl_context context = contexts[dev_index];
     cl_command_queue command_queue = command_queues[dev_index];
     cl_device_id device = devices[dev_index];
+    
+    // Report on the compute device
+    h_report_on_device(device);
     
     // We are going to do a simple array multiplication for this example, 
     // using raw binary files for input and output
