@@ -6,7 +6,7 @@ include ../env
 INC_DIR=../include
 
 # List of applications to target
-TARGETS=mat_mult_coarse_buffer_svm.exe mat_mult_fine_buffer_svm.exe svm_check.exe mat_mult_fine_system_svm.exe mat_elementwise_svm.exe mat_elementwise_svm_answer.exe
+TARGETS=mat_mult_coarse_buffer_svm.exe mat_mult_fine_buffer_svm.exe svm_check.exe mat_mult_fine_system_svm.exe mat_elementwise_svm.exe mat_elementwise_svm_answer.exe atomics.exe
 
 all: $(TARGETS)
 
