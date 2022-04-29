@@ -184,9 +184,6 @@ int main(int argc, char** argv) {
     // Do we enable a blocking write?
     cl_bool blocking=CL_TRUE;
     
-    //// Insert code here to upload arrays D and E //// 
-    //// to Buffers D and E                        ////
-    
     h_errchk(
         clEnqueueWriteBuffer(command_queue,
                             buffer_D,
@@ -212,8 +209,6 @@ int main(int argc, char** argv) {
                             NULL), 
         "Writing to buffer_E from host"
     );
-    
-    //// End insert code                           ////
     
     // Number of dimensions in the kernel
     size_t work_dim=2;
