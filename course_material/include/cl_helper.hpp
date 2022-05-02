@@ -666,3 +666,49 @@ void h_release_devices(
     free(devices);
     free(platforms);
 }
+
+h_optimise_local (
+        int argc,
+        char** argv,
+        cl_command_queue command_queue,
+        cl_kernel kernel,
+        cl_device_id device,
+        size_t *global_size,
+        int ndim) {
+    
+    int *input_local = NULL;
+    size_t local_bytes = 0;
+
+    // Look for the --local_file in argv, must be integer
+    for (int i=1; i<argc; i++) {   
+        if ((std::strncmp(argv[i], "--local_file", 12)==0) ||
+            (std::strncmp(argv[i], "-local_file", 11)==0)) {
+        
+            // Read the input file
+            input_local=(int*)h_read_binary("input_local.dat", &local_bytes);
+        }
+    }    
+   
+    // Get the maximum number of work items in a work group
+    size_t max_work_group_size;
+    h_errchk(
+        clGetDeviceInfo(device, 
+                        CL_DEVICE_MAX_WORK_GROUP_SIZE, 
+                        sizeof(size_t), 
+                        &max_work_group_size, 
+                        NULL),
+        "Max number of work-items a workgroup."
+    );
+    //std::printf("\t%20s %zu\n", "max work-items:", max_work_group_size);
+
+    if (local_bytes > 0) {
+        size_t nrows = local_bytes/sizeof(int);
+        cl_double* output_local = (cl_double*)h_alloc(nrows*ndim*sizeof(cl_double));
+        // Run the kernel and time it each time
+        for (int n=0; n<nrows; n++) {
+            // got to here
+        }
+    } else {
+        // Just run the application once
+    }
+}
