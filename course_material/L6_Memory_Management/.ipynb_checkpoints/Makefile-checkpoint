@@ -6,7 +6,7 @@ include ../env
 INC_DIR=../include
 
 # List of applications to target
-TARGETS=mat_mult_local.exe mat_mult_local_transpose_vector.exe atomics.exe
+TARGETS=mat_mult_local.exe mat_mult_local_transpose_vector.exe atomics.exe atomics2.exe mat_elementwise.exe mat_elementwise_answer.exe
 
 all: $(TARGETS)
 
