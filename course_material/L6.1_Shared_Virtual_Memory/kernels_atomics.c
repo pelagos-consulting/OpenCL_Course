@@ -1,10 +1,13 @@
 // Kernel to test atomics
-__kernel void atomic_test (__global unsigned int* T) {
-    
+__kernel void atomic_test (__global atomic_uint* T) {
+      
     // Increment T atomically
-    atomic_int sum;
-    atomic_init(&sum, 0);
-    atomic_fetch_add(&sum, 1);
-    
-    T[0] = atomic_load(&sum);
+    atomic_fetch_add(T, 1);
+
+    // Make a fence to synchronise memory 
+    // within the work item to global memory
+    atomic_work_item_fence(
+            CLK_GLOBAL_MEM_FENCE,
+            memory_order_acq_rel,
+            memory_scope_device);
 }

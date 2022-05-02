@@ -79,20 +79,23 @@ int main(int argc, char** argv) {
     // Report on the device in use
     h_report_on_device(device);    
     
+    // Make an atomic counter
+    std::atomic_uint value_T = { 0 };
+
     // Make some global memory for an atomic operation
     cl_mem buffer_T = clCreateBuffer(
         context, 
-        CL_MEM_READ_WRITE, 
-        sizeof(cl_uint), 
-        NULL, 
+        CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, 
+        sizeof(std::atomic_uint), 
+        &value_T, 
         &errcode
     );
     h_errchk(errcode, "Creating buffer_T");
-    
+
     // Now specify the kernel source and read it in
     size_t nbytes_src = 0;
     const char* kernel_source = (const char*)h_read_binary(
-        "kernels_atomics.c", 
+        "kernels_atomics2.c", 
         &nbytes_src
     );
 
@@ -100,7 +103,7 @@ int main(int argc, char** argv) {
     cl_program program = h_build_program(kernel_source, context, device, "-cl-std=CL2.0");
         
     // Create a kernel from the built program
-    cl_kernel kernel=clCreateKernel(program, "atomic_test", &errcode);
+    cl_kernel kernel=clCreateKernel(program, "atomics_test2", &errcode);
     h_errchk(errcode, "Creating Kernel");
 
     // Write memory from the host
@@ -146,15 +149,12 @@ int main(int argc, char** argv) {
         "Waiting on the kernel"
     );
  
-    // Read memory from the buffer to the host
-    cl_uint value_T = 0;
-    
     h_errchk(
         clEnqueueReadBuffer(command_queue,
                             buffer_T,
                             blocking,
                             0,
-                            sizeof(cl_uint),
+                            sizeof(std::atomic_uint),
                             &value_T,
                             1,
                             &kernel_event,
@@ -162,12 +162,12 @@ int main(int argc, char** argv) {
              "Copying T from device to host"
     );
     
-    std::cout << "A total of" << value_T << "work items were executed\n";
+    printf("A total of %u work items were executed\n", (unsigned int)value_T);
     
-    //h_errchk(
-    //    clReleaseMemObject(buffer_T),
-    //    "releasing buffer T"
-    //);
+    h_errchk(
+        clReleaseMemObject(buffer_T),
+        "releasing buffer T"
+    );
     
     // Clean up command queues
     h_release_command_queues(
