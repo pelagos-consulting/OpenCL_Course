@@ -428,7 +428,7 @@ cl_double h_get_event_time_ms(
     cl_double elapsed = (cl_double)(t2-t1)*(cl_double)1.0e-6;
         
     // Print the timing message if necessary
-    if (strlen(message)>0) {
+    if ((message != NULL) && (strlen(message)>0)) {
         std::printf("Time for event \"%s\": %.3f ms", message, elapsed);
         
         // Print transfer rate if nbytes is not NULL
@@ -786,7 +786,7 @@ void h_optimise_local(
     );
     
     // Make sure dimensions are good
-    assert(max_work_dims<=ndim);
+    assert(ndim<=max_work_dims);
     
     // Get the max number of work items along
     // dimensions of a work group

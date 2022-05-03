@@ -7,9 +7,9 @@ Written by Dr Toby M. Potter
 #include <iostream>
 
 // Define the size of the arrays to be computed
-#define NCOLS_A 256
-#define NROWS_C 520
-#define NCOLS_C 1032
+#define NCOLS_A 512
+#define NROWS_C 512
+#define NCOLS_C 1024
 
 // Bring in helper header to manage boilerplate code
 #include "cl_helper.hpp"
@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
     cl_bool ordering = CL_FALSE;
     
     // Do we enable profiling?
-    cl_bool profiling = CL_FALSE;
+    cl_bool profiling = CL_TRUE;
     
     // Create the command queues
     cl_command_queue* command_queues = h_create_command_queues(
@@ -196,40 +196,26 @@ int main(int argc, char** argv) {
     // Number of dimensions in the kernel
     size_t work_dim=2;
     
+    // Number of statistical runs to do per experiment 
+    size_t nstats = 3;
+    
     // Desired local size
-    const size_t local_size[]={ 8, 8 };
+    size_t local_size[]={ 8, 8 };
     
     // Desired global_size
-    const size_t global_size[]={ N0_C, N1_C };
+    size_t global_size[]={ N0_C, N1_C };
     
-    // Enlarge the global size so that 
-    // an integer number of local sizes fits within it
-    h_fit_global_size(global_size, 
-                      local_size, 
-                      work_dim
-    );
-    
-    // Event for the kernel
-    cl_event kernel_event;
-    
-    // Now enqueue the kernel
-    h_errchk(
-        clEnqueueNDRangeKernel(command_queue,
-                                kernel,
-                                work_dim,
-                                NULL,
-                                global_size,
-                                local_size,
-                                0,
-                                NULL,
-                                &kernel_event), 
-        "Running the kernel"
-    );
-    
-    // Wait on the kernel to finish
-    h_errchk(
-        clWaitForEvents(1, &kernel_event),
-        "Waiting on the kernel"
+    // Run the optimisation program
+    h_optimise_local(
+        argc,
+        argv,
+        command_queue,
+        kernel,
+        device,
+        global_size,
+        local_size,
+        work_dim,
+        nstats
     );
     
     // Read memory from the buffer to the host
@@ -240,8 +226,8 @@ int main(int argc, char** argv) {
                             0,
                             nbytes_C,
                             array_C,
-                            1,
-                            &kernel_event,
+                            0,
+                            NULL,
                             NULL), 
              "Copying matrix C from device to host"
     );
@@ -281,5 +267,7 @@ int main(int argc, char** argv) {
         contexts,
         platforms
     );
+    
+    return 0;
 }
 
