@@ -4,6 +4,7 @@
 #include <map>
 #include <cassert>
 #include <cstring>
+#include <cmath>
 
 // Define target OpenCL version
 #define CL_TARGET_OPENCL_VERSION 300
@@ -665,4 +666,219 @@ void h_release_devices(
     free(contexts);
     free(devices);
     free(platforms);
+}
+
+// Function to run a kernel
+cl_double h_run_kernel(
+    cl_command_queue command_queue,
+    cl_kernel kernel,
+    size_t *local_size,
+    size_t *global_size,
+    size_t ndim,
+    cl_bool profiling) {
+    
+    // Sort out the global size
+    size_t *new_global = (size_t*)malloc(ndim*sizeof(size_t));
+    std::memcpy(new_global, global_size, ndim*sizeof(size_t));
+    h_fit_global_size(new_global, local_size, ndim);
+    
+    // Event management
+    cl_event kernel_event;
+    
+    // Now enqueue the kernel
+    h_errchk(
+        clEnqueueNDRangeKernel(command_queue,
+                                kernel,
+                                ndim,
+                                NULL,
+                                new_global,
+                                local_size,
+                                0,
+                                NULL,
+                                &kernel_event), 
+        "Running the kernel"
+    );
+
+    // How much time did the kernel take?
+    cl_double elapsed_msec=0.0;
+    
+    if (profiling==CL_TRUE) {
+        // Get the time taken to run the kernel
+        elapsed_msec = h_get_event_time_ms(
+            &kernel_event, 
+            NULL, 
+            NULL
+        );
+    }
+    
+    // Free allocated memory
+    free(new_global);
+    
+    return(elapsed_msec);
+}
+
+// Function to optimise the local size
+// if command line arguments are --local_file or -local_file
+// read an input file called input_local.dat
+// type == cl_uint and size == (nexperiments, ndim)
+//
+// writes to a file called output_local.dat
+// type == cl_double and size == (nexperiments, 2)
+// where each line is (avd, stdev) in milli-seconds
+void h_optimise_local(
+        int argc,
+        char** argv,
+        cl_command_queue command_queue,
+        cl_kernel kernel,
+        cl_device_id device,
+        // Desired global size of the problem
+        size_t *global_size,
+        // Desired local_size of the problem, use NULL for defaults
+        size_t *local_size,
+        // Number of dimensions in the kernel
+        size_t ndim,
+        // Number of times to run the kernel per experiment
+        size_t nstats) {
+    
+    // Terrible default for local_size
+    size_t temp_local_size[] = {16,1,1};
+    if (local_size != NULL) {
+        for (size_t i=0; i<ndim; i++) {
+            temp_local_size[i] = local_size[i];
+        }
+    }
+    
+    // Array of ints for local size (nexperiments, ndim)
+    // With row_major ordering
+    cl_uint *input_local = NULL;
+    size_t local_bytes = 0;
+
+    // Look for the --local_file in argv, must be integer
+    for (int i=1; i<argc; i++) {   
+        if ((std::strncmp(argv[i], "--local_file", 12)==0) ||
+            (std::strncmp(argv[i], "-local_file", 11)==0)) {
+        
+            // Read the input file
+            input_local=(cl_uint*)h_read_binary("input_local.dat", &local_bytes);
+        }
+    }    
+   
+    // Get the maximum number of work items in a work group
+    size_t max_work_group_size;
+    h_errchk(
+        clGetDeviceInfo(device, 
+                        CL_DEVICE_MAX_WORK_GROUP_SIZE, 
+                        sizeof(size_t), 
+                        &max_work_group_size, 
+                        NULL),
+        "Max number of work-items a workgroup."
+    );
+
+    // Get the maximum number of dimensions supported
+    cl_uint max_work_dims;
+    h_errchk(
+        clGetDeviceInfo(device, 
+                        CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, 
+                        sizeof(cl_uint), 
+                        &max_work_dims, 
+                        NULL),
+        "Max number of dimensions for local size."
+    );
+    
+    // Make sure dimensions are good
+    assert(max_work_dims<=ndim);
+    
+    // Get the max number of work items along
+    // dimensions of a work group
+    size_t* max_size = new size_t[max_work_dims];
+    h_errchk(
+        clGetDeviceInfo(device, 
+                        CL_DEVICE_MAX_WORK_ITEM_SIZES, 
+                        max_work_dims*sizeof(size_t), 
+                        max_size, 
+                        NULL),
+        "Max size for work items."
+    );
+    
+    if (input_local != NULL) {
+        // Number of rows to process
+        size_t nexperiments = local_bytes/(ndim*sizeof(cl_uint));
+        
+        // Number of data points per experiment
+        size_t npoints = 2; // (avg, stdev)
+        // Output_local is of size (nexperiments, npoints)
+        size_t nbytes_output = nexperiments*npoints*sizeof(cl_double);
+        cl_double* output_local = (cl_double*)malloc(nbytes_output);
+        
+        // Array to store the statistical timings for each experiment
+        cl_double* experiment_msec = new cl_double[nstats];
+        
+        for (int n=0; n<nexperiments; n++) {
+            // Run the application
+            size_t work_group_size = 1;
+            int valid_size = 1;
+            
+            // Fill local size
+            for (int i=0; i<ndim; i++) {
+                temp_local_size[i]=(size_t)input_local[n*ndim+i];
+                work_group_size*=temp_local_size[i];
+                // Check to make sure we aren't exceeding a limit
+                valid_size*=(temp_local_size[i]<=max_size[i]);
+            }
+            
+            // Average and standard deviation
+            cl_double avg=0.0, stdev=0.0;
+            
+            if ((work_group_size <= max_work_group_size) && (valid_size > 0)) {
+                // Run the experiment nstats times and get statistical information
+                // Command queue must have profiling enabled
+                for (int s=0; s<nstats; s++) {
+                    experiment_msec[s] = h_run_kernel(
+                        command_queue,
+                        kernel,
+                        temp_local_size,
+                        global_size,
+                        ndim,
+                        CL_TRUE);
+                }
+
+                // Calculate the average and standard deviation
+                for (int s=0; s<nstats; s++) {
+                    avg+=experiment_msec[s];
+                }
+                avg/=(cl_double)nstats;
+                
+                for (int s=0; s<nstats; s++) {
+                    stdev+=((experiment_msec[s]-avg)*(experiment_msec[s]-avg));
+                }
+                stdev/=(cl_double)nstats;
+                stdev=sqrt(stdev);
+            } else {
+                // No result
+                avg = nan("");
+                stdev = nan("");
+            }
+                  
+            // Send to output array 
+            output_local[n*npoints+0] = avg;
+            output_local[n*npoints+1] = stdev;
+        }
+                            
+        h_write_binary(output_local, "output_local.dat", nbytes_output); 
+                            
+        delete[] experiment_msec;
+        free(output_local);
+        free(input_local);
+    } else {
+        // Run the kernel with just one experiment
+        h_run_kernel(
+                command_queue,
+                kernel,
+                temp_local_size,
+                global_size,
+                ndim,
+                CL_FALSE);
+    }
+    
+    delete[] max_size;
 }
