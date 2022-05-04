@@ -114,8 +114,8 @@ cl_uint h_parse_args(int argc,
         // Check for CPU args
         } else if ((std::strcmp(arg, "-cpu")==0) || (std::strcmp(arg, "--cpu")==0)) {
             *device_type = CL_DEVICE_TYPE_CPU;
-        // Check for device index
-        } else {
+        // Check for device index if it is not a flag
+        } else if (std::strncmp(arg, "-", 1)!=0) {
             dev_index = (cl_uint)std::atoi(arg);
         }
     }

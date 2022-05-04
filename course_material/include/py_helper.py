@@ -141,17 +141,22 @@ class LocalOpt2D:
         self.local1 = np.uint32(2**self.exp_vec1)
         
         # Turn local0 and local1 into a meshgrid of experiments
-        V0, V1 = np.meshgrid(self.local0, self.local1, indexing="ij")
+        self.L0, self.L1 = np.meshgrid(self.local0, self.local1, indexing="ij")
         
         self.nexperiments = self.local0.size*self.local1.size
-        
         self.input_local = np.zeros((self.local0.size, self.local1.size, 2), dtype=np.uint32)
-        self.input_local[:,:,0] = V0
-        self.input_local[:,:,1] = V1
+        self.input_local[:,:,0] = self.L0
+        self.input_local[:,:,1] = self.L1
         
         # Write out to file
         self.input_local.tofile("input_local.dat")
 
+    def report_timings(self):
+        assert hasattr(self, "timing_data"), "Must execute run_problem() before report_timings()."
+        
+        print(f"Min time is {self.timing_data['min_ms']:.3f} ms, at the local size of" 
+            f" ({self.timing_data['L0_min']},{self.timing_data['L1_min']}).")
+        
     def run_problem(self, cmds):
         # Make sure we have the solution
         assert hasattr(self, "input_local"), "Must run make_data() before check_data()."
@@ -169,7 +174,8 @@ class LocalOpt2D:
         
             # Get the output data
             self.output_local = np.fromfile("output_local.dat", dtype=np.float64).reshape(
-                self.local0.size, self.local1.size,2)
+                self.local0.size, self.local1.size, 2, order="C"
+            )
 
             # Make plots
             fig, axes = plt.subplots(1, 1, figsize=(6,6), sharex=True, sharey=True)
@@ -177,6 +183,19 @@ class LocalOpt2D:
             # Data to plot
             #data = [self.output_local[:,:,0], self.output_local[:,:,1]]
             data = [self.output_local[:,:,0]]
+            
+            # Find the minimum time
+            times_ms = data[0]
+            index = np.nanargmin(times_ms)
+            
+            self.timing_data = {
+                "min_ms" : times_ms.ravel()[index],
+                "L0_min" : self.L0.ravel()[index],
+                "L1_min" : self.L1.ravel()[index]
+            }
+            
+            # Report timings
+            self.report_timings()
             
             # Labels to plot
             labels = ["Time (ms)", "Error (ms)"]
@@ -189,9 +208,9 @@ class LocalOpt2D:
                 indices = np.where(~np.isnan(value))
                 bad_indices=np.where(np.isnan(value))
     
-                value[bad_indices]=1.0
+                #value[bad_indices]=1.0
                 value=np.log10(value)
-                value[bad_indices]=np.nan
+                #value[bad_indices]=np.nan
                 
                 min_data = np.min(value[indices])
                 max_data = np.max(value[indices])
@@ -216,3 +235,5 @@ class LocalOpt2D:
 
             fig.tight_layout()
             plt.show()
+            
+            return(self.timing_data)

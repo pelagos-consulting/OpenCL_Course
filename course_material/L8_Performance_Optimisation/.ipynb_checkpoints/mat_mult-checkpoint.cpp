@@ -7,9 +7,9 @@ Written by Dr Toby M. Potter
 #include <iostream>
 
 // Define the size of the arrays to be computed
-#define NCOLS_A 512
-#define NROWS_C 512
-#define NCOLS_C 1024
+#define NCOLS_A 1025
+#define NROWS_C 1025
+#define NCOLS_C 1025
 
 // Bring in helper header to manage boilerplate code
 #include "cl_helper.hpp"
