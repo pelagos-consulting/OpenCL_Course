@@ -5,9 +5,6 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import subprocess
 from collections.abc import Iterable
 
-# Data type
-dtype = np.float32
-
 class MatMul:
     
     def __init__(self, NCOLS_A, NROWS_C, NCOLS_C, dtype):
@@ -27,7 +24,7 @@ class MatMul:
         B = np.random.random(size = (self.NCOLS_A, self.NCOLS_C)).astype(self.dtype)
 
         # Make up the answer
-        self.C = np.matmul(A, B, dtype = dtype)
+        self.C = np.matmul(A, B, dtype = self.dtype)
 
         # Write out the arrays as binary files
         A.tofile("array_A.dat")
@@ -157,7 +154,7 @@ class LocalOpt2D:
         print(f"Min time is {self.timing_data['min_ms']:.3f} ms, at the local size of" 
             f" ({self.timing_data['L0_min']},{self.timing_data['L1_min']}).")
         
-    def run_problem(self, cmds):
+    def run_problem(self, cmds, plot=True):
         # Make sure we have the solution
         assert hasattr(self, "input_local"), "Must run make_data() before check_data()."
 
@@ -169,6 +166,7 @@ class LocalOpt2D:
         
         # Run the program 
         result = subprocess.run(temp_cmds)
+        print(f"returncode is {result.returncode}")
         
         if (result.returncode==0):
         
@@ -176,16 +174,14 @@ class LocalOpt2D:
             self.output_local = np.fromfile("output_local.dat", dtype=np.float64).reshape(
                 self.local0.size, self.local1.size, 2, order="C"
             )
-
-            # Make plots
-            fig, axes = plt.subplots(1, 1, figsize=(6,6), sharex=True, sharey=True)
-
+            
             # Data to plot
             #data = [self.output_local[:,:,0], self.output_local[:,:,1]]
-            data = [self.output_local[:,:,0]]
+            times_ms = self.output_local[:,:,0]
+            times_stdev = self.output_local[:,:,1]
+            data = [times_ms] #, times_stdev]
             
             # Find the minimum time
-            times_ms = data[0]
             index = np.nanargmin(times_ms)
             
             self.timing_data = {
@@ -196,44 +192,49 @@ class LocalOpt2D:
             
             # Report timings
             self.report_timings()
-            
-            # Labels to plot
-            labels = ["Time (ms)", "Error (ms)"]
 
-            for n, value in enumerate(data):
-                # Plot the graph
-                #ax = axes[n]
-                ax=axes
+            if plot:
+            
+                # Make plots
+                fig, axes = plt.subplots(1, 1, figsize=(6,6), sharex=True, sharey=True)
+
+                # Labels to plot
+                labels = ["Time (ms)", "Error (ms)"]
+
+                for n, value in enumerate(data):
+                    # Plot the graph
+                    #ax = axes[n]
+                    ax=axes
                 
-                indices = np.where(~np.isnan(value))
-                bad_indices=np.where(np.isnan(value))
+                    indices = np.where(~np.isnan(value))
+                    bad_indices=np.where(np.isnan(value))
     
-                #value[bad_indices]=1.0
-                value=np.log10(value)
-                #value[bad_indices]=np.nan
+                    #value[bad_indices]=1.0
+                    value=np.log10(value)
+                    #value[bad_indices]=np.nan
                 
-                min_data = np.min(value[indices])
-                max_data = np.max(value[indices])
+                    min_data = np.min(value[indices])
+                    max_data = np.max(value[indices])
                 
-                im = ax.imshow(value, origin="lower")
-                #ax.contour(value, 20, origin="lower")
+                    im = ax.imshow(value, origin="lower")
+                    #ax.contour(value, 20, origin="lower")
                 
-                divider = make_axes_locatable(ax)
-                cax = divider.append_axes("right", size="5%", pad=0.1)
+                    divider = make_axes_locatable(ax)
+                    cax = divider.append_axes("right", size="5%", pad=0.1)
 
-                # Set labels on things
-                ax.set_xticks(self.exp_vec1)
-                ax.set_yticks(self.exp_vec0)
-                ax.set_xticklabels([str(x) for x in self.local1])
-                ax.set_yticklabels([str(x) for x in self.local0])
-                ax.set_xlabel("Local size (dimension 1)")
-                ax.set_ylabel("Local size (dimension 0)")
-                ax.set_title(labels[n])
+                    # Set labels on things
+                    ax.set_xticks(self.exp_vec1)
+                    ax.set_yticks(self.exp_vec0)
+                    ax.set_xticklabels([str(x) for x in self.local1])
+                    ax.set_yticklabels([str(x) for x in self.local0])
+                    ax.set_xlabel("Local size (dimension 1)")
+                    ax.set_ylabel("Local size (dimension 0)")
+                    ax.set_title(labels[n])
 
-                # Put a color bar on the plot
-                plt.colorbar(mappable=im, cax=cax)
+                    # Put a color bar on the plot
+                    plt.colorbar(mappable=im, cax=cax)
 
-            fig.tight_layout()
-            plt.show()
+                fig.tight_layout()
+                plt.show()
             
-            return(self.timing_data)
+            
