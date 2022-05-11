@@ -1,9 +1,11 @@
 import numpy as np
+import math
 from matplotlib import pyplot as plt
 # Import axes machinery
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import subprocess
 from collections.abc import Iterable
+from collections import OrderedDict
 
 class MatMul:
     
@@ -123,9 +125,6 @@ class Hadamard:
         plt.show()
         
 class LocalOpt2D:
-    
-    def __init__(self, ndim):
-        self.ndim = ndim
         
     def make_data(self):
     
@@ -155,9 +154,9 @@ class LocalOpt2D:
             f" ({self.timing_data['L0_min']},{self.timing_data['L1_min']}).")
         
     def run_problem(self, cmds, plot=True):
-        # Make sure we have the solution
-        assert hasattr(self, "input_local"), "Must run make_data() before check_data()."
-
+        # Make the output data
+        self.make_data()
+    
         # Add the --local-file flag
         if isinstance(cmds, Iterable) and not isinstance(cmds, str):
             temp_cmds = list(cmds) + ["--local_file"]
@@ -186,6 +185,7 @@ class LocalOpt2D:
             
             self.timing_data = {
                 "min_ms" : times_ms.ravel()[index],
+                "std_ms" : times_stdev.ravel()[index],
                 "L0_min" : self.L0.ravel()[index],
                 "L1_min" : self.L1.ravel()[index]
             }
@@ -236,5 +236,56 @@ class LocalOpt2D:
 
                 fig.tight_layout()
                 plt.show()
+                
+            return self.timing_data
+                
+class TimingResults:
+    
+    def __init__(self):
+        self.results = OrderedDict()
+    
+    def add_result(self, result, label, benchmark=False):
+        if result is not None:
+            if len(self.results)==0 or benchmark:
+                self.benchmark_label = label
+            self.results[label] = result
+    
+    def delete_result(self, label):
+        if label in self.results:
+            del self.results["label"]
+    
+    def plot_results(self):
+        
+        if len(self.results)>0:
             
+            # Make up timing results
+            [fig, ax] = plt.subplots(1, 1, figsize=(6,6))
             
+            t_bench = self.results[self.benchmark_label]["min_ms"]
+            dt_bench = self.results[self.benchmark_label]["std_ms"]
+            
+            labels = []
+            speedups = []
+            errors = []
+            
+            for key, result in self.results.items():
+                
+                # Get time
+                t = result["min_ms"]
+                # Get error in time
+                dt = result["std_ms"]
+                
+                speedup  = t_bench / t
+                err = (1/t)**2.0 * dt_bench**2.0
+                err += (-t_bench/(t**2.0))**2.0 * dt**2.0
+                err = math.sqrt(err)
+                
+                speedups.append(speedup)
+                errors.append(err)
+                labels.append(key)
+            
+            ax.barh(labels, speedups, 0.8, xerr=errors, color="Orange")
+            ax.set_xlabel("Speedup, more is better")
+    
+            fig.tight_layout()
+            plt.show()
