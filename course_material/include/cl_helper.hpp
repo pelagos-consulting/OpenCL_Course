@@ -801,8 +801,12 @@ void h_optimise_local(
     );
     
     if (input_local != NULL) {
+        // Find the optimal local size 
+        
         // Number of rows to process
         size_t nexperiments = local_bytes/(ndim*sizeof(cl_uint));
+        
+        // Input_local is of size (nexperiments, ndim)
         
         // Number of data points per experiment
         size_t npoints = 2; // (avg, stdev)
