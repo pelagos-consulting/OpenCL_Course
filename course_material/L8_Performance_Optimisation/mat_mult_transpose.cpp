@@ -162,7 +162,7 @@ int main(int argc, char** argv) {
     size_t work_dim=2;
     
     // Desired local size for all
-    size_t local_size[]={ 4, 16 };
+    size_t local_size[]={ 16, 16 };
     
     // Create and run the transpose kernel
     cl_kernel kernel_transp=clCreateKernel(program, "transpose", &errcode);
@@ -250,8 +250,8 @@ int main(int argc, char** argv) {
     size_t nstats = 3;
     
     // Desired local size
-    local_size[0] = 8;
-    local_size[1] = 8;
+    local_size[0] = 16;
+    local_size[1] = 16;
     
     // Desired global_size
     size_t global_size[]={ N0_C, N1_C };
