@@ -738,7 +738,8 @@ void h_optimise_local(
         // Number of dimensions in the kernel
         size_t ndim,
         // Number of times to run the kernel per experiment
-        size_t nstats) {
+        size_t nstats,
+        double prior_times) {
     
     // Terrible default for local_size
     size_t temp_local_size[] = {16,1,1};
@@ -848,7 +849,7 @@ void h_optimise_local(
 
                 // Calculate the average and standard deviation
                 for (int s=0; s<nstats; s++) {
-                    avg+=experiment_msec[s];
+                    avg+=experiment_msec[s]+prior_times;
                 }
                 avg/=(cl_double)nstats;
                 
