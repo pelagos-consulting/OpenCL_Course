@@ -141,7 +141,54 @@ __kernel void mat_mult_prefetch (__global float* A,
 } 
 
 // matrix multiply kernel with pre-fetching
-__kernel void mat_mult_transpose (__global float* A, 
+__kernel void mat_mult_transpose_A (__global float* AT, 
+                        __global float* B, 
+                        __global float* C, 
+                        unsigned int N1_A, 
+                        unsigned int N0_C,
+                        unsigned int N1_C) { 
+            
+    // C is of size (N0_C, N1_C)
+    // AT is of size (N1_A, N0_C)
+    // B is of size (N1_A, N1_C)
+    
+    // i0 and i1 represent the coordinates in Matrix C 
+    // We assume row-major ordering for the matrices 
+    size_t i0=get_global_id(0); 
+    size_t i1=get_global_id(1); 
+    
+    // Scratch variable
+    float temp=0.0;
+    
+    // Guard mechanism to make sure we do not go
+    // outside the boundaries of matrix C 
+    if ((i0<N0_C) && (i1<N1_C)) {
+        
+        // Implement prefetching for A
+        __global float* AT_i0 = &AT[i0];
+        //prefetch(A_i0, (size_t)N1_A);
+
+        __global float* B_i1 = &B[i1];
+        //prefetch(B_i1, (size_t)N1_A);
+    
+        // Loop over columns of A and rows of B 
+        for (size_t n=0; n<N1_A; n++) {
+            
+            // A is of size (N0_C, N1_A)
+            // B is of size (N1_A, N1_C)
+            
+            // Loop across row i0 of A
+            // and across row i1 of B
+            temp += AT_i0[n*N0_C]*B_i1[n*N1_C];
+        } 
+        // Number of rows in C is same as number of rows in A
+        C[i0*N1_C+i1]=temp;
+    }
+} 
+
+
+// matrix multiply kernel with pre-fetching
+__kernel void mat_mult_transpose_B (__global float* A, 
                         __global float* BT, 
                         __global float* C, 
                         unsigned int N1_A, 
@@ -166,10 +213,10 @@ __kernel void mat_mult_transpose (__global float* A,
         
         // Implement prefetching for A
         __global float* A_i0 = &A[i0*N1_A];
-        prefetch(A_i0, (size_t)N1_A);
+        //prefetch(A_i0, (size_t)N1_A);
 
-        __global float* B_i1 = &BT[i1*N1_A];
-        prefetch(B_i1, (size_t)N1_A);
+        __global float* BT_i1 = &BT[i1*N1_A];
+        //prefetch(B_i1, (size_t)N1_A);
     
         // Loop over columns of A and rows of B 
         for (size_t n=0; n<N1_A; n++) {
@@ -179,7 +226,7 @@ __kernel void mat_mult_transpose (__global float* A,
             
             // Loop across row i0 of A
             // and across row i1 of B
-            temp += A_i0[n]*B_i1[n];
+            temp += A_i0[n]*BT_i1[n];
         } 
         // Number of rows in C is same as number of rows in A
         C[i0*N1_C+i1]=temp;

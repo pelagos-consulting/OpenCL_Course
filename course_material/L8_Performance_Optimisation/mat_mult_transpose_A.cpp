@@ -86,8 +86,8 @@ int main(int argc, char** argv) {
     // using raw binary files for input and output
     
     // A is of size (N0_C, N1_A)
+    // AT is of size (N1_A, N0_C)
     // B is of size (N1_A, N1_C)
-    // BT is of size (N1_C, N1_A)    
     // C is of size (N0_C, N1_C)
     
     cl_uint N1_A = NCOLS_A, N0_C = NROWS_C, N1_C = NCOLS_C;
@@ -102,7 +102,7 @@ int main(int argc, char** argv) {
     assert(nbytes_B==N1_A*N1_C*sizeof(float_type));
     nbytes_C=N0_C*N1_C*sizeof(float_type);
     
-    // Make Buffers on the compute device for matrices A, B, BT, and C
+    // Make Buffers on the compute device for matrices A, AT, B, and C
     float_type* array_C = (float_type*)h_alloc(nbytes_C);
 
     // Make buffer_A by copying from array_A
@@ -115,6 +115,16 @@ int main(int argc, char** argv) {
     );
     h_errchk(errcode, "Creating buffer_A");
     
+    // Create buffer AT in the normal manner
+    cl_mem buffer_AT = clCreateBuffer(
+        context, 
+        CL_MEM_READ_WRITE, 
+        nbytes_A, 
+        NULL, 
+        &errcode
+    );
+    h_errchk(errcode, "Creating buffer_AT");
+    
     // Make buffer_B using array_B as a backing store
     cl_mem buffer_B = clCreateBuffer(
         context, 
@@ -124,16 +134,6 @@ int main(int argc, char** argv) {
         &errcode
     );
     h_errchk(errcode, "Creating buffer_B");
-    
-    // Create buffer BT in the normal manner
-    cl_mem buffer_BT = clCreateBuffer(
-        context, 
-        CL_MEM_READ_WRITE, 
-        nbytes_B, 
-        NULL, 
-        &errcode
-    );
-    h_errchk(errcode, "Creating buffer_BT");
     
     // Allocate buffer C from pinned host memory
     cl_mem buffer_C = clCreateBuffer(
@@ -162,14 +162,14 @@ int main(int argc, char** argv) {
     size_t work_dim=2;
     
     // Desired local size for all
-    size_t local_size[]={ 4, 16 };
+    size_t local_size[]={ 16, 16 };
     
     // Create and run the transpose kernel
     cl_kernel kernel_transp=clCreateKernel(program, "transpose", &errcode);
     h_errchk(errcode, "Creating transpose kernel");
     
     // Desired global_size
-    const size_t global_size_transp[]={ N1_A, N1_C };
+    const size_t global_size_transp[]={ N0_C, N1_A };
     h_fit_global_size(global_size_transp, 
                       local_size, 
                       work_dim
@@ -177,19 +177,19 @@ int main(int argc, char** argv) {
     
     // Set kernel arguments
     h_errchk(
-        clSetKernelArg(kernel_transp, 0, sizeof(cl_mem), &buffer_B ),
+        clSetKernelArg(kernel_transp, 0, sizeof(cl_mem), &buffer_A ),
         "setting transpose kernel argument 0"
     );
     h_errchk(
-        clSetKernelArg(kernel_transp, 1, sizeof(cl_mem), &buffer_BT ),
+        clSetKernelArg(kernel_transp, 1, sizeof(cl_mem), &buffer_AT ),
         "setting transpose kernel argument 1"
     );
     h_errchk(
-        clSetKernelArg(kernel_transp, 2, sizeof(cl_uint), &N1_A ),
+        clSetKernelArg(kernel_transp, 2, sizeof(cl_uint), &N0_C ),
         "setting transpose kernel argument 2"
     );
     h_errchk(
-        clSetKernelArg(kernel_transp, 3, sizeof(cl_uint), &N1_C ),
+        clSetKernelArg(kernel_transp, 3, sizeof(cl_uint), &N1_A ),
         "setting transpose kernel argument 3"
     );
     
@@ -217,16 +217,16 @@ int main(int argc, char** argv) {
         NULL);        
     
     // Create and run the matrix multiplication kernel
-    cl_kernel kernel_mat_mult=clCreateKernel(program, "mat_mult_transpose", &errcode);
+    cl_kernel kernel_mat_mult=clCreateKernel(program, "mat_mult_transpose_A", &errcode);
     h_errchk(errcode, "Creating mat_mult_kernel");
         
     // Set arguments to the kernel (not thread safe)
     h_errchk(
-        clSetKernelArg(kernel_mat_mult, 0, sizeof(cl_mem), &buffer_A ),
+        clSetKernelArg(kernel_mat_mult, 0, sizeof(cl_mem), &buffer_AT ),
         "setting kernel argument 0"
     );
     h_errchk(
-        clSetKernelArg(kernel_mat_mult, 1, sizeof(cl_mem), &buffer_BT ),
+        clSetKernelArg(kernel_mat_mult, 1, sizeof(cl_mem), &buffer_B ),
         "setting kernel argument 1"
     );
     h_errchk(
@@ -250,8 +250,8 @@ int main(int argc, char** argv) {
     size_t nstats = 3;
     
     // Desired local size
-    local_size[0] = 8;
-    local_size[1] = 8;
+    local_size[0] = 16;
+    local_size[1] = 16;
     
     // Desired global_size
     size_t global_size[]={ N0_C, N1_C };
@@ -292,14 +292,17 @@ int main(int argc, char** argv) {
         clReleaseMemObject(buffer_A),
         "releasing buffer A"
     );
+    
+    h_errchk(
+        clReleaseMemObject(buffer_AT),
+        "releasing buffer AT"
+    );
+    
     h_errchk(
         clReleaseMemObject(buffer_B),
         "releasing buffer B"
     );
-    h_errchk(
-        clReleaseMemObject(buffer_BT),
-        "releasing buffer BT"
-    );
+
     h_errchk(
         clReleaseMemObject(buffer_C),
         "releasing buffer C"
