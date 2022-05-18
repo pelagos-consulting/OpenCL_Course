@@ -102,7 +102,7 @@ int main(int argc, char** argv) {
     assert(nbytes_B==N1_A*N1_C*sizeof(float_type));
     nbytes_C=N0_C*N1_C*sizeof(float_type);
     
-    // Make Buffers on the compute device for matrices A, B, BT, and C
+    // Make Buffers on the compute device for matrices A, B, and C
     float_type* array_C = (float_type*)h_alloc(nbytes_C);
 
     // Make buffer_A by copying from array_A
@@ -138,12 +138,15 @@ int main(int argc, char** argv) {
         "kernels_mat_mult.c", 
         &nbytes_src
     );
+    
+    // Desired local size
+    size_t local_size[]={ 4, 16 }; 
 
     // Turn this source code into a program
     cl_program program = h_build_program(kernel_source, context, device, NULL);
         
     // Create a kernel from the built program
-    cl_kernel kernel=clCreateKernel(program, "mat_mult_float", &errcode);
+    cl_kernel kernel=clCreateKernel(program, "mat_mult_local", &errcode);
     h_errchk(errcode, "Creating Kernel");
     
     // Set arguments to the kernel (not thread safe)
@@ -159,27 +162,35 @@ int main(int argc, char** argv) {
         clSetKernelArg(kernel, 2, sizeof(cl_mem), &buffer_C ),
         "setting kernel argument 2"
     );
+    // Set shared memory in argument 3
+    // Local size is going to be (local_size[0], N1_A)
     h_errchk(
-        clSetKernelArg(kernel, 3, sizeof(cl_uint), &N1_A ),
+        clSetKernelArg(kernel, 3, local_size[0]*N1_A*sizeof(cl_float), NULL ),
+        "setting kernel argument 3"
+    );
+    // Local size is going to be (local_size[1], N1_A)
+    h_errchk(
+        clSetKernelArg(kernel, 4, local_size[1]*N1_A*sizeof(cl_float), NULL ),
         "setting kernel argument 3"
     );
     h_errchk(
-        clSetKernelArg(kernel, 4, sizeof(cl_uint), &N0_C ),
+        clSetKernelArg(kernel, 5, sizeof(cl_uint), &N1_A ),
+        "setting kernel argument 3"
+    );
+    h_errchk(
+        clSetKernelArg(kernel, 6, sizeof(cl_uint), &N0_C ),
         "setting kernel argument 4"
     );
     h_errchk(
-        clSetKernelArg(kernel, 5, sizeof(cl_uint), &N1_C ),
+        clSetKernelArg(kernel, 7, sizeof(cl_uint), &N1_C ),
         "setting kernel argument 5"
     );
     
     // Number of dimensions in the kernel
-    size_t work_dim=2;
+    size_t work_dim = 2;
     
     // Number of statistical runs to do per experiment 
     size_t nstats = 3;
-    
-    // Desired local size
-    size_t local_size[]={ 4, 16 };
     
     // Desired global_size
     size_t global_size[]={ N0_C, N1_C };
@@ -195,7 +206,7 @@ int main(int argc, char** argv) {
         local_size,
         work_dim,
         nstats,
-        0
+        0.0
     );
 
     // Read memory from the buffer to the host

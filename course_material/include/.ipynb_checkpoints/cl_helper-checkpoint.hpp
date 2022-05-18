@@ -685,30 +685,31 @@ cl_double h_run_kernel(
     // Event management
     cl_event kernel_event;
     
-    // Now enqueue the kernel
-    h_errchk(
-        clEnqueueNDRangeKernel(command_queue,
-                                kernel,
-                                ndim,
-                                NULL,
-                                new_global,
-                                local_size,
-                                0,
-                                NULL,
-                                &kernel_event), 
+    // How much time did the kernel take?
+    cl_double elapsed_msec;
+    
+    // Enqueue the kernel
+    h_errchk(clEnqueueNDRangeKernel(
+        command_queue,
+        kernel,
+        ndim,
+        NULL,
+        new_global,
+        local_size,
+        0,
+        NULL,
+        &kernel_event),
         "Running the kernel"
     );
-
-    // How much time did the kernel take?
-    cl_double elapsed_msec=0.0;
     
+    // Profiling information
     if (profiling==CL_TRUE) {
-        // Get the time taken to run the kernel
         elapsed_msec = h_get_event_time_ms(
             &kernel_event, 
             NULL, 
-            NULL
-        );
+            NULL);
+    } else {
+        elapsed_msec = nan("");
     }
     
     // Free allocated memory
@@ -738,7 +739,8 @@ void h_optimise_local(
         // Number of dimensions in the kernel
         size_t ndim,
         // Number of times to run the kernel per experiment
-        size_t nstats) {
+        size_t nstats,
+        double prior_times) {
     
     // Terrible default for local_size
     size_t temp_local_size[] = {16,1,1};
@@ -848,7 +850,7 @@ void h_optimise_local(
 
                 // Calculate the average and standard deviation
                 for (int s=0; s<nstats; s++) {
-                    avg+=experiment_msec[s];
+                    avg+=experiment_msec[s]+prior_times;
                 }
                 avg/=(cl_double)nstats;
                 

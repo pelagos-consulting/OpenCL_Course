@@ -685,30 +685,31 @@ cl_double h_run_kernel(
     // Event management
     cl_event kernel_event;
     
-    // Now enqueue the kernel
-    h_errchk(
-        clEnqueueNDRangeKernel(command_queue,
-                                kernel,
-                                ndim,
-                                NULL,
-                                new_global,
-                                local_size,
-                                0,
-                                NULL,
-                                &kernel_event), 
+    // How much time did the kernel take?
+    cl_double elapsed_msec;
+    
+    // Enqueue the kernel
+    h_errchk(clEnqueueNDRangeKernel(
+        command_queue,
+        kernel,
+        ndim,
+        NULL,
+        new_global,
+        local_size,
+        0,
+        NULL,
+        &kernel_event),
         "Running the kernel"
     );
-
-    // How much time did the kernel take?
-    cl_double elapsed_msec=0.0;
     
+    // Profiling information
     if (profiling==CL_TRUE) {
-        // Get the time taken to run the kernel
         elapsed_msec = h_get_event_time_ms(
             &kernel_event, 
             NULL, 
-            NULL
-        );
+            NULL);
+    } else {
+        elapsed_msec = nan("");
     }
     
     // Free allocated memory
