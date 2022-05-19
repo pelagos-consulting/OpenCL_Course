@@ -8,12 +8,14 @@ Written by Dr Toby M. Potter
 #include <iostream>
 
 // Define the size of the arrays to be computed
-#define NCOLS_A 256
-#define NROWS_C 520
-#define NCOLS_C 1032
+#define NCOLS_A 1025
+#define NROWS_C 1025
+#define NCOLS_C 1025
 
 // Bring in helper header to manage boilerplate code
 #include "cl_helper.hpp"
+
+typedef cl_float float_type;
 
 int main(int argc, char** argv) {
    
@@ -91,13 +93,13 @@ int main(int argc, char** argv) {
     size_t nbytes_A, nbytes_B, nbytes_C;
 
     // Read the input data into arrays and sanity check
-    cl_float* array_A = (cl_float*)h_read_binary("array_A.dat", &nbytes_A);
-    cl_float* array_B = (cl_float*)h_read_binary("array_B.dat", &nbytes_B);
+    float_type* array_A = (float_type*)h_read_binary("array_A.dat", &nbytes_A);
+    float_type* array_B = (float_type*)h_read_binary("array_B.dat", &nbytes_B);
 
     // Sanity check on incoming data
-    assert(nbytes_A==N0_C*N1_A*sizeof(cl_float));   
-    assert(nbytes_B==N1_A*N1_C*sizeof(cl_float));
-    nbytes_C=N0_C*N1_C*sizeof(cl_float);
+    assert(nbytes_A==N0_C*N1_A*sizeof(float_type));   
+    assert(nbytes_B==N1_A*N1_C*sizeof(float_type));
+    nbytes_C=N0_C*N1_C*sizeof(float_type);
         
     // Number of elements we are going to use in a vector
     cl_uint vector_len = 8;
@@ -109,8 +111,8 @@ int main(int argc, char** argv) {
     cl_uint N1_A_star = N1_A_v*vector_len;
     
     // Resized bytes due to enlarged N1_A_star
-    size_t nbytes_A_star = N0_C*N1_A_star*sizeof(cl_float);
-    size_t nbytes_B_star = N1_C*N1_A_star*sizeof(cl_float);    
+    size_t nbytes_A_star = N0_C*N1_A_star*sizeof(float_type);
+    size_t nbytes_B_star = N1_C*N1_A_star*sizeof(float_type);    
     
     // A_star is of size (N0_C, N1_A_star)
     // B_star is of size (N1_A_star, N1_C)
@@ -166,13 +168,13 @@ int main(int argc, char** argv) {
     );
 
     // Zero out buffers A_star and B_star
-    cl_float zero=0.0f;
+    float_type zero=0.0f;
     h_errchk(
         clEnqueueFillBuffer(
             command_queue,
             buffer_A_star,
             &zero,
-            sizeof(cl_float),
+            sizeof(float_type),
             0,
             nbytes_A_star,
             0,
@@ -186,7 +188,7 @@ int main(int argc, char** argv) {
             command_queue,
             buffer_B_star,
             &zero,
-            sizeof(cl_float),
+            sizeof(float_type),
             0,
             nbytes_B_star,
             0,
@@ -207,8 +209,8 @@ int main(int argc, char** argv) {
     const size_t host_origin[] = {offset, row_id, slice_id};
     
         // Length of a row in the allocation (in bytes)
-    size_t buffer_row_pitch = N1_A_star * sizeof(cl_float); 
-    size_t host_row_pitch = N1_A * sizeof(cl_float);
+    size_t buffer_row_pitch = N1_A_star * sizeof(float_type); 
+    size_t host_row_pitch = N1_A * sizeof(float_type);
     
     // Number of bytes in a slice 
     size_t buffer_slice_pitch = N0_C * buffer_row_pitch;
@@ -240,7 +242,7 @@ int main(int argc, char** argv) {
     );
     
     // Length of a row (in bytes)
-    buffer_row_pitch = N1_C * sizeof(cl_float); 
+    buffer_row_pitch = N1_C * sizeof(float_type); 
     host_row_pitch = buffer_row_pitch;
     
     // Number of bytes in a slice 
@@ -377,7 +379,7 @@ int main(int argc, char** argv) {
         clSetKernelArg(
             kernel_mat_mult, 
             3, 
-            local_size[0]*N1_A_star*sizeof(cl_float), 
+            local_size[0]*N1_A_star*sizeof(float_type), 
             NULL
         ),
         "setting kernel argument 3"
@@ -387,7 +389,7 @@ int main(int argc, char** argv) {
         clSetKernelArg(
             kernel_mat_mult, 
             4, 
-            local_size[1]*N1_A_star*sizeof(cl_float), 
+            local_size[1]*N1_A_star*sizeof(float_type), 
             NULL
         ),
         "setting kernel argument 4"
@@ -430,7 +432,7 @@ int main(int argc, char** argv) {
     );
     
     // Map the buffer_C back to the host so we can write it to disk
-    cl_float* array_C = (cl_float*)clEnqueueMapBuffer(
+    float_type* array_C = (float_type*)clEnqueueMapBuffer(
         command_queue,
         buffer_C,
         CL_TRUE,

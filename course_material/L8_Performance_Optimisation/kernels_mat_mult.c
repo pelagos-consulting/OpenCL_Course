@@ -186,7 +186,6 @@ __kernel void mat_mult_transpose_A (__global float* AT,
     }
 } 
 
-
 // matrix multiply kernel with pre-fetching
 __kernel void mat_mult_transpose_B (__global float* A, 
                         __global float* BT, 
@@ -232,6 +231,76 @@ __kernel void mat_mult_transpose_B (__global float* A,
         C[i0*N1_C+i1]=temp;
     }
 } 
+
+// Matrix multiply kernel that uses local memory
+__kernel void mat_mult_patch (
+                        __global float* A_star, 
+                        __global float* BT_star, 
+                        __global float* C_star,
+                        unsigned int N1_A_star, 
+                        unsigned int N0_C,
+                        unsigned int N1_C) { 
+    
+    // A_star is of size (N0_C, N1_A_star), (i1,i2)
+    // BT_star is of size (N1_C, N1_A_star), (i1, i2)
+    // C_star is of size (N1_A_v, N0_C, N1_C), (i0, i1, i2)
+    
+    // i0 and i1 represent the coordinates in Matrix C 
+    // We assume row-major ordering for the matrices 
+    size_t i2=get_global_id(0); // Fastest dimension
+    size_t i1=get_global_id(1); 
+    size_t i0=get_global_id(2); // Slowest dimension
+    
+    // Get the number of vector elements
+    size_t N1_A_v = get_global_size(2);
+    
+    // start and end along N1_A_star
+    size_t start, end;
+    
+    // Get the start and end lengths to fill a block
+    get_start_end(N1_A_v, N1_A_star, i0, &start, &end);
+    
+    // Scratch variable
+    float temp=0.0;
+    
+    // Guard mechanism to make sure we do not go
+    // outside the boundaries of matrix C
+    if ((i1<N0_C) && (i2<N1_C)) {
+        
+        // Loop over columns of A and rows of B 
+        for (size_t n=start; n<end; n++) {
+            
+            // Loop across row i0 of A
+            // and down column i1 of B
+            temp+=A_star[i1*N1_A_star+n]*BT_star[i2*N1_A_star+n]; 
+        } 
+        // Number of rows in C is same as number of rows in A
+        C_star[i0*N0_C*N1_C+i1*N_C+i2]=temp;
+    }
+}
+
+__kernel void c_star_stack (
+                        __global float* C_star,
+                        __global float* C,
+                        unsigned int N1_A_v, 
+                        unsigned int N0_C,
+                        unsigned int N1_C) {    
+
+    // C_star is of size (N1_A_v, N0_C, N1_C) (n, i0, i1)
+    // C is of size (N0_C, N1_C) (i0, i1)
+    size_t i0=get_global_id(1); // Slowest dimension
+    size_t i1=get_global_id(0); // Fastest dimension
+    
+    // Temporary storage
+    float temp=0.0;
+    
+    if ((i0<N0_C) && (i1<N1_C)) {    
+        for (int n=0; n<N1_A_v; n++) {
+            temp+=C_star[n*N0_C*N1_C+i0*N1_C+i1];
+        }
+        C[i0*N1_C+i1]=temp;
+    }
+}
 
 // Matrix multiply kernel that uses local memory
 __kernel void mat_mult_local (

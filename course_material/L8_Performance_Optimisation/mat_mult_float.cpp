@@ -173,7 +173,7 @@ int main(int argc, char** argv) {
     );
     
     // Number of dimensions in the kernel
-    size_t work_dim=2;
+    size_t work_dim = 2;
     
     // Number of statistical runs to do per experiment 
     size_t nstats = 3;

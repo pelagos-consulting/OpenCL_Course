@@ -15,7 +15,8 @@ Written by Dr Toby M. Potter
 // Bring in helper header to manage boilerplate code
 #include "cl_helper.hpp"
 
-typedef cl_float float_type;
+typedef float_type float_type;
+
 
 int main(int argc, char** argv) {
    
@@ -55,7 +56,7 @@ int main(int argc, char** argv) {
     // Number of command queues to generate
     cl_uint num_command_queues = num_devices;
     
-    // Do we enable out-of-order execution? 
+    // Do we enable out-of-order execution 
     cl_bool ordering = CL_FALSE;
     
     // Do we enable profiling?
@@ -100,7 +101,7 @@ int main(int argc, char** argv) {
     assert(nbytes_A==N0_C*N1_A*sizeof(float_type));   
     assert(nbytes_B==N1_A*N1_C*sizeof(float_type));
     nbytes_C=N0_C*N1_C*sizeof(float_type);
-        
+    
     // Get the cache line size
     cl_uint cache_line_bytes;
     h_errchk(
@@ -115,7 +116,8 @@ int main(int argc, char** argv) {
     );
     
     // Number of elements we are going to use in a vector
-    cl_uint vector_len = 8;
+    cl_uint vector_len = cache_line_bytes/sizeof(float_type);
+
     // Integer (floored) number of vectors along axis of length N1_A
     cl_uint N1_A_v = N1_A/vector_len;
     // Increase the number of vectors if there is any remainder
@@ -130,8 +132,10 @@ int main(int argc, char** argv) {
     // A_star is of size (N0_C, N1_A_star)
     // B_star is of size (N1_A_star, N1_C)
     // BT_star is of size (N1_C, N1_A_star)
+    // C_star is of size (N1_A_v, N0_C, N1_C)
+    // C is of size (N0_C, N1_C)
     
-    // Make Buffers on the compute device for matrices A_star, B_star, BT_star, and C
+    // Make Buffers on the compute device for matrices A_star, B_star, BT_star, C_star, and C
     
     // Make buffer_A using array_A as a backing store
     cl_mem buffer_A_star = clCreateBuffer(
@@ -156,13 +160,23 @@ int main(int argc, char** argv) {
     // Create buffer BT in the normal manner
     cl_mem buffer_BT_star = clCreateBuffer(
         context, 
-        CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, 
+        CL_MEM_READ_WRITE, 
         nbytes_B_star, 
         NULL, 
         &errcode
     );
     h_errchk(errcode, "Creating buffer_BT");
     
+    // Allocate buffer C from pinned host memory
+    cl_mem buffer_C_star = clCreateBuffer(
+        context, 
+        CL_MEM_READ_WRITE, 
+        nbytes_C_star, 
+        NULL, 
+        &errcode
+    );
+    h_errchk(errcode, "Creating buffer_C_star");
+
     // Allocate buffer C from pinned host memory
     cl_mem buffer_C = clCreateBuffer(
         context, 
@@ -297,23 +311,27 @@ int main(int argc, char** argv) {
     cl_bool blocking=CL_TRUE;
     
     // Number of dimensions in the kernel
-    size_t work_dim=2;
+    size_t work_dim_transp=2;
     
     // Desired local size for all
-    const size_t local_size[]={ 8, 8 };
+    const size_t local_size_transp[]={ 4, 32 };
     
-    // Create and run the transpose kernel
-    cl_kernel kernel_transp=clCreateKernel(program, "transpose", &errcode);
+    // Create the transpose kernel
+    cl_kernel kernel_transp=clCreateKernel(
+        program, 
+        "transpose", 
+        &errcode
+    );
     h_errchk(errcode, "Creating transpose kernel");
-    
+
     // Desired global_size
     const size_t global_size_transp[]={ N1_A_star, N1_C };
     h_fit_global_size(global_size_transp, 
-                      local_size, 
-                      work_dim
+                      local_size_transp, 
+                      work_dim_transp
     );    
     
-    // Set kernel arguments
+    // Set arguments for the transpose kernel
     h_errchk(
         clSetKernelArg(kernel_transp, 0, sizeof(cl_mem), &buffer_B_star ),
         "setting transpose kernel argument 0"
@@ -332,46 +350,100 @@ int main(int argc, char** argv) {
     );
     
     // Event for the transpose kernel
-    cl_event transp_event;
+    cl_event event_transp;
     
     // Now enqueue the transpose kernel
     h_errchk(
         clEnqueueNDRangeKernel(command_queue,
                                 kernel_transp,
-                                work_dim,
+                                work_dim_transp,
                                 NULL,
                                 global_size_transp,
-                                local_size,
+                                local_size_transp,
                                 0,
                                 NULL,
-                                &transp_event), 
+                                &event_transp), 
         "Running the transpose kernel"
     );
-    
     // Wait on the kernel to finish and time it takes
     cl_double run_transp_ms = h_get_event_time_ms(
-        &transp_event, 
+        &event_transp, 
         "Running transpose kernel",
         NULL
     );
-    
-    // Create and run the matrix multiplication kernel
-    cl_kernel kernel_mat_mult=clCreateKernel(
+        
+    // Create the stacking kernel
+    cl_kernel kernel_stack=clCreateKernel(
         program, 
-        "mat_mult_local_transp_vec", 
+        "c_star_stack", 
         &errcode
     );
-    h_errchk(errcode, "Creating mat_mult_kernel");
+    h_errchk(errcode, "Creating stacking kernel.");
+
+    // Set kernel arguments for the stacking kernel
+    h_errchk(
+        clSetKernelArg(kernel_stack, 0, sizeof(cl_mem), &buffer_C_star ),
+        "setting transpose kernel argument 0"
+    );
+    h_errchk(
+        clSetKernelArg(kernel_stack, 1, sizeof(cl_mem), &buffer_C ),
+        "setting transpose kernel argument 1"
+    );
+    h_errchk(
+        clSetKernelArg(kernel_stack, 2, sizeof(cl_uint), &N1_A_v ),
+        "setting transpose kernel argument 2"
+    );
+    h_errchk(
+        clSetKernelArg(kernel_stack, 3, sizeof(cl_uint), &N0_C ),
+        "setting transpose kernel argument 3"
+    );
+    h_errchk(
+        clSetKernelArg(kernel_stack, 4, sizeof(cl_uint), &N1_C ),
+        "setting transpose kernel argument 4"
+    );
+    
+    // Event for the stacking kernel
+    cl_event event_stack;
+    // Now enqueue the kernel for stacking so we can get a
+    // performance metric
+    size_t work_dim_stack=2;
+    const size_t global_size_stack[] = { N1_C, N0_C };
+    size_t local_size_stack[] = {4, 32};
+    h_fit_global_size(global_size_stack, 
+                      local_size_stack, 
+                      work_dim_stack
+    ); 
+    h_errchk(
+        clEnqueueNDRangeKernel(command_queue,
+                                kernel_stack,
+                                work_dim_stack,
+                                NULL,
+                                global_size_stack,
+                                local_size_stack,
+                                0,
+                                NULL,
+                                &event_stack), 
+        "Running the kernel"
+    );
+    // Wait on the kernel to finish and time it
+    cl_double run_stack_ms = h_get_event_time_ms(
+        &event_stack, 
+        "Running stacking kernel",
+        NULL
+    );
+    
+    // Create the matrix multiplication kernel
+    cl_kernel kernel_mat_mult=clCreateKernel(
+        program, 
+        "mat_mult_patch", 
+        &errcode
+    );
+    h_errchk(errcode, "Creating mat_mult_patch kernel.");
     
     // Desired global_size
-    const size_t global_size_mat_mult[]={ N0_C, N1_C };
-    
-    // Enlarge the global size so that 
-    // an integer number of local sizes fits within it
-    h_fit_global_size(global_size_mat_mult, 
-                      local_size, 
-                      work_dim
-    );
+    size_t work_dim_mat_mult = 3;
+    size_t global_size_mat_mult[]={ N1_C, N0_C, (size_t)N1_A_v };
+    size_t local_size_mat_mult[] = { 8, 8, 1};
     
     // Set arguments to the kernel (not thread safe)
     h_errchk(
@@ -383,67 +455,54 @@ int main(int argc, char** argv) {
         "setting kernel argument 1"
     );
     h_errchk(
-        clSetKernelArg(kernel_mat_mult, 2, sizeof(cl_mem), &buffer_C ),
+        clSetKernelArg(kernel_mat_mult, 2, sizeof(cl_mem), &buffer_C_star ),
         "setting kernel argument 2"
     );
-    // Set shared memory in argument 3
-    // Local size is going to be (local_size[0], N1_A)
     h_errchk(
-        clSetKernelArg(
-            kernel_mat_mult, 
-            3, 
-            local_size[0]*N1_A_star*sizeof(float_type), 
-            NULL
-        ),
+        clSetKernelArg(kernel_mat_mult, 3, sizeof(cl_uint), &N1_A_star ),
         "setting kernel argument 3"
     );
-    // Local size is going to be (local_size[1], N1_A)
     h_errchk(
-        clSetKernelArg(
-            kernel_mat_mult, 
-            4, 
-            local_size[1]*N1_A_star*sizeof(float_type), 
-            NULL
-        ),
+        clSetKernelArg(kernel_mat_mult, 4, sizeof(cl_uint), &N0_C ),
         "setting kernel argument 4"
     );
     h_errchk(
-        clSetKernelArg(kernel_mat_mult, 5, sizeof(cl_uint), &N1_A_v ),
+        clSetKernelArg(kernel_mat_mult, 5, sizeof(cl_uint), &N1_C ),
         "setting kernel argument 5"
     );
-    h_errchk(
-        clSetKernelArg(kernel_mat_mult, 6, sizeof(cl_uint), &N0_C ),
-        "setting kernel argument 6"
-    );
-    h_errchk(
-        clSetKernelArg(kernel_mat_mult, 7, sizeof(cl_uint), &N1_C ),
-        "setting kernel argument 7"
-    );
     
-    // Event for the matrix multiplication kernel
-    cl_event kernel_event;
+    h_optimise_local(
+        argc,
+        argv,
+        command_queue,
+        kernel_mat_mult,
+        device,
+        // Desired global size of the problem
+        global_size_mat_mult,
+        // Desired local_size of the problem, use NULL for defaults
+        local_size_mat_mult,
+        // Number of dimensions in the kernel
+        work_dim_mat_mult,
+        // Number of times to run the kernel per experiment
+        size_t nstats,
+        run_stack_ms+run_transp_ms)
     
-    // Now enqueue the kernel
+    
+    
+    // Run stacking kernel again to produce the result
     h_errchk(
         clEnqueueNDRangeKernel(command_queue,
-                                kernel_mat_mult,
-                                work_dim,
+                                kernel_stack,
+                                work_dim_stack,
                                 NULL,
-                                global_size_mat_mult,
-                                local_size,
+                                global_size_stack,
+                                local_size_stack,
                                 0,
                                 NULL,
-                                &kernel_event), 
+                                &stack_event), 
         "Running the kernel"
-    );
+    ); 
 
-    // Wait on the kernel to finish and time it
-    cl_double run_kernel_ms = h_get_event_time_ms(
-        &kernel_event, 
-        "Running mat_mul_transp_vec kernel",
-        NULL
-    );
-    
     // Map the buffer_C back to the host so we can write it to disk
     float_type* array_C = (float_type*)clEnqueueMapBuffer(
         command_queue,
