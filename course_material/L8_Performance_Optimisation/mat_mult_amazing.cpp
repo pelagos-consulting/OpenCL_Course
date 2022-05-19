@@ -471,6 +471,7 @@ int main(int argc, char** argv) {
         "setting kernel argument 5"
     );
     
+    size_t nstats=3;
     h_optimise_local(
         argc,
         argv,
@@ -484,10 +485,8 @@ int main(int argc, char** argv) {
         // Number of dimensions in the kernel
         work_dim_mat_mult,
         // Number of times to run the kernel per experiment
-        size_t nstats,
-        run_stack_ms+run_transp_ms)
-    
-    
+        nstats,
+        run_stack_ms+run_transp_ms);
     
     // Run stacking kernel again to produce the result
     h_errchk(
@@ -500,7 +499,7 @@ int main(int argc, char** argv) {
                                 0,
                                 NULL,
                                 &stack_event), 
-        "Running the kernel"
+        "Running the stacking kernel"
     ); 
 
     // Map the buffer_C back to the host so we can write it to disk
@@ -546,6 +545,10 @@ int main(int argc, char** argv) {
     h_errchk(
         clReleaseMemObject(buffer_BT_star),
         "releasing buffer B"
+    );
+    h_errchk(
+        clReleaseMemObject(buffer_C),
+        "releasing buffer C_star"
     );
     h_errchk(
         clReleaseMemObject(buffer_C),
