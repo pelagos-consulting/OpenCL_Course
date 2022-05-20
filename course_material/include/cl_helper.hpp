@@ -740,15 +740,18 @@ void h_optimise_local(
         size_t nstats,
         double prior_times) {
     
+    // Maximum number of dimensions permitted
+    const int max_ndim = 3;
+    
     // Terrible default for local_size
-    size_t temp_local_size[] = {16,1,1};
+    size_t temp_local_size[max_ndim] = {16,1,1};
     if (local_size != NULL) {
         for (size_t i=0; i<ndim; i++) {
             temp_local_size[i] = local_size[i];
         }
     }
     
-    // Array of ints for local size (nexperiments, ndim)
+    // Array of ints for local size (nexperiments, max_dims)
     // With row_major ordering
     cl_uint *input_local = NULL;
     size_t local_bytes = 0;
@@ -804,9 +807,9 @@ void h_optimise_local(
         // Find the optimal local size 
         
         // Number of rows to process
-        size_t nexperiments = local_bytes/(ndim*sizeof(cl_uint));
+        size_t nexperiments = local_bytes/(max_ndim*sizeof(cl_uint));
         
-        // Input_local is of size (nexperiments, ndim)
+        // Input_local is of size (nexperiments, max_ndim)
         
         // Number of data points per experiment
         size_t npoints = 2; // (avg, stdev)
@@ -823,8 +826,8 @@ void h_optimise_local(
             int valid_size = 1;
             
             // Fill local size
-            for (int i=0; i<ndim; i++) {
-                temp_local_size[i]=(size_t)input_local[n*ndim+i];
+            for (int i=0; i<max_ndim; i++) {
+                temp_local_size[i]=(size_t)input_local[n*max_ndim+i];
                 work_group_size*=temp_local_size[i];
                 // Check to make sure we aren't exceeding a limit
                 valid_size*=(temp_local_size[i]<=max_size[i]);

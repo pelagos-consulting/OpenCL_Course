@@ -260,6 +260,8 @@ __kernel void mat_mult_patch (
     // Get the start and end lengths to fill a block
     get_start_end(N1_A_v, N1_A_star, i0, &start, &end);
     
+    printf("Start is %lu, end is %lu\n", start, end);
+    
     // Scratch variable
     float temp=0.0;
     
@@ -273,6 +275,84 @@ __kernel void mat_mult_patch (
             // Loop across row i0 of A
             // and down column i1 of B
             temp+=A_star[i1*N1_A_star+n]*BT_star[i2*N1_A_star+n]; 
+        } 
+        // Number of rows in C is same as number of rows in A
+        C_star[i0*N0_C*N1_C+i1*N1_C+i2]=temp;
+    }
+}
+
+// Matrix multiply kernel that uses local memory
+__kernel void mat_mult_patch_local (
+                        __global float* A_star, 
+                        __global float* BT_star, 
+                        __global float* C_star,
+                        __local float* shared_A_star,
+                        __local float* shared_BT_star,
+                        unsigned int N1_A_star, 
+                        unsigned int N0_C,
+                        unsigned int N1_C,
+                        unsigned int vector_len) { 
+    
+    // A_star is of size (N0_C, N1_A_star), (i1, n)
+    // BT_star is of size (N1_C, N1_A_star), (i2, n)
+    // C_star is of size (N1_A_v, N0_C, N1_C), (i0, i1, i2)
+    
+    size_t L0 = get_local_size(1);
+    size_t L1 = get_local_size(0);
+    
+    size_t s0 = get_local_id(1);
+    size_t s1 = get_local_id(0);
+    
+    // shared_A_star is of size (L0, vector_len) (s0, n)
+    // shared_BT_star is of size (L1, vector_len) (s1, n)
+    
+    // i0 and i1 represent the coordinates in Matrix C 
+    // We assume row-major ordering for the matrices 
+    size_t i2=get_global_id(0); // Fastest dimension
+    size_t i1=get_global_id(1); 
+    size_t i0=get_global_id(2); // Slowest dimension
+    
+    // Get the number of vector elements
+    size_t N1_A_v = get_global_size(2);
+    
+    // start and end along N1_A_star
+    size_t start, end;
+    
+    // Get the start and end lengths to fill a block
+    get_start_end(N1_A_v, N1_A_star, i0, &start, &end);
+    
+    // Fetch local memory into shared_A_star and shared_BT_star
+    
+    // Fill the rows of shared_A_star and shared_BT_star
+    if (i1<N0_C) {
+        for (int n = start; n<end; n++) {
+            shared_A_star[s0*vector_len+n-start] = A_star[i1*N1_A_star+n];
+        }
+    }
+    if (i2<N1_C) {
+        for (int n = start; n<end; n++) {
+            shared_BT_star[s1*vector_len+n-start] = BT_star[i2*N1_A_star+n];
+        }
+    }       
+    
+    // Enqueue a local barrier to make sure shared memory is filled
+    barrier(CLK_LOCAL_MEM_FENCE);
+    
+    // Scratch variable
+    float temp=0.0;
+    
+    // Guard mechanism to make sure we do not go
+    // outside the boundaries of matrix C
+    if ((i1<N0_C) && (i2<N1_C)) {
+        
+        // Loop over columns of A and rows of B 
+        for (size_t n=0; n<(end-start); n++) {
+            
+            // Loop across row i0 of A
+            // and down column i1 of B
+            //temp+=A_star[i1*N1_A_star+n]*BT_star[i2*N1_A_star+n];
+            temp+=shared_A_star[s0*vector_len+n]*shared_BT_star[s1*vector_len+n];
+            
         } 
         // Number of rows in C is same as number of rows in A
         C_star[i0*N0_C*N1_C+i1*N1_C+i2]=temp;

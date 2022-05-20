@@ -8,9 +8,9 @@ Written by Dr Toby M. Potter
 #include <iostream>
 
 // Define the size of the arrays to be computed
-#define NCOLS_A 513
-#define NROWS_C 513
-#define NCOLS_C 513
+#define NCOLS_A 1025
+#define NROWS_C 1025
+#define NCOLS_C 1025
 
 // Bring in helper header to manage boilerplate code
 #include "cl_helper.hpp"
@@ -18,7 +18,7 @@ Written by Dr Toby M. Potter
 typedef cl_float float_type;
 
 int main(int argc, char** argv) {
-   
+    
     // Parse arguments and set the target device
     cl_device_type target_device;
     cl_uint dev_index = h_parse_args(argc, argv, &target_device);
@@ -95,14 +95,15 @@ int main(int argc, char** argv) {
     // Read the input data into arrays and sanity check
     float_type* array_A = (float_type*)h_read_binary("array_A.dat", &nbytes_A);
     float_type* array_B = (float_type*)h_read_binary("array_B.dat", &nbytes_B);
-
+    
     // Sanity check on incoming data
     assert(nbytes_A == N0_C*N1_A*sizeof(float_type));   
     assert(nbytes_B == N1_A*N1_C*sizeof(float_type));
     nbytes_C = N0_C*N1_C*sizeof(float_type);
-
+    
     // Get the cache line size
-    cl_uint cache_line_bytes;
+    cl_uint cache_line_bytes=64;
+
     h_errchk(
         clGetDeviceInfo(
             device,
@@ -113,9 +114,13 @@ int main(int argc, char** argv) {
         ),
         "Getting the cache line size"
     );
-    
+     
+    // Sanity check the cache line size;
+    cache_line_bytes = std::max(cache_line_bytes, (cl_uint)64);
+    printf("Cache line size is %lu\n", cache_line_bytes);
+        
     // Number of elements we are going to use in a vector
-    cl_uint vector_len = cache_line_bytes/sizeof(float_type);
+    cl_uint vector_len = 2*cache_line_bytes/sizeof(float_type);
 
     // Integer (floored) number of vectors along axis of length N1_A
     cl_uint N1_A_v = N1_A/vector_len;
@@ -134,7 +139,6 @@ int main(int argc, char** argv) {
     // BT_star is of size (N1_C, N1_A_star)
     // C_star is of size (N1_A_v, N0_C, N1_C)
     // C is of size (N0_C, N1_C)
-    
     
     // Make Buffers on the compute device for matrices A_star, B_star, BT_star, C_star, and C
     
@@ -194,7 +198,7 @@ int main(int argc, char** argv) {
         "kernels_mat_mult.c", 
         &nbytes_src
     );
-
+    
     // Zero out buffers A_star and B_star
     float_type zero=0.0;
     h_errchk(

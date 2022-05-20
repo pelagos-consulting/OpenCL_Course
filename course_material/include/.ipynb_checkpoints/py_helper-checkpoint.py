@@ -124,38 +124,37 @@ class Hadamard:
         fig.tight_layout()
         plt.show()
         
-class LocalOpt2D:
-        
-    def make_data(self):
-    
-        # input_local.dat is of type np.uint32
-        
-        self.exp_vec0 = np.arange(0,10,1)
-        self.exp_vec1 = np.arange(0,10,1)        
-        
-        self.local0 = np.uint32(2**self.exp_vec0)
-        self.local1 = np.uint32(2**self.exp_vec1)
-        
-        # Turn local0 and local1 into a meshgrid of experiments
-        self.L0, self.L1 = np.meshgrid(self.local0, self.local1, indexing="ij")
-        
-        self.nexperiments = self.local0.size*self.local1.size
-        self.input_local = np.zeros((self.local0.size, self.local1.size, 2), dtype=np.uint32)
-        self.input_local[:,:,0] = self.L0
-        self.input_local[:,:,1] = self.L1
-        
-        # Write out to file
-        self.input_local.tofile("input_local.dat")
+class LocalOpt():
 
     def report_timings(self):
         assert hasattr(self, "timing_data"), "Must execute run_problem() before report_timings()."
         
         print(f"Min time is {self.timing_data['min_ms']:.3f} ms, at the local size of" 
-            f" ({self.timing_data['L0_min']},{self.timing_data['L1_min']}).")
+            f" ({self.timing_data['L0_min']},{self.timing_data['L1_min']},{self.timing_data['L2_min']}).")
         
-    def run_problem(self, cmds, plot=True):
-        # Make the output data
-        self.make_data()
+    def run_problem(self, 
+                    cmds,
+                    # Vectors of local sizes
+                    local0=np.uint32(2**np.arange(0,10,1)),
+                    local1=np.uint32(2**np.arange(0,10,1)),
+                    local2=np.uint32(2**np.arange(0,1,1)),
+                    plot=True):
+        
+        self.local0 = local0
+        self.local1 = local1
+        self.local2 = local2
+        
+        # Make up the optimisation grid
+        self.L0, self.L1, self.L2 = np.meshgrid(self.local0, self.local1, self.local2, indexing="ij")    
+    
+        self.nexperiments = self.L0.size
+        self.input_local = np.zeros((*self.L0.shape, 3), dtype=np.uint32)
+        self.input_local[...,0] = self.L0
+        self.input_local[...,1] = self.L1
+        self.input_local[...,2] = self.L2
+        
+        # Write out to file
+        self.input_local.tofile("input_local.dat")        
     
         # Add the --local-file flag
         if isinstance(cmds, Iterable) and not isinstance(cmds, str):
@@ -171,13 +170,13 @@ class LocalOpt2D:
         
             # Get the output data
             self.output_local = np.fromfile("output_local.dat", dtype=np.float64).reshape(
-                self.local0.size, self.local1.size, 2, order="C"
+                self.local0.size, self.local1.size, self.local2.size, 2, order="C"
             )
             
             # Data to plot
             #data = [self.output_local[:,:,0], self.output_local[:,:,1]]
-            times_ms = self.output_local[:,:,0]
-            times_stdev = self.output_local[:,:,1]
+            times_ms = self.output_local[...,0]
+            times_stdev = self.output_local[...,1]
             data = [times_ms] #, times_stdev]
             
             # Find the minimum time
@@ -187,7 +186,8 @@ class LocalOpt2D:
                 "min_ms" : times_ms.ravel()[index],
                 "std_ms" : times_stdev.ravel()[index],
                 "L0_min" : self.L0.ravel()[index],
-                "L1_min" : self.L1.ravel()[index]
+                "L1_min" : self.L1.ravel()[index],
+                "L2_min" : self.L2.ravel()[index]
             }
             
             # Report timings
@@ -216,15 +216,15 @@ class LocalOpt2D:
                     min_data = np.min(value[indices])
                     max_data = np.max(value[indices])
                 
-                    im = ax.imshow(value, origin="lower")
+                    im = ax.imshow(value[...,0], vmin=min_data, vmax=max_data, origin="lower")
                     #ax.contour(value, 20, origin="lower")
                 
                     divider = make_axes_locatable(ax)
                     cax = divider.append_axes("right", size="5%", pad=0.1)
 
                     # Set labels on things
-                    ax.set_xticks(self.exp_vec1)
-                    ax.set_yticks(self.exp_vec0)
+                    ax.set_xticks(np.arange(0,self.local1.size,1))
+                    ax.set_yticks(np.arange(0,self.local0.size,1))
                     ax.set_xticklabels([str(x) for x in self.local1])
                     ax.set_yticklabels([str(x) for x in self.local0])
                     ax.set_xlabel("Local size (dimension 1)")
