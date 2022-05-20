@@ -686,7 +686,7 @@ cl_double h_run_kernel(
     cl_event kernel_event;
     
     // How much time did the kernel take?
-    cl_double elapsed_msec;
+    cl_double elapsed_msec=0.0;
     
     // Enqueue the kernel
     h_errchk(clEnqueueNDRangeKernel(
@@ -708,8 +708,6 @@ cl_double h_run_kernel(
             &kernel_event, 
             NULL, 
             NULL);
-    } else {
-        elapsed_msec = nan("");
     }
     
     // Free allocated memory

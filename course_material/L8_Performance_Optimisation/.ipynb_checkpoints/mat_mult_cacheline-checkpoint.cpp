@@ -8,15 +8,14 @@ Written by Dr Toby M. Potter
 #include <iostream>
 
 // Define the size of the arrays to be computed
-#define NCOLS_A 1025
-#define NROWS_C 1025
-#define NCOLS_C 1025
+#define NCOLS_A 513
+#define NROWS_C 513
+#define NCOLS_C 513
 
 // Bring in helper header to manage boilerplate code
 #include "cl_helper.hpp"
 
-typedef float_type float_type;
-
+typedef cl_float float_type;
 
 int main(int argc, char** argv) {
    
@@ -98,10 +97,10 @@ int main(int argc, char** argv) {
     float_type* array_B = (float_type*)h_read_binary("array_B.dat", &nbytes_B);
 
     // Sanity check on incoming data
-    assert(nbytes_A==N0_C*N1_A*sizeof(float_type));   
-    assert(nbytes_B==N1_A*N1_C*sizeof(float_type));
-    nbytes_C=N0_C*N1_C*sizeof(float_type);
-    
+    assert(nbytes_A == N0_C*N1_A*sizeof(float_type));   
+    assert(nbytes_B == N1_A*N1_C*sizeof(float_type));
+    nbytes_C = N0_C*N1_C*sizeof(float_type);
+
     // Get the cache line size
     cl_uint cache_line_bytes;
     h_errchk(
@@ -109,7 +108,7 @@ int main(int argc, char** argv) {
             device,
             CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE,
             sizeof(cl_uint),
-            &cache_line_bytes
+            &cache_line_bytes,
             NULL
         ),
         "Getting the cache line size"
@@ -128,12 +127,14 @@ int main(int argc, char** argv) {
     // Resized bytes due to enlarged N1_A_star
     size_t nbytes_A_star = N0_C*N1_A_star*sizeof(float_type);
     size_t nbytes_B_star = N1_C*N1_A_star*sizeof(float_type);    
+    size_t nbytes_C_star = nbytes_C*N1_A_v;
     
     // A_star is of size (N0_C, N1_A_star)
     // B_star is of size (N1_A_star, N1_C)
     // BT_star is of size (N1_C, N1_A_star)
     // C_star is of size (N1_A_v, N0_C, N1_C)
     // C is of size (N0_C, N1_C)
+    
     
     // Make Buffers on the compute device for matrices A_star, B_star, BT_star, C_star, and C
     
@@ -195,7 +196,7 @@ int main(int argc, char** argv) {
     );
 
     // Zero out buffers A_star and B_star
-    float_type zero=0.0f;
+    float_type zero=0.0;
     h_errchk(
         clEnqueueFillBuffer(
             command_queue,
@@ -471,7 +472,10 @@ int main(int argc, char** argv) {
         "setting kernel argument 5"
     );
     
+    // Number of statistical runs per experiment
     size_t nstats=3;
+    
+    // Optimise the local size for this
     h_optimise_local(
         argc,
         argv,
@@ -498,7 +502,7 @@ int main(int argc, char** argv) {
                                 local_size_stack,
                                 0,
                                 NULL,
-                                &stack_event), 
+                                &event_stack), 
         "Running the stacking kernel"
     ); 
 
@@ -547,7 +551,7 @@ int main(int argc, char** argv) {
         "releasing buffer B"
     );
     h_errchk(
-        clReleaseMemObject(buffer_C),
+        clReleaseMemObject(buffer_C_star),
         "releasing buffer C_star"
     );
     h_errchk(

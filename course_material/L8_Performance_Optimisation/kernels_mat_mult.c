@@ -275,7 +275,7 @@ __kernel void mat_mult_patch (
             temp+=A_star[i1*N1_A_star+n]*BT_star[i2*N1_A_star+n]; 
         } 
         // Number of rows in C is same as number of rows in A
-        C_star[i0*N0_C*N1_C+i1*N_C+i2]=temp;
+        C_star[i0*N0_C*N1_C+i1*N1_C+i2]=temp;
     }
 }
 
