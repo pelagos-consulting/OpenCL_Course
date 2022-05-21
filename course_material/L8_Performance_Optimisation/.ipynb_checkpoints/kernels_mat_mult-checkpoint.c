@@ -297,20 +297,20 @@ __kernel void mat_mult_patch_local (
     // BT_star is of size (N1_C, N1_A_star), (i2, n)
     // C_star is of size (N1_A_v, N0_C, N1_C), (i0, i1, i2)
     
-    size_t L0 = get_local_size(1);
-    size_t L1 = get_local_size(0);
-    
-    size_t s0 = get_local_id(1);
-    size_t s1 = get_local_id(0);
-    
-    // shared_A_star is of size (L0, vector_len) (s0, n)
-    // shared_BT_star is of size (L1, vector_len) (s1, n)
-    
     // i0 and i1 represent the coordinates in Matrix C 
     // We assume row-major ordering for the matrices 
     size_t i2=get_global_id(0); // Fastest dimension
     size_t i1=get_global_id(1); 
     size_t i0=get_global_id(2); // Slowest dimension
+    
+    // shared_A_star is of size (L0, vector_len) (s0, n)
+    // shared_BT_star is of size (L1, vector_len) (s1, n)
+    size_t L0 = get_local_size(1); // Slowest dimension
+    size_t L1 = get_local_size(0); // Fastest dimension
+    
+    // index within local memory
+    size_t s0 = get_local_id(1); // Slowest dimension
+    size_t s1 = get_local_id(0); // fastest dimension
     
     // Get the number of vector elements
     size_t N1_A_v = get_global_size(2);
@@ -318,24 +318,26 @@ __kernel void mat_mult_patch_local (
     // start and end along N1_A_star
     size_t start, end;
     
-    // Get the start and end lengths to fill a block
+    // Get the start and end lengths of the subsection along N1_A_star
     get_start_end(N1_A_v, N1_A_star, i0, &start, &end);
     
     // Fetch local memory into shared_A_star and shared_BT_star
     
     // Fill the rows of shared_A_star and shared_BT_star
-    if (i1<N0_C) {
+    // From row i1 of A_star
+    if ((i1<N0_C) && (s1==0)) {
         for (int n = start; n<end; n++) {
             shared_A_star[s0*vector_len+n-start] = A_star[i1*N1_A_star+n];
         }
     }
-    if (i2<N1_C) {
+    // From row i2 of BT_star
+    if ((i2<N1_C) && (s0==0)) {
         for (int n = start; n<end; n++) {
             shared_BT_star[s1*vector_len+n-start] = BT_star[i2*N1_A_star+n];
         }
     }       
     
-    // Enqueue a local barrier to make sure shared memory is filled
+    // Enqueue a local barrier to ensure shared memory is filled
     barrier(CLK_LOCAL_MEM_FENCE);
     
     // Scratch variable
