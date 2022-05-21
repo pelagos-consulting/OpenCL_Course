@@ -260,8 +260,6 @@ __kernel void mat_mult_patch (
     // Get the start and end lengths to fill a block
     get_start_end(N1_A_v, N1_A_star, i0, &start, &end);
     
-    printf("Start is %lu, end is %lu\n", start, end);
-    
     // Scratch variable
     float temp=0.0;
     
@@ -325,20 +323,23 @@ __kernel void mat_mult_patch_local (
     
     // Fill the rows of shared_A_star and shared_BT_star
     // From row i1 of A_star
-    if ((i1<N0_C) && (s1==0)) {
+    if (i1<N0_C) {
         for (int n = start; n<end; n++) {
             shared_A_star[s0*vector_len+n-start] = A_star[i1*N1_A_star+n];
+            //shared_A_star[s0*vector_len+n-start] = 2.0;
         }
     }
     // From row i2 of BT_star
-    if ((i2<N1_C) && (s0==0)) {
+    if (i2<N1_C) {
         for (int n = start; n<end; n++) {
             shared_BT_star[s1*vector_len+n-start] = BT_star[i2*N1_A_star+n];
+            //shared_BT_star[s1*vector_len+n-start] = 2.0;
         }
     }       
     
     // Enqueue a local barrier to ensure shared memory is filled
     barrier(CLK_LOCAL_MEM_FENCE);
+    barrier(CLK_GLOBAL_MEM_FENCE);
     
     // Scratch variable
     float temp=0.0;
@@ -352,10 +353,10 @@ __kernel void mat_mult_patch_local (
             
             // Loop across row i0 of A
             // and down column i1 of B
-            //temp+=A_star[i1*N1_A_star+n]*BT_star[i2*N1_A_star+n];
             temp+=shared_A_star[s0*vector_len+n]*shared_BT_star[s1*vector_len+n];
             
-        } 
+        }
+        
         // Number of rows in C is same as number of rows in A
         C_star[i0*N0_C*N1_C+i1*N1_C+i2]=temp;
     }

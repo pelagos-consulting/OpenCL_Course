@@ -689,7 +689,7 @@ cl_double h_run_kernel(
     cl_double elapsed_msec=0.0;
     
     // Enqueue the kernel
-    h_errchk(clEnqueueNDRangeKernel(
+    cl_int errcode = clEnqueueNDRangeKernel(
         command_queue,
         kernel,
         ndim,
@@ -698,16 +698,16 @@ cl_double h_run_kernel(
         local_size,
         0,
         NULL,
-        &kernel_event),
-        "Running the kernel"
-    );
+        &kernel_event);
     
     // Profiling information
-    if (profiling==CL_TRUE) {
+    if ((profiling==CL_TRUE) && (errcode==CL_SUCCESS)) {
         elapsed_msec = h_get_event_time_ms(
             &kernel_event, 
             NULL, 
             NULL);
+    } else {
+        elapsed_msec = nan("");
     }
     
     // Free allocated memory
@@ -839,6 +839,13 @@ void h_optimise_local(
             if ((work_group_size <= max_work_group_size) && (valid_size > 0)) {
                 // Run the experiment nstats times and get statistical information
                 // Command queue must have profiling enabled
+                
+                printf("Trying local size (");
+                for (int i=0; i<max_ndim; i++) {
+                    printf(" %d", (int)temp_local_size[i]);
+                }
+                printf(")\n");
+                    
                 for (int s=0; s<nstats; s++) {
                     experiment_msec[s] = h_run_kernel(
                         command_queue,
@@ -878,13 +885,15 @@ void h_optimise_local(
         free(input_local);
     } else {
         // Run the kernel with just one experiment
-        h_run_kernel(
+        cl_double experiment_msec = h_run_kernel(
                 command_queue,
                 kernel,
                 temp_local_size,
                 global_size,
                 ndim,
-                CL_FALSE);
+                CL_TRUE);
+        
+        std::printf("Time for kernel was %.3f ms\n", experiment_msec);
     }
     
     delete[] max_size;

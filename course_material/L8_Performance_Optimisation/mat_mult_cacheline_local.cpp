@@ -120,7 +120,7 @@ int main(int argc, char** argv) {
     printf("Cache line size is %lu\n", cache_line_bytes);
         
     // Number of elements we are going to use in a vector
-    cl_uint vector_len = 2*cache_line_bytes/sizeof(float_type);
+    cl_uint vector_len = cache_line_bytes/sizeof(float_type);
 
     // Integer (floored) number of vectors along axis of length N1_A
     cl_uint N1_A_v = N1_A/vector_len;
@@ -447,8 +447,9 @@ int main(int argc, char** argv) {
     
     // Desired global_size
     size_t work_dim_mat_mult = 3;
+    
     size_t global_size_mat_mult[]={ N1_C, N0_C, (size_t)N1_A_v };
-    size_t local_size_mat_mult[] = { 8, 8, 1};
+    size_t local_size_mat_mult[] = { 1, 32, 1};
     
     // Set arguments to the kernel (not thread safe)
     h_errchk(
