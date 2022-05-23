@@ -159,6 +159,7 @@ int main(int argc, char** argv) {
     // Number of elements in a chunk, 
     // must be a multiple of vector_len
     cl_uint chunk_len = 4*vector_len;
+    //chunk_len = 1056;
 
     // Integer (floored) number of chunks along axis of length N1_A
     cl_uint N1_A_c = N1_A/chunk_len;
@@ -487,7 +488,7 @@ int main(int argc, char** argv) {
     size_t work_dim_mat_mult = 3;
     
     size_t global_size_mat_mult[]={ N1_C, N0_C, (size_t)N1_A_c };
-    size_t local_size_mat_mult[] = { 8, 8, 1};
+    size_t local_size_mat_mult[] = { 16, 16, 1};
     
     // Set arguments to the kernel (not thread safe)
     h_errchk(
