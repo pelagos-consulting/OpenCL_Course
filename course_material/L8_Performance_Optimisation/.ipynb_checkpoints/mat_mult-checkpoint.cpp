@@ -215,7 +215,9 @@ int main(int argc, char** argv) {
         global_size,
         local_size,
         work_dim,
-        nstats
+        nstats,
+        NULL,
+        NULL
     );
     
     // Read memory from the buffer to the host

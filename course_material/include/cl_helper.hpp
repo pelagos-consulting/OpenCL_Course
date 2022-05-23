@@ -675,7 +675,11 @@ cl_double h_run_kernel(
     size_t *local_size,
     size_t *global_size,
     size_t ndim,
-    cl_bool profiling) {
+    cl_bool profiling,
+    // Function for prepping the kernel
+    void (*prep_kernel)(cl_kernel, size_t*, size_t*, size_t, void*),
+    void* prep_data
+    ) {
     
     // Sort out the global size
     size_t *new_global = (size_t*)malloc(ndim*sizeof(size_t));
@@ -687,6 +691,11 @@ cl_double h_run_kernel(
     
     // How much time did the kernel take?
     cl_double elapsed_msec=0.0;
+    
+    // Prepare the kernel for execution, setting arguments etc
+    if (prep_kernel!=NULL) {
+        prep_kernel(kernel, local_size, new_global, ndim, prep_data);
+    }
     
     // Enqueue the kernel
     cl_int errcode = clEnqueueNDRangeKernel(
@@ -738,7 +747,9 @@ void h_optimise_local(
         size_t ndim,
         // Number of times to run the kernel per experiment
         size_t nstats,
-        double prior_times) {
+        double prior_times,
+        void (*prep_kernel)(cl_kernel, size_t*, size_t*, size_t, void*),
+        void* prep_data) {
     
     // Maximum number of dimensions permitted
     const int max_ndim = 3;
@@ -838,14 +849,10 @@ void h_optimise_local(
             
             if ((work_group_size <= max_work_group_size) && (valid_size > 0)) {
                 // Run the experiment nstats times and get statistical information
-                // Command queue must have profiling enabled
+                // Command queue must have profiling enabled 
                 
-                printf("Trying local size (");
-                for (int i=0; i<max_ndim; i++) {
-                    printf(" %d", (int)temp_local_size[i]);
-                }
-                printf(")\n");
-                    
+                // Run function pointer here
+                
                 for (int s=0; s<nstats; s++) {
                     experiment_msec[s] = h_run_kernel(
                         command_queue,
@@ -853,7 +860,10 @@ void h_optimise_local(
                         temp_local_size,
                         global_size,
                         ndim,
-                        CL_TRUE);
+                        CL_TRUE,
+                        prep_kernel,
+                        prep_data
+                    );
                 }
 
                 // Calculate the average and standard deviation
@@ -891,7 +901,10 @@ void h_optimise_local(
                 temp_local_size,
                 global_size,
                 ndim,
-                CL_TRUE);
+                CL_TRUE,
+                prep_kernel,
+                prep_data
+        );
         
         std::printf("Time for kernel was %.3f ms\n", experiment_msec);
     }

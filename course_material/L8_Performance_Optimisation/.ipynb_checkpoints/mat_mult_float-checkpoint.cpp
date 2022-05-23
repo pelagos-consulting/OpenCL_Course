@@ -17,7 +17,7 @@ Written by Dr Toby M. Potter
 typedef cl_float float_type;
 
 int main(int argc, char** argv) {
-    
+   
     // Parse arguments and set the target device
     cl_device_type target_device;
     cl_uint dev_index = h_parse_args(argc, argv, &target_device);
@@ -59,6 +59,9 @@ int main(int argc, char** argv) {
     
     // Do we enable profiling?
     cl_bool profiling = CL_TRUE;
+
+    // Do we enable blocking IO?
+    cl_bool blocking = CL_TRUE;
     
     // Create the command queues
     cl_command_queue* command_queues = h_create_command_queues(
@@ -70,7 +73,8 @@ int main(int argc, char** argv) {
         profiling
     );
 
-    // Make sure command line arguments are sane
+    // Choose the first available context
+    // and compute device to use
     assert(dev_index < num_devices);
     cl_context context = contexts[dev_index];
     cl_command_queue command_queue = command_queues[dev_index];
@@ -83,7 +87,7 @@ int main(int argc, char** argv) {
     // using raw binary files for input and output
     
     // A is of size (N0_C, N1_A)
-    // B is of size (N1_A, N1_C)    
+    // B is of size (N1_A, N1_C)
     // C is of size (N0_C, N1_C)
     
     cl_uint N1_A = NCOLS_A, N0_C = NROWS_C, N1_C = NCOLS_C;
@@ -98,24 +102,29 @@ int main(int argc, char** argv) {
     assert(nbytes_B==N1_A*N1_C*sizeof(float_type));
     nbytes_C=N0_C*N1_C*sizeof(float_type);
     
-    // Make an array to store the result in array_C
+    // Make Buffers on the compute device for matrices A, B, BT, and C
     float_type* array_C = (float_type*)h_alloc(nbytes_C);
-    
-    // Make Buffers on the compute device for matrices A, B, and C
-    cl_mem buffer_A = clCreateBuffer(context, 
-                                     CL_MEM_READ_WRITE, 
-                                     nbytes_A, 
-                                     NULL, 
-                                     &errcode);
+
+    // Make buffer_A by copying from array_A
+    cl_mem buffer_A = clCreateBuffer(
+        context, 
+        CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, 
+        nbytes_A, 
+        (void*)array_A, 
+        &errcode
+    );
     h_errchk(errcode, "Creating buffer_A");
     
-    cl_mem buffer_B = clCreateBuffer(context, 
-                                     CL_MEM_READ_WRITE, 
-                                     nbytes_B, 
-                                     NULL, 
-                                     &errcode);
+    // Make buffer_B using array_B as a backing store
+    cl_mem buffer_B = clCreateBuffer(
+        context, 
+        CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, 
+        nbytes_B, 
+        (void*)array_B, 
+        &errcode
+    );
     h_errchk(errcode, "Creating buffer_B");
-    
+   
     cl_mem buffer_C = clCreateBuffer(context, 
                                      CL_MEM_READ_WRITE, 
                                      nbytes_C, 
@@ -162,47 +171,15 @@ int main(int argc, char** argv) {
         clSetKernelArg(kernel, 5, sizeof(cl_uint), &N1_C ),
         "setting kernel argument 5"
     );
-
-    // Write memory from the host
-    // to buffer_A and buffer_B on the compute device
-    
-    // Do we enable a blocking write?
-    cl_bool blocking=CL_TRUE;
-    
-    h_errchk(
-        clEnqueueWriteBuffer(command_queue,
-                            buffer_A,
-                            blocking,
-                            0,
-                            nbytes_A,
-                            array_A,
-                            0,
-                            NULL,
-                            NULL), 
-        "Writing to buffer_A from host"
-    );
-
-    h_errchk(
-        clEnqueueWriteBuffer(command_queue,
-                            buffer_B,
-                            blocking,
-                            0,
-                            nbytes_B,
-                            array_B,
-                            0,
-                            NULL,
-                            NULL), 
-        "Writing to buffer_B from host"
-    );
     
     // Number of dimensions in the kernel
-    size_t work_dim=2;
+    size_t work_dim = 2;
     
     // Number of statistical runs to do per experiment 
     size_t nstats = 3;
     
     // Desired local size
-    size_t local_size[]={ 8, 8 };
+    size_t local_size[]={ 4, 16 };
     
     // Desired global_size
     size_t global_size[]={ N0_C, N1_C };
@@ -217,9 +194,12 @@ int main(int argc, char** argv) {
         global_size,
         local_size,
         work_dim,
-        nstats
+        nstats,
+        0,
+        NULL,
+        NULL
     );
-    
+
     // Read memory from the buffer to the host
     h_errchk(
         clEnqueueReadBuffer(command_queue,
@@ -269,7 +249,7 @@ int main(int argc, char** argv) {
         contexts,
         platforms
     );
-    
+
     return 0;
 }
 

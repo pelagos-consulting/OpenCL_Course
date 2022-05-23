@@ -267,7 +267,9 @@ int main(int argc, char** argv) {
         local_size,
         work_dim,
         nstats,
-        transpose_ms
+        transpose_ms,
+        NULL,
+        NULL
     );
     
     // Read memory from the buffer to the host

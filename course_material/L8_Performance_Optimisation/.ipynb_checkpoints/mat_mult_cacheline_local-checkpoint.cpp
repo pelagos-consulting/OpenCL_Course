@@ -17,6 +17,37 @@ Written by Dr Toby M. Potter
 
 typedef cl_float float_type;
 
+void prep_mat_kernel(cl_kernel kernel, 
+                 size_t* local_size,
+                 size_t* global_size,
+                 size_t ndim,
+                 void* data) {
+                 
+    size_t* nbytes_line=(size_t*)data;
+                 
+    // Set shared memory in argument 3
+    // Local size of shared_A is going to be (local_size[1], vector_len)
+    h_errchk(
+        clSetKernelArg(
+            kernel, 
+            3, 
+            local_size[1]*(*nbytes_line), 
+            NULL
+        ),
+        "setting kernel argument 3"
+    );
+    // Local size of shared_B is going to be (local_size[0], vector_len)
+    h_errchk(
+        clSetKernelArg(
+            kernel, 
+            4, 
+            local_size[0]*(*nbytes_line), 
+            NULL
+        ),
+        "setting kernel argument 4"
+    );                               
+}
+
 int main(int argc, char** argv) {
     
     // Parse arguments and set the target device
@@ -464,27 +495,18 @@ int main(int argc, char** argv) {
         clSetKernelArg(kernel_mat_mult, 2, sizeof(cl_mem), &buffer_C_star ),
         "setting kernel argument 2"
     );
-    // Set shared memory in argument 3
-    // Local size of shared_A is going to be (local_size[1], vector_len)
-    h_errchk(
-        clSetKernelArg(
-            kernel_mat_mult, 
-            3, 
-            local_size_mat_mult[1]*vector_len*sizeof(float_type), 
-            NULL
-        ),
-        "setting kernel argument 3"
-    );
-    // Local size of shared_B is going to be (local_size[0], vector_len)
-    h_errchk(
-        clSetKernelArg(
-            kernel_mat_mult, 
-            4, 
-            local_size_mat_mult[0]*vector_len*sizeof(float_type), 
-            NULL
-        ),
-        "setting kernel argument 4"
-    );
+
+    // data for local memory preparation kernel
+    size_t prep_data=vector_len*sizeof(float_type);
+    
+    // Prepare local memory arguments for execution
+    prep_mat_kernel(
+        kernel_mat_mult, 
+        local_size_mat_mult,
+        global_size_mat_mult,
+        work_dim_mat_mult,
+        &prep_data);
+    
     h_errchk(
         clSetKernelArg(kernel_mat_mult, 5, sizeof(cl_uint), &N1_A_star ),
         "setting kernel argument 5"
@@ -505,7 +527,7 @@ int main(int argc, char** argv) {
     // Number of statistical runs per experiment
     size_t nstats=3;
     
-    // Optimise the local size for this
+    // Find the optimal local size
     h_optimise_local(
         argc,
         argv,
@@ -520,7 +542,10 @@ int main(int argc, char** argv) {
         work_dim_mat_mult,
         // Number of times to run the kernel per experiment
         nstats,
-        run_stack_ms+run_transp_ms);
+        run_stack_ms+run_transp_ms,
+        // Function for prepping the kernel prior to execution
+        prep_mat_kernel,
+        &prep_data);
     
     // Run stacking kernel again to produce the result
     h_errchk(

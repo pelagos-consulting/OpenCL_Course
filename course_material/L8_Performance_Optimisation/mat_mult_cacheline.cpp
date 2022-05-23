@@ -494,7 +494,10 @@ int main(int argc, char** argv) {
         work_dim_mat_mult,
         // Number of times to run the kernel per experiment
         nstats,
-        run_stack_ms+run_transp_ms);
+        run_stack_ms+run_transp_ms,
+        NULL,
+        NULL
+    );
     
     // Run stacking kernel again to produce the result
     h_errchk(

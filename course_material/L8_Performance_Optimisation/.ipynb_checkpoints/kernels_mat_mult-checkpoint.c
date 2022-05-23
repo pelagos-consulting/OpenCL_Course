@@ -312,7 +312,7 @@ __kernel void mat_mult_patch_local (
     
     // Get the number of vector elements
     size_t N1_A_v = get_global_size(2);
-    
+     
     // start and end along N1_A_star
     size_t start, end;
     
