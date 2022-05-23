@@ -26,7 +26,7 @@ void prep_mat_kernel(cl_kernel kernel,
     size_t* nbytes_line=(size_t*)data;
                  
     // Set shared memory in argument 3
-    // Local size of shared_A is going to be (local_size[1], vector_len)
+    // Local size of shared_A is going to be (local_size[1], chunk_len)
     h_errchk(
         clSetKernelArg(
             kernel, 
@@ -36,7 +36,7 @@ void prep_mat_kernel(cl_kernel kernel,
         ),
         "setting kernel argument 3"
     );
-    // Local size of shared_B is going to be (local_size[0], vector_len)
+    // Local size of shared_B is going to be (local_size[0], chunk_len)
     h_errchk(
         clSetKernelArg(
             kernel, 
@@ -151,24 +151,24 @@ int main(int argc, char** argv) {
     printf("Cache line size is %lu\n", cache_line_bytes);
         
     // Number of elements we are going to use in a vector
-    cl_uint vector_len = cache_line_bytes/sizeof(float_type);
+    cl_uint chunk_len = cache_line_bytes/sizeof(float_type);
 
     // Integer (floored) number of vectors along axis of length N1_A
-    cl_uint N1_A_v = N1_A/vector_len;
+    cl_uint N1_A_c = N1_A/chunk_len;
     // Increase the number of vectors if there is any remainder
-    if (N1_A % vector_len) N1_A_v++;
+    if (N1_A % chunk_len) N1_A_c++;
     // Resized N1_A for allocation of B and A, may be larger than N1_A
-    cl_uint N1_A_star = N1_A_v*vector_len;
+    cl_uint N1_A_star = N1_A_c*chunk_len;
     
     // Resized bytes due to enlarged N1_A_star
     size_t nbytes_A_star = N0_C*N1_A_star*sizeof(float_type);
     size_t nbytes_B_star = N1_C*N1_A_star*sizeof(float_type);    
-    size_t nbytes_C_star = nbytes_C*N1_A_v;
+    size_t nbytes_C_star = nbytes_C*N1_A_c;
     
     // A_star is of size (N0_C, N1_A_star)
     // B_star is of size (N1_A_star, N1_C)
     // BT_star is of size (N1_C, N1_A_star)
-    // C_star is of size (N1_A_v, N0_C, N1_C)
+    // C_star is of size (N1_A_c, N0_C, N1_C)
     // C is of size (N0_C, N1_C)
     
     // Make Buffers on the compute device for matrices A_star, B_star, BT_star, C_star, and C
@@ -426,7 +426,7 @@ int main(int argc, char** argv) {
         "setting transpose kernel argument 1"
     );
     h_errchk(
-        clSetKernelArg(kernel_stack, 2, sizeof(cl_uint), &N1_A_v ),
+        clSetKernelArg(kernel_stack, 2, sizeof(cl_uint), &N1_A_c ),
         "setting transpose kernel argument 2"
     );
     h_errchk(
@@ -479,7 +479,7 @@ int main(int argc, char** argv) {
     // Desired global_size
     size_t work_dim_mat_mult = 3;
     
-    size_t global_size_mat_mult[]={ N1_C, N0_C, (size_t)N1_A_v };
+    size_t global_size_mat_mult[]={ N1_C, N0_C, (size_t)N1_A_c };
     size_t local_size_mat_mult[] = { 8, 8, 1};
     
     // Set arguments to the kernel (not thread safe)
@@ -497,7 +497,7 @@ int main(int argc, char** argv) {
     );
 
     // data for local memory preparation kernel
-    size_t prep_data=vector_len*sizeof(float_type);
+    size_t prep_data=chunk_len*sizeof(float_type);
     
     // Prepare local memory arguments for execution
     prep_mat_kernel(
@@ -520,7 +520,7 @@ int main(int argc, char** argv) {
         "setting kernel argument 7"
     );
     h_errchk(
-        clSetKernelArg(kernel_mat_mult, 8, sizeof(cl_uint), &vector_len ),
+        clSetKernelArg(kernel_mat_mult, 8, sizeof(cl_uint), &chunk_len ),
         "setting kernel argument 8"
     );
     

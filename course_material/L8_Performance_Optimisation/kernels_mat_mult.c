@@ -186,6 +186,94 @@ __kernel void mat_mult_transpose_A (__global float* AT,
     }
 } 
 
+
+// Matrix multiply kernel that uses local memory
+__kernel void mat_mult_transpose_A_local (
+                        __global float* AT_star, 
+                        __global float* B_star, 
+                        __global float* C_star,
+                        __local float* shared_AT_star,
+                        __local float* shared_B_star,
+                        unsigned int N1_A_star, 
+                        unsigned int N0_C,
+                        unsigned int N1_C,
+                        unsigned int chunk_len) { 
+    
+    // AT_star is of size (N1_A_star, N0_C), (n, i1)
+    // B_star is of size (N1_A_star, N1_C, ), (n, i2)
+    // C_star is of size (N1_A_c, N0_C, N1_C), (i0, i1, i2)
+    
+    // i0 and i1 represent the coordinates in Matrix C 
+    // We assume row-major ordering for the matrices 
+    size_t i2=get_global_id(0); // Fastest dimension
+    size_t i1=get_global_id(1); 
+    size_t i0=get_global_id(2); // Slowest dimension
+    
+    // shared_AT_star is of size (L0, chunk_len) (s0, n)
+    // shared_B_star is of size (L1, chunk_len) (s1, n)
+    size_t L0 = get_local_size(1); // Slowest dimension
+    size_t L1 = get_local_size(0); // Fastest dimension
+    
+    // index within local memory
+    size_t s0 = get_local_id(1); // Slowest dimension
+    size_t s1 = get_local_id(0); // fastest dimension
+    
+    // Get the number of chunks to process
+    size_t N1_A_c = get_global_size(2);
+     
+    // start and end along N1_A_star
+    size_t start, end;
+    
+    // Get the start and end lengths of the subsection along N1_A_star
+    get_start_end(N1_A_c, N1_A_star, i0, &start, &end);
+    
+    // Fetch local memory into shared_AT_star and shared_B_star
+    
+    // Starting positions for the copies
+    __global float* AT_star_i1 = &AT_star[i1];
+    __global float* B_star_i2 = &B_star[i2];
+    
+    __local float* shared_AT_star_s0 = &shared_AT_star[s0*chunk_len];
+    __local float* shared_B_star_s1 = &shared_B_star[s1*chunk_len];
+    
+    // From column i1 of A_star
+    if ((i1<N0_C) && (s1==0)) {
+        for (int n = start; n<end; n++) {
+            shared_AT_star_s0[n-start] = AT_star_i1[n*N0_C];
+        }
+    }
+    // From column i2 of BT_star
+    if ((i2<N1_C) && (s0==0)) {
+        for (int n = start; n<end; n++) {
+            shared_B_star_s1[n-start] = B_star_i2[n*N1_C];
+        }
+    }       
+    
+    // Enqueue a local barrier to ensure shared memory is filled
+    barrier(CLK_LOCAL_MEM_FENCE);
+    
+    // Scratch variable
+    float temp=0.0;
+    
+    // Guard mechanism to make sure we do not go
+    // outside the boundaries of matrix C
+    if ((i1<N0_C) && (i2<N1_C)) {
+        
+        // Loop over columns of A and rows of B 
+        for (size_t n=0; n<(end-start); n++) {
+            
+            // Loop across row i0 of A
+            // and down column i1 of B
+            temp+=shared_AT_star_s0[n]*shared_B_star_s1[n];
+            
+        }
+        
+        // Number of rows in C is same as number of rows in A
+        C_star[i0*N0_C*N1_C+i1*N1_C+i2]=temp;
+    }
+}
+
+
 // matrix multiply kernel with pre-fetching
 __kernel void mat_mult_transpose_B (__global float* A, 
                         __global float* BT, 
@@ -263,6 +351,10 @@ __kernel void mat_mult_patch (
     // Scratch variable
     float temp=0.0;
     
+    // Starting positions for the copy
+    __global float* A_star_i1 = &A_star[i1*N1_A_star];
+    __global float* BT_star_i2 = &BT_star[i2*N1_A_star];
+    
     // Guard mechanism to make sure we do not go
     // outside the boundaries of matrix C
     if ((i1<N0_C) && (i2<N1_C)) {
@@ -272,7 +364,7 @@ __kernel void mat_mult_patch (
             
             // Loop across row i0 of A
             // and down column i1 of B
-            temp+=A_star[i1*N1_A_star+n]*BT_star[i2*N1_A_star+n]; 
+            temp+=A_star_i1[n]*BT_star_i2[n]; 
         } 
         // Number of rows in C is same as number of rows in A
         C_star[i0*N0_C*N1_C+i1*N1_C+i2]=temp;
@@ -289,11 +381,11 @@ __kernel void mat_mult_patch_local (
                         unsigned int N1_A_star, 
                         unsigned int N0_C,
                         unsigned int N1_C,
-                        unsigned int vector_len) { 
+                        unsigned int chunk_len) { 
     
     // A_star is of size (N0_C, N1_A_star), (i1, n)
     // BT_star is of size (N1_C, N1_A_star), (i2, n)
-    // C_star is of size (N1_A_v, N0_C, N1_C), (i0, i1, i2)
+    // C_star is of size (N1_A_c, N0_C, N1_C), (i0, i1, i2)
     
     // i0 and i1 represent the coordinates in Matrix C 
     // We assume row-major ordering for the matrices 
@@ -301,8 +393,8 @@ __kernel void mat_mult_patch_local (
     size_t i1=get_global_id(1); 
     size_t i0=get_global_id(2); // Slowest dimension
     
-    // shared_A_star is of size (L0, vector_len) (s0, n)
-    // shared_BT_star is of size (L1, vector_len) (s1, n)
+    // shared_A_star is of size (L0, chunk_len) (s0, n)
+    // shared_BT_star is of size (L1, chunk_len) (s1, n)
     size_t L0 = get_local_size(1); // Slowest dimension
     size_t L1 = get_local_size(0); // Fastest dimension
     
@@ -311,35 +403,39 @@ __kernel void mat_mult_patch_local (
     size_t s1 = get_local_id(0); // fastest dimension
     
     // Get the number of vector elements
-    size_t N1_A_v = get_global_size(2);
+    size_t N1_A_c = get_global_size(2);
      
     // start and end along N1_A_star
     size_t start, end;
     
     // Get the start and end lengths of the subsection along N1_A_star
-    get_start_end(N1_A_v, N1_A_star, i0, &start, &end);
+    get_start_end(N1_A_c, N1_A_star, i0, &start, &end);
     
     // Fetch local memory into shared_A_star and shared_BT_star
     
+    // Starting positions for the copy
+    __global float* A_star_i1 = &A_star[i1*N1_A_star];
+    __global float* BT_star_i2 = &BT_star[i2*N1_A_star];
+    
+    __local float* shared_A_star_s0 = &shared_A_star[s0*chunk_len];
+    __local float* shared_BT_star_s1 = &shared_BT_star[s1*chunk_len];
+    
     // Fill the rows of shared_A_star and shared_BT_star
     // From row i1 of A_star
-    if (i1<N0_C) {
+    if ((i1<N0_C) && (s1==0)) {
         for (int n = start; n<end; n++) {
-            shared_A_star[s0*vector_len+n-start] = A_star[i1*N1_A_star+n];
-            //shared_A_star[s0*vector_len+n-start] = 2.0;
+            shared_A_star_s0[n-start] = A_star_i1[n];
         }
     }
     // From row i2 of BT_star
-    if (i2<N1_C) {
+    if ((i2<N1_C) && (s0==0)) {
         for (int n = start; n<end; n++) {
-            shared_BT_star[s1*vector_len+n-start] = BT_star[i2*N1_A_star+n];
-            //shared_BT_star[s1*vector_len+n-start] = 2.0;
+            shared_BT_star_s1[n-start] = BT_star_i2[n];
         }
     }       
     
     // Enqueue a local barrier to ensure shared memory is filled
     barrier(CLK_LOCAL_MEM_FENCE);
-    barrier(CLK_GLOBAL_MEM_FENCE);
     
     // Scratch variable
     float temp=0.0;
@@ -353,7 +449,7 @@ __kernel void mat_mult_patch_local (
             
             // Loop across row i0 of A
             // and down column i1 of B
-            temp+=shared_A_star[s0*vector_len+n]*shared_BT_star[s1*vector_len+n];
+            temp+=shared_A_star_s0[n]*shared_BT_star_s1[n];
             
         }
         
@@ -362,14 +458,158 @@ __kernel void mat_mult_patch_local (
     }
 }
 
+// Matrix multiply kernel that uses local memory
+__kernel void mat_mult_patch_vector (
+                        __global float8* A_star, 
+                        __global float8* BT_star, 
+                        __global float* C_star,
+                        __local float8* shared_A_star,
+                        __local float8* shared_BT_star,
+                        unsigned int N1_A_star, 
+                        unsigned int N0_C,
+                        unsigned int N1_C,
+                        unsigned int chunk_len) { 
+    
+    // A_star is of size (N0_C, N1_A_star), (i1, n)
+    // BT_star is of size (N1_C, N1_A_star), (i2, n)
+    // C_star is of size (N1_A_c, N0_C, N1_C), (i0, i1, i2)
+    
+    // i0 and i1 represent the coordinates in Matrix C 
+    // We assume row-major ordering for the matrices 
+    size_t i2=get_global_id(0); // Fastest dimension
+    size_t i1=get_global_id(1); 
+    size_t i0=get_global_id(2); // Slowest dimension
+    
+    // Get the number of vector elements
+    size_t N1_A_c = get_global_size(2);
+     
+    // start and end along N1_A_star
+    size_t start, end;
+    
+    // Get the start and end lengths of the subsection along N1_A_star
+    get_start_end(N1_A_c, N1_A_star, i0, &start, &end);
+    
+    // Fetch local memory into shared_A_star and shared_BT_star
+        
+    // Starting positions for the copy
+    __global float8* A_star_i1 = &A_star[i1*N1_A_star];
+    __global float8* BT_star_i2 = &BT_star[i2*N1_A_star];
+    
+    // Scratch variable
+    float8 temp=(float8)0.0;
+    
+    // Guard mechanism to make sure we do not go
+    // outside the boundaries of matrix C
+    if ((i1<N0_C) && (i2<N1_C)) {
+        
+        // Loop over columns of A and rows of B 
+        for (size_t n=start; n<end; n++) {
+            
+            // Loop across row i0 of A
+            // and down column i1 of B
+            temp+=A_star_i1[n]*BT_star_i2[n];
+        }
+        
+        // Number of rows in C is same as number of rows in A
+        C_star[i0*N0_C*N1_C+i1*N1_C+i2]=temp.s0+temp.s1+temp.s2+temp.s3+temp.s4+temp.s5+temp.s6+temp.s7;
+    }
+}
+
+
+// Matrix multiply kernel that uses local memory
+__kernel void mat_mult_patch_local_vector (
+                        __global float8* A_star, 
+                        __global float8* BT_star, 
+                        __global float* C_star,
+                        __local float8* shared_A_star,
+                        __local float8* shared_BT_star,
+                        unsigned int N1_A_star, 
+                        unsigned int N0_C,
+                        unsigned int N1_C,
+                        unsigned int chunk_len) { 
+    
+    // A_star is of size (N0_C, N1_A_star), (i1, n)
+    // BT_star is of size (N1_C, N1_A_star), (i2, n)
+    // C_star is of size (N1_A_c, N0_C, N1_C), (i0, i1, i2)
+    
+    // i0 and i1 represent the coordinates in Matrix C 
+    // We assume row-major ordering for the matrices 
+    size_t i2=get_global_id(0); // Fastest dimension
+    size_t i1=get_global_id(1); 
+    size_t i0=get_global_id(2); // Slowest dimension
+    
+    // shared_A_star is of size (L0, chunk_len) (s0, n)
+    // shared_BT_star is of size (L1, chunk_len) (s1, n)
+    size_t L0 = get_local_size(1); // Slowest dimension
+    size_t L1 = get_local_size(0); // Fastest dimension
+    
+    // index within local memory
+    size_t s0 = get_local_id(1); // Slowest dimension
+    size_t s1 = get_local_id(0); // fastest dimension
+    
+    // Get the number of vector elements
+    size_t N1_A_c = get_global_size(2);
+     
+    // start and end along N1_A_star
+    size_t start, end;
+    
+    // Get the start and end lengths of the subsection along N1_A_star
+    get_start_end(N1_A_c, N1_A_star, i0, &start, &end);
+    
+    // Fetch local memory into shared_A_star and shared_BT_star
+        
+    // Starting positions for the copy
+    __global float8* A_star_i1 = &A_star[i1*N1_A_star];
+    __global float8* BT_star_i2 = &BT_star[i2*N1_A_star];
+    
+    __local float8* shared_A_star_s0 = &shared_A_star[s0*chunk_len];
+    __local float8* shared_BT_star_s1 = &shared_BT_star[s1*chunk_len];
+    
+    // Fill the rows of shared_A_star and shared_BT_star
+    // From row i1 of A_star
+    if ((i1<N0_C) && (s1==0)) {
+        for (int n = start; n<end; n++) {
+            shared_A_star_s0[n-start] = A_star_i1[n];
+        }
+    }
+    // From row i2 of BT_star
+    if ((i2<N1_C) && (s0==0)) {
+        for (int n = start; n<end; n++) {
+            shared_BT_star_s1[n-start] = BT_star_i2[n];
+        }
+    }       
+    
+    // Enqueue a local barrier to ensure shared memory is filled
+    barrier(CLK_LOCAL_MEM_FENCE);
+    
+    // Scratch variable
+    float8 temp=(float8)0.0;
+    
+    // Guard mechanism to make sure we do not go
+    // outside the boundaries of matrix C
+    if ((i1<N0_C) && (i2<N1_C)) {
+        
+        // Loop over columns of A and rows of B 
+        for (size_t n=0; n<(end-start); n++) {
+            
+            // Loop across row i0 of A
+            // and down column i1 of B
+            temp+=shared_A_star_s0[n]*shared_BT_star_s1[n];
+        }
+        
+        // Number of rows in C is same as number of rows in A
+        C_star[i0*N0_C*N1_C+i1*N1_C+i2]=temp.s0+temp.s1+temp.s2+temp.s3+temp.s4+temp.s5+temp.s6+temp.s7;
+    }
+}
+
 __kernel void c_star_stack (
                         __global float* C_star,
                         __global float* C,
-                        unsigned int N1_A_v, 
+                        unsigned int N1_A_c, 
                         unsigned int N0_C,
                         unsigned int N1_C) {    
 
-    // C_star is of size (N1_A_v, N0_C, N1_C) (n, i0, i1)
+    // C_star is of size (N1_A_c, N0_C, N1_C) (n, i0, i1)
     // C is of size (N0_C, N1_C) (i0, i1)
     size_t i0=get_global_id(1); // Slowest dimension
     size_t i1=get_global_id(0); // Fastest dimension
@@ -378,7 +618,7 @@ __kernel void c_star_stack (
     float temp=0.0;
     
     if ((i0<N0_C) && (i1<N1_C)) {    
-        for (int n=0; n<N1_A_v; n++) {
+        for (int n=0; n<N1_A_c; n++) {
             temp+=C_star[n*N0_C*N1_C+i0*N1_C+i1];
         }
         C[i0*N1_C+i1]=temp;

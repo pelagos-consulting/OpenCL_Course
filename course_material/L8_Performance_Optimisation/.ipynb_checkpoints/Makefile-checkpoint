@@ -6,7 +6,7 @@ include ../env
 INC_DIR=../include
 
 # List of applications to target
-TARGETS=mat_mult_float.exe mat_mult_double.exe mat_mult_prefetch.exe mat_mult_transpose_A.exe mat_mult_local_transpose_vector.exe mat_mult_transpose_B.exe mat_mult_local.exe mat_mult_cacheline.exe
+TARGETS=mat_mult_float.exe mat_mult_double.exe mat_mult_prefetch.exe mat_mult_transpose_A.exe mat_mult_local_transpose_vector.exe mat_mult_transpose_B.exe mat_mult_local.exe mat_mult_patch.exe mat_mult_patch_local.exe mat_mult_patch_vector.exe mat_mult_patch_local_vector.exe mat_mult_transpose_A_local.exe
 
 all: $(TARGETS)
 
