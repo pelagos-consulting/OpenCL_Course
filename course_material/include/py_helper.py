@@ -258,15 +258,23 @@ class TimingResults:
         
         if len(self.results)>0:
             
+            # Sort by GPU results and CPU results
+            
             # Make up timing results
-            [fig, ax] = plt.subplots(1, 1, figsize=(6,6))
+            [fig, ax] = plt.subplots(2, 1, figsize=(6,6))
             
             t_bench = self.results[self.benchmark_label]["min_ms"]
             dt_bench = self.results[self.benchmark_label]["std_ms"]
             
-            labels = []
-            speedups = []
-            errors = []
+            # GPU data
+            labels_GPU = []
+            speedups_GPU = []
+            errors_GPU = []
+            
+            # CPU data
+            labels_CPU = []
+            speedups_CPU = []
+            errors_CPU = []
             
             for key, result in self.results.items():
                 
@@ -280,12 +288,26 @@ class TimingResults:
                 err += (-t_bench/(t**2.0))**2.0 * dt**2.0
                 err = math.sqrt(err)
                 
-                speedups.append(speedup)
-                errors.append(err)
-                labels.append(key)
+                if "CPU" in key:
+                    speedups_CPU.append(speedup)
+                    errors_CPU.append(err)
+                    labels_CPU.append(key)
+                else:
+                    speedups_GPU.append(speedup)
+                    errors_GPU.append(err)
+                    labels_GPU.append(key)
             
-            ax.barh(labels, speedups, 0.8, xerr=errors, color="Orange")
-            ax.set_xlabel("Speedup, more is better")
+            total_data = [*speedups_GPU, *speedups_CPU]
+            
+            if len(labels_CPU)>0:
+                ax[0].barh(labels_CPU, speedups_CPU, 0.8, xerr=errors_CPU, color="Orange")
+                ax[0].set_xlabel("Speedup, more is better")
+                ax[0].set_xlim((0,np.max(total_data)))
+    
+            if len(labels_GPU)>0:
+                ax[1].barh(labels_GPU, speedups_GPU, 0.8, xerr=errors_GPU, color="Orange")
+                ax[1].set_xlabel("Speedup, more is better")
+                ax[1].set_xlim((0,np.max(total_data)))
     
             fig.tight_layout()
             plt.show()

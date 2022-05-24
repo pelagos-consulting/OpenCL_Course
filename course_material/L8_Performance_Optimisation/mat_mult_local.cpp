@@ -16,6 +16,27 @@ Written by Dr Toby M. Potter
 
 typedef cl_float float_type;
 
+void prep_mat_kernel(cl_kernel kernel, 
+                 size_t* local_size,
+                 size_t* global_size,
+                 size_t ndim,
+                 void* data) {
+                 
+    size_t* nbytes_line=(size_t*)data;
+          
+    // Set shared memory in argument 3
+    // Local size is going to be (local_size[0], N1_A)
+    h_errchk(
+        clSetKernelArg(kernel, 3, local_size[0]*(*nbytes_line), NULL ),
+        "setting kernel argument 3"
+    );
+    // Local size is going to be (local_size[1], N1_A)
+    h_errchk(
+        clSetKernelArg(kernel, 4, local_size[1]*(*nbytes_line), NULL ),
+        "setting kernel argument 3"
+    );                        
+}
+
 int main(int argc, char** argv) {
    
     // Parse arguments and set the target device
@@ -139,8 +160,14 @@ int main(int argc, char** argv) {
         &nbytes_src
     );
     
+    // Number of dimensions in the kernel
+    size_t work_dim = 2;
+    
     // Desired local size
     size_t local_size[]={ 4, 16 }; 
+    
+    // Desired global_size
+    size_t global_size[]={ N0_C, N1_C };
 
     // Turn this source code into a program
     cl_program program = h_build_program(kernel_source, context, device, NULL);
@@ -162,17 +189,18 @@ int main(int argc, char** argv) {
         clSetKernelArg(kernel, 2, sizeof(cl_mem), &buffer_C ),
         "setting kernel argument 2"
     );
-    // Set shared memory in argument 3
-    // Local size is going to be (local_size[0], N1_A)
-    h_errchk(
-        clSetKernelArg(kernel, 3, local_size[0]*N1_A*sizeof(cl_float), NULL ),
-        "setting kernel argument 3"
-    );
-    // Local size is going to be (local_size[1], N1_A)
-    h_errchk(
-        clSetKernelArg(kernel, 4, local_size[1]*N1_A*sizeof(cl_float), NULL ),
-        "setting kernel argument 3"
-    );
+    
+    // data for local memory preparation kernel
+    size_t prep_data=N1_A*sizeof(float_type);
+    
+    // Prepare local memory arguments for execution
+    prep_mat_kernel(
+        kernel, 
+        local_size,
+        global_size,
+        work_dim,
+        &prep_data);
+    
     h_errchk(
         clSetKernelArg(kernel, 5, sizeof(cl_uint), &N1_A ),
         "setting kernel argument 3"
@@ -186,14 +214,12 @@ int main(int argc, char** argv) {
         "setting kernel argument 5"
     );
     
-    // Number of dimensions in the kernel
-    size_t work_dim = 2;
+
     
     // Number of statistical runs to do per experiment 
     size_t nstats = 3;
     
-    // Desired global_size
-    size_t global_size[]={ N0_C, N1_C };
+
     
     // Run the optimisation program
     h_optimise_local(
@@ -207,8 +233,8 @@ int main(int argc, char** argv) {
         work_dim,
         nstats,
         0.0,
-        NULL,
-        NULL
+        prep_mat_kernel,
+        &prep_data
     );
 
     // Read memory from the buffer to the host

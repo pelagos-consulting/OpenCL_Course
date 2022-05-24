@@ -478,7 +478,7 @@ int main(int argc, char** argv) {
     // Create the matrix multiplication kernel
     cl_kernel kernel_mat_mult=clCreateKernel(
         program, 
-        "mat_mult_transpose_A_local", 
+        "mat_mult_transpose_A_local_col_major", 
         &errcode
     );
     h_errchk(errcode, "Creating mat_mult_transpose_A kernel.");
