@@ -238,7 +238,24 @@ class LocalOpt():
                 plt.show()
                 
             return self.timing_data
-                
+
+        
+class TimingPlotData:
+    def __init__(self):
+        self.labels=[]
+        self.colours=[]
+        self.speedups=[]
+        self.errors=[]
+        
+    def ingest(self, speedup, error, label, colour):
+        self.labels.append(label)
+        self.colours.append(colour)
+        self.speedups.append(speedup)
+        self.errors.append(error)
+        
+    def num_items(self):
+        return len(self.speedups)
+        
 class TimingResults:
     
     def __init__(self):
@@ -254,9 +271,12 @@ class TimingResults:
         if label in self.results:
             del self.results["label"]
     
-    def plot_results(self):
+    def plot_results(self, highlight_key=None):
         
         if len(self.results)>0:
+            
+            if highlight_key is None:
+                highlight_key = self.benchmark_label
             
             # Sort by GPU results and CPU results
             
@@ -266,15 +286,8 @@ class TimingResults:
             t_bench = self.results[self.benchmark_label]["min_ms"]
             dt_bench = self.results[self.benchmark_label]["std_ms"]
             
-            # GPU data
-            labels_GPU = []
-            speedups_GPU = []
-            errors_GPU = []
-            
-            # CPU data
-            labels_CPU = []
-            speedups_CPU = []
-            errors_CPU = []
+            gpu_data = TimingPlotData()
+            cpu_data = TimingPlotData()
             
             for key, result in self.results.items():
                 
@@ -283,31 +296,34 @@ class TimingResults:
                 # Get error in time
                 dt = result["std_ms"]
                 
+                # Calculate speedup and associated error
                 speedup  = t_bench / t
                 err = (1/t)**2.0 * dt_bench**2.0
                 err += (-t_bench/(t**2.0))**2.0 * dt**2.0
                 err = math.sqrt(err)
                 
+                output=gpu_data
                 if "CPU" in key:
-                    speedups_CPU.append(speedup)
-                    errors_CPU.append(err)
-                    labels_CPU.append(key)
-                else:
-                    speedups_GPU.append(speedup)
-                    errors_GPU.append(err)
-                    labels_GPU.append(key)
+                    output=cpu_data
+                
+                colour="Orange"       
+                if highlight_key in key:
+                    colour="Purple"
+             
+                output.ingest(speedup, err, key, colour)
             
-            total_data = [*speedups_GPU, *speedups_CPU]
             
-            if len(labels_CPU)>0:
-                ax[0].barh(labels_CPU, speedups_CPU, 0.8, xerr=errors_CPU, color="Orange")
-                ax[0].set_xlabel("Speedup, more is better")
-                ax[0].set_xlim((0,np.max(total_data)))
-    
-            if len(labels_GPU)>0:
-                ax[1].barh(labels_GPU, speedups_GPU, 0.8, xerr=errors_GPU, color="Orange")
-                ax[1].set_xlabel("Speedup, more is better")
-                ax[1].set_xlim((0,np.max(total_data)))
+            total_data = [*gpu_data.speedups, *cpu_data.speedups]
+            
+            for n, data in enumerate([cpu_data, gpu_data]):
+                if data.num_items()>0:
+                    ax[n].barh(data.labels, 
+                               data.speedups, 
+                               0.8, 
+                               xerr=data.errors, 
+                               color=data.colours)
+                    ax[n].set_xlabel("Speedup, more is better")
+                    ax[n].set_xlim((0,1.1*np.max(total_data)))
     
             fig.tight_layout()
             plt.show()

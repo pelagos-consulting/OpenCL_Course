@@ -362,6 +362,64 @@ __kernel void mat_mult_transpose_A_local_col_major (
     }
 }
 
+// Matrix multiply kernel that uses local memory
+__kernel void mat_mult_transpose_A_patch (
+                        __global float* AT_star, 
+                        __global float* B_star, 
+                        __global float* C_star,
+                        unsigned int N1_A_star, 
+                        unsigned int N0_C,
+                        unsigned int N1_C,
+                        unsigned int chunk_len) { 
+    
+    // AT_star is of size (N1_A_star, N0_C), (n, i1)
+    // B_star is of size (N1_A_star, N1_C, ), (n, i2)
+    // C_star is of size (N1_A_c, N0_C, N1_C), (i0, i1, i2)
+    
+    // i0 and i1 represent the coordinates in Matrix C 
+    // We assume row-major ordering for the matrices 
+    size_t i2=get_global_id(0); // Fastest dimension
+    size_t i1=get_global_id(1); 
+    size_t i0=get_global_id(2); // Slowest dimension
+    
+    // Get the number of chunks to process
+    size_t N1_A_c = get_global_size(2);
+     
+    // start and end along N1_A_star
+    size_t start, end;
+    
+    // Get the start and end lengths of the subsection along N1_A_star
+    get_start_end(N1_A_c, N1_A_star, i0, &start, &end);
+    
+    // Fetch local memory into shared_AT_star and shared_B_star
+    
+    // Starting positions for the copies
+    __global float* AT_star_i1 = &AT_star[i1];
+    __global float* B_star_i2 = &B_star[i2];
+    
+    // Enqueue a local barrier to ensure shared memory is filled
+    barrier(CLK_LOCAL_MEM_FENCE);
+    
+    // Scratch variable
+    float temp=0.0;
+    
+    // Guard mechanism to make sure we do not go
+    // outside the boundaries of matrix C
+    if ((i1<N0_C) && (i2<N1_C)) {
+        
+        // Loop over columns of A and rows of B 
+        for (size_t n=start; n<end; n++) {
+            
+            // Loop across row i0 of A
+            // and down column i1 of B
+            temp+=AT_star_i1[n*N0_C]*B_star_i2[n*N1_C];
+            
+        }
+        
+        // Number of rows in C is same as number of rows in A
+        C_star[i0*N0_C*N1_C+i1*N1_C+i2]=temp;
+    }
+}
 
 // matrix multiply kernel with pre-fetching
 __kernel void mat_mult_transpose_B (__global float* A, 
