@@ -121,6 +121,7 @@ int main(int argc, char** argv) {
         
     // Number of elements we are going to use in a chunk
     cl_uint chunk_len = cache_line_bytes/sizeof(float_type);
+    //cl_uint chunk_len=N1_A;
 
     // Integer (floored) number of vectors along axis of length N1_A
     cl_uint N1_A_c = N1_A/chunk_len;
