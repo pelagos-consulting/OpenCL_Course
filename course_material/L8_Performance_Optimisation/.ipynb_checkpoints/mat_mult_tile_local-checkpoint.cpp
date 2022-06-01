@@ -17,6 +17,37 @@ Written by Dr Toby M. Potter
 
 typedef cl_float float_type;
 
+void prep_mat_kernel(cl_kernel kernel, 
+                 size_t* local_size,
+                 size_t* global_size,
+                 size_t ndim,
+                 void* data) {
+                 
+    size_t* nbytes_line=(size_t*)data;
+                 
+    // Set shared memory in argument 3
+    // Local size of shared_A is going to be (local_size[1], chunk_len)
+    h_errchk(
+        clSetKernelArg(
+            kernel, 
+            3, 
+            local_size[1]*(*nbytes_line), 
+            NULL
+        ),
+        "setting kernel argument 3"
+    );
+    // Local size of shared_B is going to be (local_size[0], chunk_len)
+    h_errchk(
+        clSetKernelArg(
+            kernel, 
+            4, 
+            local_size[0]*(*nbytes_line), 
+            NULL
+        ),
+        "setting kernel argument 4"
+    );                               
+}
+
 int main(int argc, char** argv) {
     
     // Parse arguments and set the target device
@@ -373,10 +404,10 @@ int main(int argc, char** argv) {
     // Create the matrix multiplication kernel
     cl_kernel kernel_mat_mult=clCreateKernel(
         program, 
-        "mat_mult_tile", 
+        "mat_mult_tile_local", 
         &errcode
     );
-    h_errchk(errcode, "Creating mat_mult_tile kernel.");
+    h_errchk(errcode, "Creating mat_mult_tile_local kernel.");
     
     // Desired global_size
     size_t work_dim_mat_mult = 2;
@@ -396,30 +427,42 @@ int main(int argc, char** argv) {
     h_errchk(
         clSetKernelArg(kernel_mat_mult, 2, sizeof(cl_mem), &buffer_C ),
         "setting kernel argument 2"
-    );    
-    h_errchk(
-        clSetKernelArg(kernel_mat_mult, 3, sizeof(cl_uint), &N1_A_star ),
-        "setting kernel argument 3"
     );
+
+    // data for local memory preparation kernel
+    size_t prep_data=chunk_len*sizeof(float_type);
+    
+    // Prepare local memory arguments for execution
+    prep_mat_kernel(
+        kernel_mat_mult, 
+        local_size_mat_mult,
+        global_size_mat_mult,
+        work_dim_mat_mult,
+        &prep_data);
+    
     h_errchk(
-        clSetKernelArg(kernel_mat_mult, 4, sizeof(cl_uint), &N0_C ),
-        "setting kernel argument 4"
-    );
-    h_errchk(
-        clSetKernelArg(kernel_mat_mult, 5, sizeof(cl_uint), &N1_C ),
+        clSetKernelArg(kernel_mat_mult, 5, sizeof(cl_uint), &N1_A_star ),
         "setting kernel argument 5"
     );
     h_errchk(
-        clSetKernelArg(kernel_mat_mult, 6, sizeof(cl_uint), &chunk_len ),
+        clSetKernelArg(kernel_mat_mult, 6, sizeof(cl_uint), &N0_C ),
         "setting kernel argument 6"
     );
     h_errchk(
-        clSetKernelArg(kernel_mat_mult, 7, sizeof(cl_uint), &start_chunk_id ),
+        clSetKernelArg(kernel_mat_mult, 7, sizeof(cl_uint), &N1_C ),
         "setting kernel argument 7"
     );
     h_errchk(
-        clSetKernelArg(kernel_mat_mult, 8, sizeof(cl_uint), &end_chunk_id ),
+        clSetKernelArg(kernel_mat_mult, 8, sizeof(cl_uint), &chunk_len ),
         "setting kernel argument 8"
+    );
+    h_errchk(
+        clSetKernelArg(kernel_mat_mult, 9, sizeof(cl_uint), &start_chunk_id ),
+        "setting kernel argument 9"
+    );
+    h_errchk(
+        clSetKernelArg(kernel_mat_mult, 10, sizeof(cl_uint), &end_chunk_id ),
+        "setting kernel argument 10"
     );
 
     // Number of statistical runs per experiment
@@ -442,8 +485,8 @@ int main(int argc, char** argv) {
         nstats,
         run_transp_ms,
         // Function for prepping the kernel prior to execution
-        NULL,
-        NULL);
+        prep_mat_kernel,
+        &prep_data);
     
     // Map the buffer_C back to the host so we can write it to disk
     float_type* array_C = (float_type*)clEnqueueMapBuffer(

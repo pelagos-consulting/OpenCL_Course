@@ -17,6 +17,37 @@ Written by Dr Toby M. Potter
 
 typedef cl_float float_type;
 
+void prep_mat_kernel(cl_kernel kernel, 
+                 size_t* local_size,
+                 size_t* global_size,
+                 size_t ndim,
+                 void* data) {
+                 
+    size_t* nbytes_line=(size_t*)data;
+                 
+    // Set shared memory in argument 3
+    // Local size of shared_A is going to be (local_size[1], chunk_len)
+    h_errchk(
+        clSetKernelArg(
+            kernel, 
+            3, 
+            local_size[1]*(*nbytes_line), 
+            NULL
+        ),
+        "setting kernel argument 3"
+    );
+    // Local size of shared_B is going to be (local_size[0], chunk_len)
+    h_errchk(
+        clSetKernelArg(
+            kernel, 
+            4, 
+            local_size[0]*(*nbytes_line), 
+            NULL
+        ),
+        "setting kernel argument 4"
+    );                               
+}
+
 int main(int argc, char** argv) {
     
     // Parse arguments and set the target device
@@ -153,7 +184,17 @@ int main(int argc, char** argv) {
         NULL, 
         &errcode
     );
-    h_errchk(errcode, "Creating buffer_A");
+    h_errchk(errcode, "Creating buffer_A_star");
+    
+    // Create buffer BT in the normal manner
+    cl_mem buffer_AT_star = clCreateBuffer(
+        context, 
+        CL_MEM_READ_WRITE, 
+        nbytes_A_star, 
+        NULL, 
+        &errcode
+    );
+    h_errchk(errcode, "Creating buffer_AT_star");
     
     // Make buffer_B using array_B as a backing store
     cl_mem buffer_B_star = clCreateBuffer(
@@ -163,17 +204,9 @@ int main(int argc, char** argv) {
         NULL, 
         &errcode
     );
-    h_errchk(errcode, "Creating buffer_B");
+    h_errchk(errcode, "Creating buffer_B_star");
     
-    // Create buffer BT in the normal manner
-    cl_mem buffer_BT_star = clCreateBuffer(
-        context, 
-        CL_MEM_READ_WRITE, 
-        nbytes_B_star, 
-        NULL, 
-        &errcode
-    );
-    h_errchk(errcode, "Creating buffer_BT");
+
     
     // Allocate buffer C from pinned host memory
     cl_mem buffer_C = clCreateBuffer(
@@ -323,7 +356,7 @@ int main(int argc, char** argv) {
     h_errchk(errcode, "Creating transpose kernel");
 
     // Desired global_size
-    const size_t global_size_transp[]={ N1_A_star, N1_C };
+    const size_t global_size_transp[]={ N0_C, N1_A_star };
     h_fit_global_size(global_size_transp, 
                       local_size_transp, 
                       work_dim_transp
@@ -331,19 +364,19 @@ int main(int argc, char** argv) {
     
     // Set arguments for the transpose kernel
     h_errchk(
-        clSetKernelArg(kernel_transp, 0, sizeof(cl_mem), &buffer_B_star ),
+        clSetKernelArg(kernel_transp, 0, sizeof(cl_mem), &buffer_A_star ),
         "setting transpose kernel argument 0"
     );
     h_errchk(
-        clSetKernelArg(kernel_transp, 1, sizeof(cl_mem), &buffer_BT_star ),
+        clSetKernelArg(kernel_transp, 1, sizeof(cl_mem), &buffer_AT_star ),
         "setting transpose kernel argument 1"
     );
     h_errchk(
-        clSetKernelArg(kernel_transp, 2, sizeof(cl_uint), &N1_A_star ),
+        clSetKernelArg(kernel_transp, 2, sizeof(cl_uint), &N0_C ),
         "setting transpose kernel argument 2"
     );
     h_errchk(
-        clSetKernelArg(kernel_transp, 3, sizeof(cl_uint), &N1_C ),
+        clSetKernelArg(kernel_transp, 3, sizeof(cl_uint), &N1_A_star ),
         "setting transpose kernel argument 3"
     );
     
@@ -373,10 +406,10 @@ int main(int argc, char** argv) {
     // Create the matrix multiplication kernel
     cl_kernel kernel_mat_mult=clCreateKernel(
         program, 
-        "mat_mult_tile", 
+        "mat_mult_tile_local_transpose_A", 
         &errcode
     );
-    h_errchk(errcode, "Creating mat_mult_tile kernel.");
+    h_errchk(errcode, "Creating mat_mult_tile_local kernel.");
     
     // Desired global_size
     size_t work_dim_mat_mult = 2;
@@ -386,40 +419,52 @@ int main(int argc, char** argv) {
 
     // Set arguments to the kernel (not thread safe)
     h_errchk(
-        clSetKernelArg(kernel_mat_mult, 0, sizeof(cl_mem), &buffer_A_star ),
+        clSetKernelArg(kernel_mat_mult, 0, sizeof(cl_mem), &buffer_AT_star ),
         "setting kernel argument 0"
     );
     h_errchk(
-        clSetKernelArg(kernel_mat_mult, 1, sizeof(cl_mem), &buffer_BT_star ),
+        clSetKernelArg(kernel_mat_mult, 1, sizeof(cl_mem), &buffer_B_star ),
         "setting kernel argument 1"
     );
     h_errchk(
         clSetKernelArg(kernel_mat_mult, 2, sizeof(cl_mem), &buffer_C ),
         "setting kernel argument 2"
-    );    
-    h_errchk(
-        clSetKernelArg(kernel_mat_mult, 3, sizeof(cl_uint), &N1_A_star ),
-        "setting kernel argument 3"
     );
+
+    // data for local memory preparation kernel
+    size_t prep_data=chunk_len*sizeof(float_type);
+    
+    // Prepare local memory arguments for execution
+    prep_mat_kernel(
+        kernel_mat_mult, 
+        local_size_mat_mult,
+        global_size_mat_mult,
+        work_dim_mat_mult,
+        &prep_data);
+    
     h_errchk(
-        clSetKernelArg(kernel_mat_mult, 4, sizeof(cl_uint), &N0_C ),
-        "setting kernel argument 4"
-    );
-    h_errchk(
-        clSetKernelArg(kernel_mat_mult, 5, sizeof(cl_uint), &N1_C ),
+        clSetKernelArg(kernel_mat_mult, 5, sizeof(cl_uint), &N1_A_star ),
         "setting kernel argument 5"
     );
     h_errchk(
-        clSetKernelArg(kernel_mat_mult, 6, sizeof(cl_uint), &chunk_len ),
+        clSetKernelArg(kernel_mat_mult, 6, sizeof(cl_uint), &N0_C ),
         "setting kernel argument 6"
     );
     h_errchk(
-        clSetKernelArg(kernel_mat_mult, 7, sizeof(cl_uint), &start_chunk_id ),
+        clSetKernelArg(kernel_mat_mult, 7, sizeof(cl_uint), &N1_C ),
         "setting kernel argument 7"
     );
     h_errchk(
-        clSetKernelArg(kernel_mat_mult, 8, sizeof(cl_uint), &end_chunk_id ),
+        clSetKernelArg(kernel_mat_mult, 8, sizeof(cl_uint), &chunk_len ),
         "setting kernel argument 8"
+    );
+    h_errchk(
+        clSetKernelArg(kernel_mat_mult, 9, sizeof(cl_uint), &start_chunk_id ),
+        "setting kernel argument 9"
+    );
+    h_errchk(
+        clSetKernelArg(kernel_mat_mult, 10, sizeof(cl_uint), &end_chunk_id ),
+        "setting kernel argument 10"
     );
 
     // Number of statistical runs per experiment
@@ -442,8 +487,8 @@ int main(int argc, char** argv) {
         nstats,
         run_transp_ms,
         // Function for prepping the kernel prior to execution
-        NULL,
-        NULL);
+        prep_mat_kernel,
+        &prep_data);
     
     // Map the buffer_C back to the host so we can write it to disk
     float_type* array_C = (float_type*)clEnqueueMapBuffer(
@@ -481,12 +526,12 @@ int main(int argc, char** argv) {
         clReleaseMemObject(buffer_A_star),
         "releasing buffer A"
     );
-    h_errchk(
-        clReleaseMemObject(buffer_B_star),
-        "releasing buffer B"
+        h_errchk(
+        clReleaseMemObject(buffer_AT_star),
+        "releasing buffer AT"
     );
     h_errchk(
-        clReleaseMemObject(buffer_BT_star),
+        clReleaseMemObject(buffer_B_star),
         "releasing buffer B"
     );
     h_errchk(
