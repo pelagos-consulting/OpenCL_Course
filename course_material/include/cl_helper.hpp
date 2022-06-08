@@ -81,6 +81,17 @@ std::map<cl_int, const char*> error_codes {
     {CL_PROFILING_INFO_NOT_AVAILABLE, "CL_PROFILING_INFO_NOT_AVAILABLE"},
 };
 
+size_t h_lcm(size_t n1, size_t n2) {
+    // Get the least common multiple of two numbers
+    size_t number = std::max(n1, n2);
+    
+    while ((number % n1) && (number % n2)) {
+        number++;
+    }
+    
+    return number;
+}
+
 void h_show_options(const char* name) {
     // Display a helpful error message
     std::printf("Usage: %s <options> <DEVICE_INDEX>\n", name);

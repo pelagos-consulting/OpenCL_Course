@@ -709,6 +709,95 @@ __kernel void mat_mult_tile_local (
 }
 
 // Matrix multiply kernel that uses local memory
+__kernel void mat_mult_tile_local_vector (
+                        __global float8* A_star, 
+                        __global float8* BT_star, 
+                        __global float* C,
+                        __local float8* shared_A_star,
+                        __local float8* shared_BT_star,
+                        unsigned int N1_A_star, 
+                        unsigned int N0_C,
+                        unsigned int N1_C,
+                        unsigned int chunk_len,
+                        unsigned int start_chunk_id,
+                        unsigned int end_chunk_id) { 
+    
+    // A_star is of size (N0_C, N1_A_star), (i1, n)
+    // BT_star is of size (N1_C, N1_A_star), (i2, n)
+    // C is of size (N0_C, N1_C), (i0, i1)
+    
+    // i1 and i2 represent the coordinates in Matrix C 
+    // We assume row-major ordering for the matrices 
+    size_t i1=min(get_global_id(0), (size_t)N1_C-1); // Fastest dimension
+    size_t i0=min(get_global_id(1), (size_t)N0_C-1); 
+    
+    // shared_A_star is of size (L0, chunk_len) (s0, n)
+    // shared_B_star is of size (L1, chunk_len) (s1, n)
+    size_t L0 = get_local_size(1); // Slowest dimension
+    size_t L1 = get_local_size(0); // Fastest dimension
+    
+    // index within local memory
+    size_t s0 = get_local_id(1); // Slowest dimension
+    size_t s1 = get_local_id(0); // fastest dimension
+    
+    __local float8* shared_A_star_s0 = &shared_A_star[s0*chunk_len];
+    __local float8* shared_BT_star_s1 = &shared_BT_star[s1*chunk_len];
+
+    // Scratch variable to accumulate the sum
+    float8 temp1=(float8)0.0, temp2=(float8)0.0;
+
+    // Start and end positions to copy within a chunk
+    size_t start0, end0, start1, end1;
+    get_start_end(L1, chunk_len, s1, &start1, &end1);
+    get_start_end(L0, chunk_len, s0, &start0, &end0);
+
+    // Loop over the chunks
+    for (int chunk_id=start_chunk_id; chunk_id<end_chunk_id; chunk_id++) {
+
+        // Fetch local memory into shared_A_star and shared_B_star
+        
+        // Starting positions for the copy
+        __global float8* A_star_i0 = &A_star[i0*N1_A_star+chunk_id*chunk_len];
+        __global float8* BT_star_i1 = &BT_star[i1*N1_A_star+chunk_id*chunk_len];
+          
+        // Fill the rows of shared_A_star and shared_B_star
+        // From row i1 of A_star
+        for (int n = start1; n<end1; n++) {
+            shared_A_star_s0[n] = A_star_i0[n];
+        }
+        
+        // From row i2 of B_star
+        for (int n = start0; n<end0; n++) {
+            shared_BT_star_s1[n] = BT_star_i1[n];
+        }
+              
+        // Enqueue a local barrier to ensure shared memory is filled
+        barrier(CLK_LOCAL_MEM_FENCE);
+        
+        temp1=(float8)0.0;
+
+        // Loop over columns of A and rows of B 
+        for (size_t n=0; n<chunk_len; n++) {
+                
+            // Loop across row i0 of A
+            // and down column i1 of B
+            temp1+=shared_A_star_s0[n]*shared_BT_star_s1[n];
+        }
+
+        temp2+=temp1;
+        
+        // Enqueue a local barrier to ensure all work items 
+        // are ready for the next tile
+        barrier(CLK_LOCAL_MEM_FENCE);
+    }
+
+    // Put the accumulated value into position
+    C[i0*N1_C+i1]=temp2.s0 + temp2.s1 + temp2.s2 + temp2.s3
+        + temp2.s4 + temp2.s5 + temp2.s6 + temp2.s7;
+}
+
+
+// Matrix multiply kernel that uses local memory
 __kernel void mat_mult_tile_local_transpose_A (
                         __global float* AT_star, 
                         __global float* B_star, 
