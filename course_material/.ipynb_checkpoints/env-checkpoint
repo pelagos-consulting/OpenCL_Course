@@ -31,6 +31,6 @@ ifeq ($(detected_OS), Linux)
     CXX=g++
     CXXFLAGS=-std=c++11 -g -O2 -fopenmp
     OPENCL_INC_DIR=/usr/include
-    OPENCL_LIB_DIR=/usr/lib64
-    OPENCL_LIB_FLAGS=-lOpenCL -lomp
+    OPENCL_LIB_DIR=/usr/lib/x86_64-linux-gnu
+    OPENCL_LIB_FLAGS=-lOpenCL
 endif
