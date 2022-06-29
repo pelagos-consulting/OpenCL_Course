@@ -7,10 +7,8 @@ Written by Dr Toby M. Potter
 #include <sys/stat.h>
 #include <iostream>
 
-// Define the size of the arrays to be computed
-#define NCOLS_A 1025
-#define NROWS_C 1025
-#define NCOLS_C 1025
+// Include the size of arrays to be computed
+#include "mat_size.hpp"
 
 // Bring in helper header to manage boilerplate code
 #include "cl_helper.hpp"
