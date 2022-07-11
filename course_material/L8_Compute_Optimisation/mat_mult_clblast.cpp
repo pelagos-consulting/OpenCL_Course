@@ -137,54 +137,63 @@ int main(int argc, char** argv) {
 	const float beta=0.0;
 	
 	cl_event kernel_event;
-
+    
+    // Set up a run for clblast
+    cl_int nexperiments=1;
+    cl_int npoints=2;
+    size_t nbytes_output = nexperiments*npoints*sizeof(cl_double);
+    cl_double* output_local = (cl_double*)malloc(nbytes_output);    
+    
 	// Run the experiment nstats times
 	size_t nstats=10;
-
-	// Run the CLBlast kernel
-	CLBlastStatusCode status = CLBlastSgemm(
-		CLBlastLayoutRowMajor,
-		CLBlastTransposeNo,
-		CLBlastTransposeNo,
-		(const size_t)NROWS_C,
-		(const size_t)NCOLS_C,
-		(const size_t)NCOLS_A,
-		alpha,
-		buffer_A, 0, (const size_t)NCOLS_A,
-		buffer_B, 0, (const size_t)NCOLS_C,
-		beta,
-		buffer_C, 0, (const size_t)NCOLS_C,
-		&command_queue,
-		&event
-	)
-
-	cl_double time_ms=0.0;
-	if (status == CLBlastSuccess) {
-		time_ms = h_get_event_time_ms(
-			&event,
-			"CLBlast kernel",
-			NULL
-		);
-	}
-
-
-    /*
-    // Run the optimisation program
-    h_optimise_local(
-        argc,
-        argv,
-        command_queue,
-        kernel,
-        device,
-        global_size,
-        local_size,
-        work_dim,
-        nstats,
-        0,
-        NULL,
-        NULL
-    );
-	*/
+    cl_double times_ms[nstats] = {0};
+    cl_double time_ms=0.0;
+    cl_double avg_time_ms=0.0;
+    
+    // Run the CLBlast kernel nstats times and collect times
+    for (int n=0; n<nstats; n++) {
+        CLBlastStatusCode status = CLBlastSgemm(
+            CLBlastLayoutRowMajor,
+            CLBlastTransposeNo,
+            CLBlastTransposeNo,
+            (const size_t)NROWS_C,
+            (const size_t)NCOLS_C,
+            (const size_t)NCOLS_A,
+            alpha,
+            buffer_A, 0, (const size_t)NCOLS_A,
+            buffer_B, 0, (const size_t)NCOLS_C,
+            beta,
+            buffer_C, 0, (const size_t)NCOLS_C,
+            &command_queue,
+            &kernel_event
+        );
+        
+        if (status == CLBlastSuccess) {
+            time_ms=h_get_event_time_ms(
+                &kernel_event,
+                NULL,
+                NULL
+            );
+            times_ms[n]=time_ms;
+            avg_time_ms+=time_ms;
+        }
+    }
+    
+    // Calculate the mean and average times
+    avg_time_ms/=(cl_double)nstats;
+    cl_double std_time_ms=0.0, scratch=0.0;
+    
+    for (int n=0; n<nstats; n++) {
+        scratch=times_ms[n]-avg_time_ms;
+        std_time_ms+=(scratch*scratch);
+    }
+    std_time_ms/=(cl_double)nstats;
+    
+    output_local[0]=avg_time_ms;
+    output_local[1]=std_time_ms;
+    
+    h_write_binary(output_local, "output_local.dat", nbytes_output);
+    free(output_local);
 
     // Read memory from the buffer to the host
     h_errchk(

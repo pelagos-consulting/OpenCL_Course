@@ -12,6 +12,9 @@ Written by Dr Toby M. Potter
 // Bring in helper header to manage boilerplate code
 #include "cl_helper.hpp"
 
+// Include the CLBLAST library
+#include <clblast_c.h>
+
 typedef cl_float float_type;
 
 int main(int argc, char** argv) {
@@ -130,73 +133,67 @@ int main(int argc, char** argv) {
                                      &errcode);
     h_errchk(errcode, "Creating buffer_C");
 
-    // Now specify the kernel source and read it in
-    size_t nbytes_src = 0;
-    const char* kernel_source = (const char*)h_read_binary(
-        "kernels_mat_mult.c", 
-        &nbytes_src
-    );
-
-    // Turn this source code into a program
-    cl_program program = h_build_program(kernel_source, context, device, NULL);
+	const float alpha=1.0;
+	const float beta=0.0;
+	
+	cl_event kernel_event;
+    
+    // Set up a run for clblast
+    cl_int nexperiments=1;
+    cl_int npoints=2;
+    size_t nbytes_output = nexperiments*npoints*sizeof(cl_double);
+    cl_double* output_local = (cl_double*)malloc(nbytes_output);    
+    
+	// Run the experiment nstats times
+	size_t nstats=10;
+    cl_double times_ms[nstats] = {0};
+    cl_double time_ms=0.0;
+    cl_double avg_time_ms=0.0;
+    
+    // Run the CLBlast kernel nstats times and collect times
+    for (int n=0; n<nstats; n++) {
+        CLBlastStatusCode status = CLBlastSgemm(
+            CLBlastLayoutRowMajor,
+            CLBlastTransposeNo,
+            CLBlastTransposeNo,
+            (const size_t)NROWS_C,
+            (const size_t)NCOLS_C,
+            (const size_t)NCOLS_A,
+            alpha,
+            buffer_A, 0, (const size_t)NCOLS_A,
+            buffer_B, 0, (const size_t)NCOLS_C,
+            beta,
+            buffer_C, 0, (const size_t)NCOLS_C,
+            &command_queue,
+            &kernel_event
+        );
         
-    // Create a kernel from the built program
-    cl_kernel kernel=clCreateKernel(program, "mat_mult_float", &errcode);
-    h_errchk(errcode, "Creating Kernel");
+        if (status == CLBlastSuccess) {
+            time_ms=h_get_event_time_ms(
+                &kernel_event,
+                NULL,
+                NULL
+            );
+            times_ms[n]=time_ms;
+            avg_time_ms+=time_ms;
+        }
+    }
     
-    // Set arguments to the kernel (not thread safe)
-    h_errchk(
-        clSetKernelArg(kernel, 0, sizeof(cl_mem), &buffer_A ),
-        "setting kernel argument 0"
-    );
-    h_errchk(
-        clSetKernelArg(kernel, 1, sizeof(cl_mem), &buffer_B ),
-        "setting kernel argument 1"
-    );
-    h_errchk(
-        clSetKernelArg(kernel, 2, sizeof(cl_mem), &buffer_C ),
-        "setting kernel argument 2"
-    );
-    h_errchk(
-        clSetKernelArg(kernel, 3, sizeof(cl_uint), &N1_A ),
-        "setting kernel argument 3"
-    );
-    h_errchk(
-        clSetKernelArg(kernel, 4, sizeof(cl_uint), &N0_C ),
-        "setting kernel argument 4"
-    );
-    h_errchk(
-        clSetKernelArg(kernel, 5, sizeof(cl_uint), &N1_C ),
-        "setting kernel argument 5"
-    );
+    // Calculate the mean and average times
+    avg_time_ms/=(cl_double)nstats;
+    cl_double std_time_ms=0.0, scratch=0.0;
     
-    // Number of dimensions in the kernel
-    size_t work_dim = 2;
+    for (int n=0; n<nstats; n++) {
+        scratch=times_ms[n]-avg_time_ms;
+        std_time_ms+=(scratch*scratch);
+    }
+    std_time_ms/=(cl_double)nstats;
     
-    // Number of statistical runs to do per experiment 
-    size_t nstats = 3;
+    output_local[0]=avg_time_ms;
+    output_local[1]=std_time_ms;
     
-    // Desired local size
-    size_t local_size[]={ 4, 16 };
-    
-    // Desired global_size
-    size_t global_size[]={ N0_C, N1_C };
-    
-    // Run the optimisation program
-    h_optimise_local(
-        argc,
-        argv,
-        command_queue,
-        kernel,
-        device,
-        global_size,
-        local_size,
-        work_dim,
-        nstats,
-        0,
-        NULL,
-        NULL
-    );
+    h_write_binary(output_local, "output_local.dat", nbytes_output);
+    free(output_local);
 
     // Read memory from the buffer to the host
     h_errchk(
