@@ -187,7 +187,7 @@ int main(int argc, char** argv) {
         scratch=times_ms[n]-avg_time_ms;
         std_time_ms+=(scratch*scratch);
     }
-    std_time_ms/=(cl_double)nstats;
+    std_time_ms=sqrt(std_time_ms)/(cl_double)nstats;
     
     output_local[0]=avg_time_ms;
     output_local[1]=std_time_ms;

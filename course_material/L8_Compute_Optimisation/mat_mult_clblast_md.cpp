@@ -1,0 +1,278 @@
+/* Code to perform a Matrix multiplication using OpenCL
+Written by Dr Toby M. Potter
+*/
+
+#include <cassert>
+#include <cmath>
+#include <iostream>
+
+// Include the size of arrays to be computed
+#include "mat_size.hpp"
+
+// Bring in helper header to manage boilerplate code
+#include "cl_helper.hpp"
+
+// Include the CLBLAST library
+#include <clblast_c.h>
+
+typedef cl_float float_type;
+
+int main(int argc, char** argv) {
+   
+    // Parse arguments and set the target device
+    cl_device_type target_device;
+    cl_uint dev_index = h_parse_args(argc, argv, &target_device);
+    
+    // Useful for checking OpenCL errors
+    cl_int errcode;
+
+    // Create handles to platforms, 
+    // devices, and contexts
+
+    // Number of platforms discovered
+    cl_uint num_platforms;
+
+    // Number of devices discovered
+    cl_uint num_devices;
+
+    // Pointer to an array of platforms
+    cl_platform_id *platforms = NULL;
+
+    // Pointer to an array of devices
+    cl_device_id *devices = NULL;
+
+    // Pointer to an array of contexts
+    cl_context *contexts = NULL;
+    
+    // Helper function to acquire devices
+    h_acquire_devices(target_device,
+                     &platforms,
+                     &num_platforms,
+                     &devices,
+                     &num_devices,
+                     &contexts);
+    
+    // Number of command queues to generate
+    cl_uint num_command_queues = num_devices;
+    
+    // Do we enable out-of-order execution 
+    cl_bool ordering = CL_FALSE;
+    
+    // Do we enable profiling?
+    cl_bool profiling = CL_TRUE;
+
+    // Do we enable blocking IO?
+    cl_bool blocking = CL_TRUE;
+    
+    // Create the command queues
+    cl_command_queue* command_queues = h_create_command_queues(
+        devices,
+        contexts,
+        num_devices,
+        num_command_queues,
+        ordering,
+        profiling
+    );
+    
+    // We are going to do a simple array multiplication for this example, 
+    // using raw binary files for input and output
+    
+    // A is of size (N0_C, N1_A)
+    // B is of size (N1_A, N1_C)
+    // C is of size (N0_C, N1_C)
+    
+    cl_uint N1_A = NCOLS_A, N0_C = NROWS_C, N1_C = NCOLS_C;
+    size_t nbytes_A, nbytes_B, nbytes_C;
+
+    // Read the input data into arrays and sanity check
+    float_type* array_A = (float_type*)h_read_binary("array_A.dat", &nbytes_A);
+    float_type* array_B = (float_type*)h_read_binary("array_B.dat", &nbytes_B);
+
+    // Sanity check on incoming data
+    assert(nbytes_A==N0_C*N1_A*sizeof(float_type));   
+    assert(nbytes_B==N1_A*N1_C*sizeof(float_type));
+    nbytes_C=N0_C*N1_C*sizeof(float_type);
+    
+    // Make Buffers on the compute device for matrices A, B, and C
+    float_type* array_C = (float_type*)h_alloc(nbytes_C);
+
+    // Allocate memory for buffers
+    cl_mem* buffers_A = (cl_mem*)malloc(num_devices*sizeof(cl_mem));
+    cl_mem* buffers_B = (cl_mem*)malloc(num_devices*sizeof(cl_mem));    
+    cl_mem* buffers_C = (cl_mem*)malloc(num_devices*sizeof(cl_mem));      
+    
+    for (cl_uint n=0; n<num_devices; n++) {
+        
+        // Report on the device
+        h_report_on_device(devices[n]);
+        
+        // Create buffers for A
+        buffers_A[n] = clCreateBuffer(
+            context, 
+            CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, 
+            nbytes_A, 
+            (void*)array_A, 
+            &errcode
+        );
+        h_errchk(errcode, "Creating buffer_A");
+
+        // Create buffers for B        
+        buffers_B[n] = clCreateBuffer(
+            context, 
+            CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, 
+            nbytes_B, 
+            (void*)array_B, 
+            &errcode
+        );
+        h_errchk(errcode, "Creating buffer_B");
+
+        // Create buffers for C
+        buffers_C[n] = clCreateBuffer(
+            context, 
+            CL_MEM_READ_WRITE, 
+            nbytes_C, 
+            (void*)array_C, 
+            &errcode
+        );
+        h_errchk(errcode, "Creating buffer_C");        
+    }
+
+    // Number of chunks along each dimension
+    cl_uint P0=2;
+    cl_uint P1=2;
+    
+    // Make chunk sizes
+    cl_uint C0=(cl_uint)ceil((double)N0_C/(double)P0);
+    cl_uint C1=(cl_uint)ceil((double)N1_C/(double)P1);    
+    
+    // Constants for multiplication
+	const float alpha=1.0;
+	const float beta=0.0;
+	
+	cl_event kernel_event;
+    
+    // Set up a run for clblast
+    cl_int nexperiments=1;
+    cl_int npoints=2;
+    size_t nbytes_output = nexperiments*npoints*sizeof(cl_double);
+    cl_double* output_local = (cl_double*)malloc(nbytes_output);    
+    
+	// Run the experiment nstats times
+	size_t nstats=10;
+    cl_double times_ms[nstats] = {0};
+    cl_double time_ms=0.0;
+    cl_double avg_time_ms=0.0;
+    
+    // Loop over domains using dynamic scheduling
+    #pragma omp parallel for private() shared() schedule(dynamic,1)  
+    for (int d=0; d<P0*P1; d++) {
+    
+        // Run the CLBlast kernel nstats times and collect times
+        for (int n=0; n<nstats; n++) {
+            CLBlastStatusCode status = CLBlastSgemm(
+                CLBlastLayoutRowMajor,
+                CLBlastTransposeNo,
+                CLBlastTransposeNo,
+                (const size_t)NROWS_C,
+                (const size_t)NCOLS_C,
+                (const size_t)NCOLS_A,
+                alpha,
+                buffer_A, 0, (const size_t)NCOLS_A,
+                buffer_B, 0, (const size_t)NCOLS_C,
+                beta,
+                buffer_C, 0, (const size_t)NCOLS_C,
+                &command_queue,
+                &kernel_event
+            );
+        
+            if (status == CLBlastSuccess) {
+                time_ms=h_get_event_time_ms(
+                    &kernel_event,
+                    NULL,
+                    NULL
+                );
+                times_ms[n]=time_ms;
+                avg_time_ms+=time_ms;
+            }
+        }
+    
+        // Calculate the mean and average times
+        avg_time_ms/=(cl_double)nstats;
+        cl_double std_time_ms=0.0, scratch=0.0;
+    
+        for (int n=0; n<nstats; n++) {
+            scratch=times_ms[n]-avg_time_ms;
+            std_time_ms+=(scratch*scratch);
+        }
+        std_time_ms=sqrt(std_time_ms)/(cl_double)nstats;
+    
+        output_local[0]=avg_time_ms;
+        output_local[1]=std_time_ms;
+    
+        // Read the buffers back in from the particular point
+    
+        // Read memory from the buffer to the host
+        // Using rectangular copies
+        //h_errchk(
+        //    clEnqueueReadBuffer(command_queue,
+        //                        buffer_C,
+        //                        blocking,
+        //                        0,
+        //                        nbytes_C,
+        //                        array_C,
+        //                        0,
+        //                        NULL,
+        //                        NULL), 
+        //         "Copying matrix C from device to host"
+        //);
+    }
+    
+    h_write_binary(output_local, "output_local.dat", nbytes_output);
+    free(output_local);
+
+    // Write out the result to file
+    h_write_binary(array_C, "array_C.dat", nbytes_C);
+
+    for (cl_uint n=0; n<num_devices; n++) {
+        // Free the OpenCL buffers
+        h_errchk(
+            clReleaseMemObject(buffers_A[n]),
+            "releasing buffer A"
+        );
+        h_errchk(
+            clReleaseMemObject(buffers_B[n]),
+            "releasing buffer B"
+        );
+        h_errchk(
+            clReleaseMemObject(buffers_C[n]),
+            "releasing buffer C"
+        );
+    }
+ 
+    // Free the buffers arrays
+    free(buffers_A);
+    free(buffers_B);
+    free(buffers_C);
+    
+    // Clean up memory that was allocated on the read   
+    free(array_A);
+    free(array_B);
+    free(array_C);
+    
+    // Clean up command queues
+    h_release_command_queues(
+        command_queues, 
+        num_command_queues
+    );
+    
+    // Clean up devices, queues, and contexts
+    h_release_devices(
+        devices,
+        num_devices,
+        contexts,
+        platforms
+    );
+
+    return 0;
+}
+
