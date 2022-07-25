@@ -106,7 +106,7 @@ void h_get_start_end(
     if (array_length%local_length) jump++;
     *start=local_index*jump;
     *end=(local_index+1)*jump;
-    *end=min(*end,array_length);
+    *end=std::min(*end,array_length);
 }  
 
 void h_show_options(const char* name) {

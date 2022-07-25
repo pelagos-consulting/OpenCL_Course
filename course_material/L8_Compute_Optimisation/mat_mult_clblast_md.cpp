@@ -137,19 +137,11 @@ int main(int argc, char** argv) {
         h_errchk(errcode, "Creating buffer_C");        
     }
 
-    // Number of chunks along each dimension
-    cl_uint P0=2;
-    cl_uint P1=2;
-    
-    // Make chunk sizes
-    cl_uint C0=(cl_uint)ceil((double)N0_C/(double)P0);
-    cl_uint C1=(cl_uint)ceil((double)N1_C/(double)P1);    
+
     
     // Constants for multiplication
 	const float alpha=1.0;
 	const float beta=0.0;
-	
-	cl_event kernel_event;
     
     // Set up a run for clblast
     cl_int nexperiments=1;
@@ -163,27 +155,115 @@ int main(int argc, char** argv) {
     cl_double time_ms=0.0;
     cl_double avg_time_ms=0.0;
     
+    // Start and end locations
+    size_t start0, end0;
+    size_t start1, end1;
+    
+    // Number of domains along each dimension
+    cl_uint D0=2;
+    cl_uint D1=2;
+    
+    // Make local domain sizes
+    size_t L0=(size_t)ceil((double)N0_C/(double)D0);
+    size_t L1=(size_t)ceil((double)N1_C/(double)D1);    
+    
     // Loop over domains using dynamic scheduling
     #pragma omp parallel for private() shared() schedule(dynamic,1)  
-    for (int d=0; d<P0*P1; d++) {
+    for (int d=0; d<D0*D1; d++) {
+        
+        // A is of size (m, k)
+        // B is of size (k, n)
+        // C is of size (m, n)
+        
+        // Calculate start and stop indices of local domain
+        size_t l0 = d/D1;
+        size_t l1 = d%D1;
+        h_get_start_end(L0, N0_C, l0, &start0, &stop0);
+        h_get_start_end(L1, N1_C, l1, &start1, &stop1);
+        
+        // Get the thread ID
+        int tid = omp_get_thread_num();
+        
+        // size of the region to compute
+        size_t s0 = stop0-start0;
+        sizt_t s1 = stop1-start1;
+        
+        // starting positions in the matrices
+        size_t offset_A = start0*NCOLS_A;
+        size_t offset_B = start1;
+        size_t offset_C = start0*NCOLS_C+start1;
+        
+        // Event for the kernel
+        cl_event kernel_event;
+        
+        // Leading dimension is number of elements that forms the biggest stride
+        CLBlastStatusCode status = CLBlastSgemm(
+            CLBlastLayoutRowMajor,
+            CLBlastTransposeNo,
+            CLBlastTransposeNo,
+            // Size of region in dim 0 of C
+            (const size_t)s0,
+            // Size of region in dim 1 of C
+            (const size_t)s1,
+            // Size of region in dim 1 of A
+            (const size_t)NCOLS_A,
+            alpha,
+            buffer_A[tid], (const size_t)offset_A, (const size_t)NCOLS_A,
+            buffer_B[tid], (const size_t)offset_B, (const size_t)NCOLS_C,
+            beta,
+            buffer_C[tid], (const size_t)offset_C, (const size_t)NCOLS_C,
+            &command_queues[tid],
+            &kernel_event
+        );
+        
+        // Rectangular copy back to matrix C
+            
+        // B is of size (N1_A, N1_C)
+        // Offset is in bytes, row_id and slice_id are indices
+        size_t offset=start1*sizeof(cl_float), row_id=start0, slice_id = 0;
     
+        // Make up the origin for host and buffer
+        const size_t buffer_origin[] = {offset, row_id, slice_id};
+        const size_t host_origin[] = {offset, row_id, slice_id};
+    
+        // Length of a row (in bytes)
+        size_t buffer_row_pitch = NCOLS_C * sizeof(cl_float); 
+        size_t host_row_pitch = buffer_row_pitch;
+    
+        // Number of bytes in a slice 
+        size_t buffer_slice_pitch = NROWS_C * NCOLS_C * sizeof(cl_float);
+        size_t host_slice_pitch = buffer_slice_pitch;        
+        
+        /// Size of the region to copy, of course we only copy 1 slice
+        size_t nrows = s0, nslices = 1;
+        const size_t region[] = { s1*sizeof(cl_float), nrows, nslices};
+     
+        // Enqueue the rectangular copy
+        h_errchk(
+            clEnqueueReadBufferRect(
+                command_queue,
+                buffers_C[tid],
+                CL_TRUE,
+                buffer_origin,
+                host_origin,
+                region,
+                buffer_row_pitch,
+                buffer_slice_pitch,
+                host_row_pitch,
+                host_slice_pitch,
+                array_C,
+                0,
+                NULL,
+                NULL
+            ),
+            "Rectangular copy to buffer_B from the host"
+        );
+        
+        // Got to here
+        
         // Run the CLBlast kernel nstats times and collect times
         for (int n=0; n<nstats; n++) {
-            CLBlastStatusCode status = CLBlastSgemm(
-                CLBlastLayoutRowMajor,
-                CLBlastTransposeNo,
-                CLBlastTransposeNo,
-                (const size_t)NROWS_C,
-                (const size_t)NCOLS_C,
-                (const size_t)NCOLS_A,
-                alpha,
-                buffer_A, 0, (const size_t)NCOLS_A,
-                buffer_B, 0, (const size_t)NCOLS_C,
-                beta,
-                buffer_C, 0, (const size_t)NCOLS_C,
-                &command_queue,
-                &kernel_event
-            );
+            
         
             if (status == CLBlastSuccess) {
                 time_ms=h_get_event_time_ms(
@@ -208,23 +288,6 @@ int main(int argc, char** argv) {
     
         output_local[0]=avg_time_ms;
         output_local[1]=std_time_ms;
-    
-        // Read the buffers back in from the particular point
-    
-        // Read memory from the buffer to the host
-        // Using rectangular copies
-        //h_errchk(
-        //    clEnqueueReadBuffer(command_queue,
-        //                        buffer_C,
-        //                        blocking,
-        //                        0,
-        //                        nbytes_C,
-        //                        array_C,
-        //                        0,
-        //                        NULL,
-        //                        NULL), 
-        //         "Copying matrix C from device to host"
-        //);
     }
     
     h_write_binary(output_local, "output_local.dat", nbytes_output);
