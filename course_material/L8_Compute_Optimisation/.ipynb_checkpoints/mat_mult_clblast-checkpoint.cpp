@@ -152,6 +152,10 @@ int main(int argc, char** argv) {
     
     // Run the CLBlast kernel nstats times and collect times
     for (int n=0; n<nstats; n++) {
+        
+        // Start the clock
+        auto t1 = std::chrono::steady_clock::now();
+        
         CLBlastStatusCode status = CLBlastSgemm(
             CLBlastLayoutRowMajor,
             CLBlastTransposeNo,
@@ -168,15 +172,30 @@ int main(int argc, char** argv) {
             &kernel_event
         );
         
-        if (status == CLBlastSuccess) {
-            time_ms=h_get_event_time_ms(
-                &kernel_event,
-                NULL,
-                NULL
-            );
-            times_ms[n]=time_ms;
-            avg_time_ms+=time_ms;
-        }
+        // Read memory from the buffer to the host
+        h_errchk(
+            clEnqueueReadBuffer(command_queue,
+                                buffer_C,
+                                blocking,
+                                0,
+                                nbytes_C,
+                                array_C,
+                                0,
+                                NULL,
+                                NULL), 
+                 "Copying matrix C from device to host"
+        );
+        
+        // Stop the clock
+        auto t2 = std::chrono::steady_clock::now();
+        
+        cl_double time_ms = (cl_double)std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count();
+        
+        // Make sure the download has run successfully
+        assert(status==CLBlastSuccess);
+        
+        times_ms[n]=time_ms;
+        avg_time_ms+=time_ms;
     }
     
     // Calculate the mean and average times
@@ -195,20 +214,6 @@ int main(int argc, char** argv) {
     h_write_binary(output_local, "output_local.dat", nbytes_output);
     free(output_local);
 
-    // Read memory from the buffer to the host
-    h_errchk(
-        clEnqueueReadBuffer(command_queue,
-                            buffer_C,
-                            blocking,
-                            0,
-                            nbytes_C,
-                            array_C,
-                            0,
-                            NULL,
-                            NULL), 
-             "Copying matrix C from device to host"
-    );
-    
     // Write out the result to file
     h_write_binary(array_C, "array_C.dat", nbytes_C);
 

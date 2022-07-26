@@ -5,6 +5,7 @@
 #include <cassert>
 #include <cstring>
 #include <cmath>
+#include <chrono>
 
 // Define target OpenCL version
 #define CL_TARGET_OPENCL_VERSION 300
