@@ -108,7 +108,7 @@ int main(int argc, char** argv) {
         
         // Create buffers for A
         buffers_A[n] = clCreateBuffer(
-            context, 
+            contexts[n], 
             CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, 
             nbytes_A, 
             (void*)array_A, 
@@ -118,7 +118,7 @@ int main(int argc, char** argv) {
 
         // Create buffers for B        
         buffers_B[n] = clCreateBuffer(
-            context, 
+            contexts[n], 
             CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, 
             nbytes_B, 
             (void*)array_B, 
@@ -128,7 +128,7 @@ int main(int argc, char** argv) {
 
         // Create buffers for C
         buffers_C[n] = clCreateBuffer(
-            context, 
+            contexts[n], 
             CL_MEM_READ_WRITE, 
             nbytes_C, 
             (void*)array_C, 
@@ -152,26 +152,24 @@ int main(int argc, char** argv) {
     cl_double times_ms[nstats] = {0};
     cl_double time_ms=0.0;
     cl_double avg_time_ms=0.0;
-    
-    // Start and end locations
-    size_t start0, end0;
-    size_t start1, end1;
+    cl_double max_time_ms=0.0;
+    cl_int max_time_n = 0;
     
     // Number of domains along each dimension
     cl_uint D0=2;
     cl_uint D1=2;
     
-    // Make local domain sizes
+    // Make maximum local domain sizes
     size_t L0=(size_t)ceil((double)N0_C/(double)D0);
     size_t L1=(size_t)ceil((double)N1_C/(double)D1);    
     
     // Loop over experiments
     for (int n=0; n<nstats; n++) {
         // Time t1
-        auto t1 = std::chrono::steady_clock::now();
+        auto t1 = std::chrono::high_resolution_clock::now();
         
         // Loop over domains using dynamic scheduling
-        #pragma omp parallel for shared(command_queues, buffers_C, array_C) default(private) schedule(dynamic,1)  
+        #pragma omp parallel for shared(command_queues, buffers_A, buffers_B, buffers_C, array_C, D0, D1, N0_C, N1_C, L0, L1) default(none) schedule(dynamic,1)  
         for (int d=0; d<D0*D1; d++) {
         
             // A is of size (m, k)
@@ -181,6 +179,11 @@ int main(int argc, char** argv) {
             // Local domain indices
             size_t l0 = d/D1;
             size_t l1 = d%D1;
+            
+            // Start and end locations
+            size_t start0, stop0;
+            size_t start1, stop1;
+            
             h_get_start_end(L0, N0_C, l0, &start0, &stop0);
             h_get_start_end(L1, N1_C, l1, &start1, &stop1);
         
@@ -189,7 +192,7 @@ int main(int argc, char** argv) {
         
             // size of the local domain
             size_t s0 = stop0-start0;
-            sizt_t s1 = stop1-start1;
+            size_t s1 = stop1-start1;
         
             // starting positions in the matrices
             size_t offset_A = start0*NCOLS_A;
@@ -211,15 +214,27 @@ int main(int argc, char** argv) {
                 // Size of region in dim 1 of A
                 (const size_t)NCOLS_A,
                 alpha,
-                buffer_A[tid], (const size_t)offset_A, (const size_t)NCOLS_A,
-                buffer_B[tid], (const size_t)offset_B, (const size_t)NCOLS_C,
+                buffers_A[tid], (const size_t)offset_A, (const size_t)NCOLS_A,
+                buffers_B[tid], (const size_t)offset_B, (const size_t)NCOLS_C,
                 beta,
-                buffer_C[tid], (const size_t)offset_C, (const size_t)NCOLS_C,
+                buffers_C[tid], (const size_t)offset_C, (const size_t)NCOLS_C,
                 &command_queues[tid],
                 &kernel_event
             );
         
-            // Rectangular copy back to matrix C
+            // Make sure the matrix multiplication ran successfully
+            assert(status==CLBlastSuccess);
+            
+            // Wait for events to finish
+            h_errchk(
+                clWaitForEvents(
+                    1,
+                    &kernel_event
+                ),
+                "Waiting for Sgemm kernels to finish."
+            );            
+            
+           // Copy the domain back to C
             
             // B is of size (N1_A, N1_C)
             // Offset is in bytes, row_id and slice_id are indices
@@ -263,25 +278,34 @@ int main(int argc, char** argv) {
             );
         } // End of parallel region
         
-        auto t2 = std::chrono::steady_clock::now();
+        auto t2 = std::chrono::high_resolution_clock::now();
         
         // Time in milliseconds
-        cl_double time_ms = (cl_double)std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count();
+        cl_double time_ms = (cl_double)std::chrono::duration_cast<std::chrono::microseconds>(t2-t1).count()/1000.0;
+        
+        // Keep track of maximum time
+        if (time_ms > max_time_ms) {
+            max_time_ms = time_ms;
+            max_time_n = n;
+        }
         
         // Fetch parallel times
         times_ms[n]=time_ms;
         avg_time_ms+=time_ms;
     }
     
-    // Calculate the mean and average times
-    avg_time_ms/=(cl_double)nstats;
+    // Leave the longest time out of the calculation
+    avg_time_ms = avg_time_ms - max_time_ms;
+    avg_time_ms/=(cl_double)(nstats-1);
     cl_double std_time_ms=0.0, scratch=0.0;
     
     for (int n=0; n<nstats; n++) {
         scratch=times_ms[n]-avg_time_ms;
-        std_time_ms+=(scratch*scratch);
+        if (n!=max_time_n) {
+            std_time_ms+=(scratch*scratch);
+        }
     }
-    std_time_ms=sqrt(std_time_ms)/(cl_double)nstats;
+    std_time_ms=sqrt(std_time_ms)/(cl_double)(nstats-1);
     
     output_local[0]=avg_time_ms;
     output_local[1]=std_time_ms;

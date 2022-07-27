@@ -149,12 +149,14 @@ int main(int argc, char** argv) {
     cl_double times_ms[nstats] = {0};
     cl_double time_ms=0.0;
     cl_double avg_time_ms=0.0;
+    cl_double max_time_ms=0.0;
+    cl_int max_time_n = 0;
     
     // Run the CLBlast kernel nstats times and collect times
     for (int n=0; n<nstats; n++) {
         
         // Start the clock
-        auto t1 = std::chrono::steady_clock::now();
+        auto t1 = std::chrono::high_resolution_clock::now();
         
         CLBlastStatusCode status = CLBlastSgemm(
             CLBlastLayoutRowMajor,
@@ -172,41 +174,63 @@ int main(int argc, char** argv) {
             &kernel_event
         );
         
-        // Read memory from the buffer to the host
+        // Make sure the matrix multiplication ran successfully
+        assert(status==CLBlastSuccess);
+        
+        // Wait for events to finish
         h_errchk(
-            clEnqueueReadBuffer(command_queue,
-                                buffer_C,
-                                blocking,
-                                0,
-                                nbytes_C,
-                                array_C,
-                                0,
-                                NULL,
-                                NULL), 
-                 "Copying matrix C from device to host"
+            clWaitForEvents(
+                1,
+                &kernel_event
+            ),
+            "Waiting for Sgemm kernels to finish."
         );
         
         // Stop the clock
-        auto t2 = std::chrono::steady_clock::now();
+        auto t2 = std::chrono::high_resolution_clock::now();
         
-        cl_double time_ms = (cl_double)std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count();
+        cl_double time_ms = (cl_double)std::chrono::duration_cast<std::chrono::microseconds>(t2-t1).count()/1000.0;
         
-        // Make sure the download has run successfully
-        assert(status==CLBlastSuccess);
+        if (time_ms > max_time_ms) {
+            max_time_ms = time_ms;
+            max_time_n = n;
+        }
         
         times_ms[n]=time_ms;
+        
+        printf("time_ms = %f\n", time_ms);
+        
         avg_time_ms+=time_ms;
     }
     
+    // Read memory from the buffer to the host
+    h_errchk(
+        clEnqueueReadBuffer(command_queue,
+                            buffer_C,
+                            blocking,
+                            0,
+                            nbytes_C,
+                            array_C,
+                            0,
+                            NULL,
+                            NULL), 
+        "Copying matrix C from device to host"
+    );
+    
     // Calculate the mean and average times
-    avg_time_ms/=(cl_double)nstats;
+    
+    // Leave the longest time out of the calculation
+    avg_time_ms = avg_time_ms - max_time_ms;
+    avg_time_ms/=(cl_double)(nstats-1);
     cl_double std_time_ms=0.0, scratch=0.0;
     
     for (int n=0; n<nstats; n++) {
         scratch=times_ms[n]-avg_time_ms;
-        std_time_ms+=(scratch*scratch);
+        if (n!=max_time_n) {
+            std_time_ms+=(scratch*scratch);
+        }
     }
-    std_time_ms=sqrt(std_time_ms)/(cl_double)nstats;
+    std_time_ms=sqrt(std_time_ms)/(cl_double)(nstats-1);
     
     output_local[0]=avg_time_ms;
     output_local[1]=std_time_ms;
