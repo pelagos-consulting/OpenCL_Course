@@ -93,23 +93,6 @@ size_t h_lcm(size_t n1, size_t n2) {
     return number;
 }
 
-void h_get_start_end(
-    // Helper function to get the start and end values
-    // for filling a shared memory array
-    size_t local_length, 
-    size_t array_length,
-    size_t local_index,
-    size_t *start,
-    size_t *end) {
-  
-    // Work out the jumps
-    size_t jump=array_length/local_length;
-    if (array_length%local_length) jump++;
-    *start=local_index*jump;
-    *end=(local_index+1)*jump;
-    *end=std::min(*end,array_length);
-}  
-
 void h_show_options(const char* name) {
     // Display a helpful error message
     std::printf("Usage: %s <options> <DEVICE_INDEX>\n", name);

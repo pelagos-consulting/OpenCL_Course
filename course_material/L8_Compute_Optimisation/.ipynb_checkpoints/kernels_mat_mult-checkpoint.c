@@ -16,8 +16,8 @@ void get_start_end(
     size_t local_index,
     size_t *start,
     size_t *end) {
-  
-    // Work out the jumps
+    
+    // Work out the number of jumps
     size_t jump=array_length/local_length;
     if (array_length%local_length) jump++;
     *start=local_index*jump;

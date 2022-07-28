@@ -166,6 +166,7 @@ int main(int argc, char** argv) {
     
     // Set the number of OpenMP threads
     omp_set_num_threads((int)num_devices);
+    //omp_set_num_threads(1);
     
     // Loop over experiments
     for (int n=0; n<nstats; n++) {
@@ -173,7 +174,7 @@ int main(int argc, char** argv) {
         auto t1 = std::chrono::high_resolution_clock::now();
         
         // Loop over domains using dynamic scheduling
-        #pragma omp parallel for shared(command_queues, buffers_A, buffers_B, buffers_C, array_C, D0, D1, N0_C, N1_C, L0, L1) default(none) schedule(dynamic,1)  
+        #pragma omp parallel for shared(command_queues, buffers_A, buffers_B, buffers_C, array_C, D0, D1, N0_C, N1_C, L0, L1, nbytes_C) default(none) schedule(dynamic,1)  
         for (int d=0; d<D0*D1; d++) {
         
             // A is of size (m, k)
@@ -184,12 +185,11 @@ int main(int argc, char** argv) {
             size_t l0 = d/D1;
             size_t l1 = d%D1;
             
-            // Start and end locations
-            size_t start0, stop0;
-            size_t start1, stop1;
+            size_t start0 = l0*L0;
+            size_t start1 = l1*L1;
             
-            h_get_start_end(L0, N0_C, l0, &start0, &stop0);
-            h_get_start_end(L1, N1_C, l1, &start1, &stop1);
+            size_t stop0 = std::min((l0+1)*L0,(size_t)N0_C);
+            size_t stop1 = std::min((l1+1)*L1,(size_t)N1_C);
         
             // Get the thread ID
             int tid = omp_get_thread_num();
@@ -260,6 +260,8 @@ int main(int argc, char** argv) {
             size_t nrows = s0, nslices = 1;
             const size_t region[] = { s1*sizeof(cl_float), nrows, nslices};
      
+            cl_float zero=1.0;
+            
             // Enqueue the rectangular copy
             h_errchk(
                 clEnqueueReadBufferRect(
