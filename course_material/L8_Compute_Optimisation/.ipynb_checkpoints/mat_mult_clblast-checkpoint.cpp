@@ -191,16 +191,12 @@ int main(int argc, char** argv) {
         
         cl_double time_ms = (cl_double)std::chrono::duration_cast<std::chrono::microseconds>(t2-t1).count()/1000.0;
         
-
-        
         if (time_ms > max_time_ms) {
             max_time_ms = time_ms;
             max_time_n = n;
         }
         
         times_ms[n]=time_ms;
-        
-        printf("time_ms = %f\n", time_ms);
         
         avg_time_ms+=time_ms;
     }

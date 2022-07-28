@@ -5,6 +5,7 @@ Written by Dr Toby M. Potter
 #include <cassert>
 #include <cmath>
 #include <iostream>
+#include "omp.h"
 
 // Include the size of arrays to be computed
 #include "mat_size.hpp"
@@ -131,7 +132,7 @@ int main(int argc, char** argv) {
             contexts[n], 
             CL_MEM_READ_WRITE, 
             nbytes_C, 
-            (void*)array_C, 
+            NULL, 
             &errcode
         );
         h_errchk(errcode, "Creating buffer_C");        
@@ -162,6 +163,9 @@ int main(int argc, char** argv) {
     // Make maximum local domain sizes
     size_t L0=(size_t)ceil((double)N0_C/(double)D0);
     size_t L1=(size_t)ceil((double)N1_C/(double)D1);    
+    
+    // Set the number of OpenMP threads
+    omp_set_num_threads((int)num_devices);
     
     // Loop over experiments
     for (int n=0; n<nstats; n++) {

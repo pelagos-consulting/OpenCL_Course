@@ -198,8 +198,6 @@ int main(int argc, char** argv) {
         
         times_ms[n]=time_ms;
         
-        printf("time_ms = %f\n", time_ms);
-        
         avg_time_ms+=time_ms;
     }
     

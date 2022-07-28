@@ -146,7 +146,7 @@ int main(int argc, char** argv) {
      
     // Sanity check the cache line size;
     cache_line_bytes = std::max(cache_line_bytes, (cl_uint)64);
-    printf("Cache line size is %lu\n", cache_line_bytes);
+    printf("Cache line size is %u\n", cache_line_bytes);
         
     // Number of elements we are going to use in a vector
     cl_uint chunk_len = 4*cache_line_bytes/sizeof(float_type);

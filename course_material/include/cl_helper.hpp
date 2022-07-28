@@ -588,7 +588,7 @@ void h_report_on_device(cl_device_id device) {
                         NULL),
         "Global mem size"
     );
-    std::printf("\t%20s %llu MB\n","global memory size:",mem_size/(1000000));
+    std::printf("\t%20s %lu MB\n","global memory size:",mem_size/(1000000));
     
     // Fetch the maximum size of a global memory allocation
     h_errchk(
@@ -599,7 +599,7 @@ void h_report_on_device(cl_device_id device) {
                         NULL),
         "Max mem alloc size"
     );
-    std::printf("\t%20s %llu MB\n","max buffer size:", mem_size/(1000000));
+    std::printf("\t%20s %lu MB\n","max buffer size:", mem_size/(1000000));
     
     // Get the maximum number of dimensions supported
     cl_uint max_work_dims;
