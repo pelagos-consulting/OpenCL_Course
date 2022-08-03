@@ -157,8 +157,8 @@ int main(int argc, char** argv) {
     cl_int max_time_n = 0;
     
     // Number of domains along each dimension
-    cl_uint D0=2;
-    cl_uint D1=2;
+    cl_uint D0=4;
+    cl_uint D1=4;
     
     // Make maximum local domain sizes
     size_t L0=(size_t)ceil((double)N0_C/(double)D0);
@@ -263,25 +263,25 @@ int main(int argc, char** argv) {
             cl_float zero=1.0;
             
             // Enqueue the rectangular copy
-            h_errchk(
-                clEnqueueReadBufferRect(
-                    command_queues[tid],
-                    buffers_C[tid],
-                    CL_TRUE,
-                    buffer_origin,
-                    host_origin,
-                    region,
-                    buffer_row_pitch,
-                    buffer_slice_pitch,
-                    host_row_pitch,
-                    host_slice_pitch,
-                    array_C,
-                    0,
-                    NULL,
-                    NULL
-                ),
-                "Rectangular copy to buffer_B from the host"
-            );
+            //h_errchk(
+            //    clEnqueueReadBufferRect(
+            //        command_queues[tid],
+            //        buffers_C[tid],
+            //        CL_TRUE,
+            //        buffer_origin,
+            //        host_origin,
+            //        region,
+            //        buffer_row_pitch,
+            //        buffer_slice_pitch,
+            //        host_row_pitch,
+            //        host_slice_pitch,
+            //        array_C,
+            //        0,
+            //        NULL,
+            //        NULL
+            //    ),
+            //    "Rectangular copy to buffer_B from the host"
+            //);
         } // End of parallel region
         
         auto t2 = std::chrono::high_resolution_clock::now();

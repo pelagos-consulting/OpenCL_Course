@@ -170,7 +170,6 @@ int main(int argc, char** argv) {
     // B_star is of size (N1_A_star, N1_C)
     // BT_star is of size (N1_C, N1_A_star)
     // C is of size (N0_C, N1_C)
-
     
     // Make Buffers on the compute device for matrices A_star, B_star, BT_star, and C
     
@@ -262,7 +261,7 @@ int main(int argc, char** argv) {
     const size_t buffer_origin[] = {offset, row_id, slice_id};
     const size_t host_origin[] = {offset, row_id, slice_id};
     
-        // Length of a row in the allocation (in bytes)
+    // Length of a row in the allocation (in bytes)
     size_t buffer_row_pitch = N1_A_star * sizeof(float_type); 
     size_t host_row_pitch = N1_A * sizeof(float_type);
     
