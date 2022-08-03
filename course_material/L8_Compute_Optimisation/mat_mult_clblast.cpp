@@ -159,13 +159,20 @@ int main(int argc, char** argv) {
         auto t1 = std::chrono::high_resolution_clock::now();
         
         CLBlastStatusCode status = CLBlastSgemm(
+            // Choose row-major ordering
             CLBlastLayoutRowMajor,
+            // Do we transpose A?
             CLBlastTransposeNo,
+            // Do we transpose B?
             CLBlastTransposeNo,
+            // Number of rows in C to cover
             (const size_t)NROWS_C,
+            // Number of columns in C to cover
             (const size_t)NCOLS_C,
+            // Number of columns in A to cover
             (const size_t)NCOLS_A,
             alpha,
+            // Buffer, starting position, length of contiguous dimension
             buffer_A, 0, (const size_t)NCOLS_A,
             buffer_B, 0, (const size_t)NCOLS_C,
             beta,
