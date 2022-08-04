@@ -157,7 +157,7 @@ int main(int argc, char** argv) {
         
         // Start the clock
         auto t1 = std::chrono::high_resolution_clock::now();
-        
+       
         CLBlastStatusCode status = CLBlastSgemm(
             // Choose row-major ordering
             CLBlastLayoutRowMajor,
@@ -165,14 +165,14 @@ int main(int argc, char** argv) {
             CLBlastTransposeNo,
             // Do we transpose B?
             CLBlastTransposeNo,
-            // Number of rows in C to cover
+            // Number of rows in C (rows in A) to compute
             (const size_t)NROWS_C,
-            // Number of columns in C to cover
+            // Number of columns in C (columns in B) to compute
             (const size_t)NCOLS_C,
-            // Number of columns in A to cover
+            // Number of columns in A (rows in B) to compute
             (const size_t)NCOLS_A,
             alpha,
-            // Buffer, starting position, length of contiguous dimension
+            // Buffer, starting offset in elements, length of contiguous dimension
             buffer_A, 0, (const size_t)NCOLS_A,
             buffer_B, 0, (const size_t)NCOLS_C,
             beta,

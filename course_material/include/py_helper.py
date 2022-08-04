@@ -131,6 +131,9 @@ class LocalOpt():
         
         print(f"Min time is {self.timing_data['min_ms']:.3f} ms, at the local size of" 
             f" ({self.timing_data['L0_min']},{self.timing_data['L1_min']},{self.timing_data['L2_min']}).")
+        print(f"Max time is {self.timing_data['max_ms']:.3f} ms, at the local size of" 
+            f" ({self.timing_data['L0_max']},{self.timing_data['L1_max']},{self.timing_data['L2_max']}).")
+        print(f"Max time / min time == {self.timing_data['max_ms']/self.timing_data['min_ms']:.3f}")
         
     def run_problem(self, 
                     cmds,
@@ -180,14 +183,20 @@ class LocalOpt():
             data = [times_ms] #, times_stdev]
             
             # Find the minimum time
-            index = np.nanargmin(times_ms)
+            index_min = np.nanargmin(times_ms)
+            index_max = np.nanargmax(times_ms)
             
             self.timing_data = {
-                "min_ms" : times_ms.ravel()[index],
-                "std_ms" : times_stdev.ravel()[index],
-                "L0_min" : self.L0.ravel()[index],
-                "L1_min" : self.L1.ravel()[index],
-                "L2_min" : self.L2.ravel()[index]
+                "min_ms" : times_ms.ravel()[index_min],
+                "std_ms" : times_stdev.ravel()[index_min],
+                "L0_min" : self.L0.ravel()[index_min],
+                "L1_min" : self.L1.ravel()[index_min],
+                "L2_min" : self.L2.ravel()[index_min],
+                "max_ms" : times_ms.ravel()[index_max],
+                "std_ms_max" : times_stdev.ravel()[index_max],
+                "L0_max" : self.L0.ravel()[index_max],
+                "L1_max" : self.L1.ravel()[index_max],
+                "L2_max" : self.L2.ravel()[index_max]
             }
             
             # Report timings
@@ -323,7 +332,7 @@ class TimingResults:
                                xerr=data.errors, 
                                color=data.colours)
                     ax[n].set_xlabel("Speedup, more is better")
-                    ax[n].set_xlim((0,1.1*np.max(total_data)))
+                    ax[n].set_xlim((0,1.1*np.max(data.speedups)))
     
             fig.tight_layout()
             plt.show()
