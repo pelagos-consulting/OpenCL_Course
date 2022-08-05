@@ -7,15 +7,14 @@ Written by Dr Toby M. Potter
 #include <sys/stat.h>
 #include <iostream>
 
-// Define the size of the arrays to be computed
-#define NCOLS_A 1025
-#define NROWS_C 1025
-#define NCOLS_C 1025
+// Include the size of arrays to be computed
+#include "mat_size.hpp"
 
 // Bring in helper header to manage boilerplate code
 #include "cl_helper.hpp"
 
 typedef cl_float float_type;
+typedef cl_float8 floatv_type;
 
 int main(int argc, char** argv) {
     
@@ -102,7 +101,7 @@ int main(int argc, char** argv) {
     nbytes_C = N0_C*N1_C*sizeof(float_type);
     
     // Get the cache line size
-    cl_uint cache_line_bytes=64;
+    cl_uint cache_line_bytes=0;
 
     h_errchk(
         clGetDeviceInfo(
@@ -116,18 +115,27 @@ int main(int argc, char** argv) {
     );
      
     // Sanity check the cache line size;
-    cache_line_bytes = std::max(cache_line_bytes, (cl_uint)64);
+    if (cache_line_bytes<=0) {
+        cache_line_bytes=64;
+    }
+    
     printf("Cache line size is %lu\n", cache_line_bytes);
-        
-    // Number of elements we are going to use in a chunk
-    cl_uint chunk_len = cache_line_bytes/sizeof(float_type);
+    
+    // Make sure chunk_len is the least common multiple of cache line and vector length
+    cl_uint chunk_len = (cl_uint)(h_lcm((size_t)cache_line_bytes, sizeof(floatv_type))/sizeof(float_type));
+    cl_uint vector_len = sizeof(floatv_type)/sizeof(float_type);
 
-    // Integer (floored) number of vectors along axis of length N1_A
+    // Integer (floored) number of chunks along axis of length N1_A
     cl_uint N1_A_c = N1_A/chunk_len;
     // Increase the number of vectors if there is any remainder
     if (N1_A % chunk_len) N1_A_c++;
     // Resized N1_A for allocation of B and A, may be larger than N1_A
     cl_uint N1_A_star = N1_A_c*chunk_len;
+    
+    // Number of vectors along N1_A_star
+    cl_uint N1_A_v = N1_A_star / vector_len;
+    // Number of vectors in a chunk
+    cl_uint nvec = N1_A_v / N1_A_c;
     
     // Resized bytes due to enlarged N1_A_star
     size_t nbytes_A_star = N0_C*N1_A_star*sizeof(float_type);
@@ -252,12 +260,15 @@ int main(int argc, char** argv) {
     size_t nrows = N0_C, nslices = 1;
     const size_t region_A[] = {host_row_pitch, nrows, nslices};
      
+    // Do we enable a blocking write?
+    cl_bool blocking=CL_TRUE;
+    
     // Enqueue the rectangular copy
     h_errchk(
         clEnqueueWriteBufferRect(
             command_queue,
             buffer_A_star,
-            CL_TRUE,
+            blocking,
             buffer_origin,
             host_origin,
             region_A,
@@ -290,7 +301,7 @@ int main(int argc, char** argv) {
         clEnqueueWriteBufferRect(
             command_queue,
             buffer_B_star,
-            CL_TRUE,
+            blocking,
             buffer_origin,
             host_origin,
             region_B,
@@ -309,14 +320,6 @@ int main(int argc, char** argv) {
     // Turn this source code into a program
     cl_program program = h_build_program(kernel_source, context, device, "");
         
-    // Write memory from the host
-    // to buffer_A and buffer_B on the compute device
-    
-    // Do we enable a blocking write?
-    cl_bool blocking=CL_TRUE;
-   
-    /**
-    
     // Number of dimensions in the kernel
     size_t work_dim_transp=2;
     
@@ -379,9 +382,6 @@ int main(int argc, char** argv) {
         NULL
     );
         
-    **/
-    cl_double run_transp_ms = 0.0;
-        
     // Create the stacking kernel
     cl_kernel kernel_stack=clCreateKernel(
         program, 
@@ -393,28 +393,29 @@ int main(int argc, char** argv) {
     // Set kernel arguments for the stacking kernel
     h_errchk(
         clSetKernelArg(kernel_stack, 0, sizeof(cl_mem), &buffer_C_star ),
-        "setting transpose kernel argument 0"
+        "setting stack kernel argument 0"
     );
     h_errchk(
         clSetKernelArg(kernel_stack, 1, sizeof(cl_mem), &buffer_C ),
-        "setting transpose kernel argument 1"
+        "setting stack kernel argument 1"
     );
     h_errchk(
         clSetKernelArg(kernel_stack, 2, sizeof(cl_uint), &N1_A_c ),
-        "setting transpose kernel argument 2"
+        "setting stack kernel argument 2"
     );
     h_errchk(
         clSetKernelArg(kernel_stack, 3, sizeof(cl_uint), &N0_C ),
-        "setting transpose kernel argument 3"
+        "setting stack kernel argument 3"
     );
     h_errchk(
         clSetKernelArg(kernel_stack, 4, sizeof(cl_uint), &N1_C ),
-        "setting transpose kernel argument 4"
+        "setting stack kernel argument 4"
     );
     
     // Event for the stacking kernel
     cl_event event_stack;
     // Now enqueue the kernel for stacking so we can get a
+    
     // performance metric
     size_t work_dim_stack=2;
     const size_t global_size_stack[] = { N1_C, N0_C };
@@ -452,8 +453,9 @@ int main(int argc, char** argv) {
     
     // Desired global_size
     size_t work_dim_mat_mult = 3;
-    size_t global_size_mat_mult[]={ N1_C, N0_C, (size_t)N1_A_c };
-    size_t local_size_mat_mult[] = { 8, 8, 1};
+    //size_t global_size_mat_mult[]={ N1_C, N0_C, (size_t)N1_A_c };
+    size_t global_size_mat_mult[]={ (size_t)N1_A_c, N0_C, N1_C };
+    size_t local_size_mat_mult[] = { 1, 8, 8 };
     
     // Set arguments to the kernel (not thread safe)
     h_errchk(
@@ -461,7 +463,7 @@ int main(int argc, char** argv) {
         "setting kernel argument 0"
     );
     h_errchk(
-        clSetKernelArg(kernel_mat_mult, 1, sizeof(cl_mem), &buffer_B_star ),
+        clSetKernelArg(kernel_mat_mult, 1, sizeof(cl_mem), &buffer_BT_star ),
         "setting kernel argument 1"
     );
     h_errchk(
@@ -469,7 +471,7 @@ int main(int argc, char** argv) {
         "setting kernel argument 2"
     );
     h_errchk(
-        clSetKernelArg(kernel_mat_mult, 3, sizeof(cl_uint), &N1_A_star ),
+        clSetKernelArg(kernel_mat_mult, 3, sizeof(cl_uint), &N1_A_v ),
         "setting kernel argument 3"
     );
     h_errchk(
@@ -480,9 +482,13 @@ int main(int argc, char** argv) {
         clSetKernelArg(kernel_mat_mult, 5, sizeof(cl_uint), &N1_C ),
         "setting kernel argument 5"
     );
+    h_errchk(
+        clSetKernelArg(kernel_mat_mult, 6, sizeof(cl_uint), &nvec ),
+        "setting kernel argument 6"
+    );
     
     // Number of statistical runs per experiment
-    size_t nstats=3;
+    size_t nstats=7;
     
     // Optimise the local size for this
     h_optimise_local(
