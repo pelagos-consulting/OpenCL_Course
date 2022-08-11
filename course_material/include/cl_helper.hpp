@@ -28,7 +28,6 @@
 // Exit code to use when crashing out
 #define OCL_EXIT -20
 
-
 // Make a lookup table for error codes
 std::map<cl_int, const char*> error_codes {
     {CL_SUCCESS, "CL_SUCCESS"},

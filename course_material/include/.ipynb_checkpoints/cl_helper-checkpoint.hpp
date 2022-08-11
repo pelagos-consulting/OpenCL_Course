@@ -1,3 +1,11 @@
+
+// Windows specific header instructions
+#if defined(_WIN32) || defined(_WIN64)
+    #define NOMINMAX
+    #include <windows.h>
+    #include <malloc.h>
+#endif
+
 #include <iostream>
 #include <cstdio>
 #include <cstdlib>
@@ -19,7 +27,6 @@
 
 // Exit code to use when crashing out
 #define OCL_EXIT -20
-
 
 // Make a lookup table for error codes
 std::map<cl_int, const char*> error_codes {
@@ -491,7 +498,11 @@ void h_write_binary(void* data, const char* filename, size_t nbytes) {
 void* h_alloc(size_t nbytes) {
     // Allocate aligned memory for potential 
     // use in OpenCL buffers
+#if defined(_WIN32) || defined(_WIN64)
+    void* buffer = _aligned_malloc(nbytes, sizeof(cl_long16));
+#else
     void* buffer = aligned_alloc(sizeof(cl_long16), nbytes);
+#endif
     // Zero out contents for safety
     memset(buffer, '\0', nbytes);
     return buffer;
