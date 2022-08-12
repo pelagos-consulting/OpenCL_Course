@@ -121,7 +121,7 @@ int main(int argc, char** argv) {
     // Read-only buffer for V
     cl_mem buffer_V = clCreateBuffer(
         context, 
-        CL_MEM_READ | CL_MEM_COPY_HOST_PTR, 
+        CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 
         nbytes_U, 
         (void*)array_V, 
         &errcode
@@ -138,7 +138,24 @@ int main(int argc, char** argv) {
             NULL, 
             &errcode
         );
-        h_errchk(errcode, "Creating scratch buffer.");       
+        h_errchk(errcode, "Creating scratch buffer.");
+        
+        // Zero out buffers
+        cl_float zero=0.0f;
+        h_errchk(
+            clEnqueueFillBuffer(
+                command_queue,
+                buffers_U[n],
+                &zero,
+                sizeof(cl_float),
+                0,
+                nbytes_U,
+                0,
+                NULL,
+                NULL
+            ),
+            "Filling buffer with zeroes."
+        );
     }
 
     // Upload arrays U0 and U1 to scratch
@@ -151,7 +168,6 @@ int main(int argc, char** argv) {
             nbytes_U,
             array_U0,
             0,
-            NULL,
             NULL,
             NULL
         ),
@@ -166,7 +182,6 @@ int main(int argc, char** argv) {
             nbytes_U,
             array_U1,
             0,
-            NULL,
             NULL,
             NULL
         ),
@@ -257,7 +272,7 @@ int main(int argc, char** argv) {
         h_errchk(
             clFinish(command_queue),
             "Waiting for all previous things to finish"
-        )
+        );
         
         // Enqueue the wave solver    
         h_errchk(
@@ -286,7 +301,7 @@ int main(int argc, char** argv) {
                 0,
                 NULL,
                 NULL), 
-            "Copying U2 from device to host"
+            "Asynchronous copy from U2 on device to host"
         );
     }
 
@@ -307,7 +322,7 @@ int main(int argc, char** argv) {
         h_errchk(
             clReleaseMemObject(buffers_U[n]),
             "Releasing scratch buffer"
-        )
+        );
     }
     
     // Clean up memory that was allocated on the read   

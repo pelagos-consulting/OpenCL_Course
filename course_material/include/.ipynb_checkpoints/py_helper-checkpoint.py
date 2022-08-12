@@ -1,4 +1,5 @@
 import numpy as np
+import ast
 import math
 from matplotlib import pyplot as plt
 # Import axes machinery
@@ -7,8 +8,18 @@ import subprocess
 from collections.abc import Iterable
 from collections import OrderedDict
 
+def load_defines(fname):
+    '''Load all defines from a header file'''
+    defines = {}
+    with open(fname, "r") as fd:
+        for line in fd:
+            if line.startswith("#define"):
+                tokens=line.split()
+                defines[tokens[1]]=ast.literal_eval(tokens[2])
+    return defines
+
 class MatMul:
-    
+    '''Implements the means to define and test and run a matrix multiplication'''
     def __init__(self, NCOLS_A, NROWS_C, NCOLS_C, dtype):
         self.NCOLS_A = NCOLS_A
         self.NROWS_C = NROWS_C
@@ -336,3 +347,4 @@ class TimingResults:
     
             fig.tight_layout()
             plt.show()
+            

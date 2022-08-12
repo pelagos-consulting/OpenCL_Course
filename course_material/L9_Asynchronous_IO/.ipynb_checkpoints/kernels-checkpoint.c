@@ -27,13 +27,13 @@ __kernel void wave2d_4o (
     // Finite difference coefficients for space derivative
     float coeffs[ncoeffs] = {-0.083333336f, 1.3333334f, -2.5f, 1.3333334f, -0.083333336f};
     
+    // Position within the array
+    long offset=i0*N1+i1;
+    
     // Temporary storage for the finite difference coefficient
     float temp0=0.0f, temp1=0.0f, tempV=V[offset];
     float tempU0 = U0[offset];
     float tempU1 = U1[offset];
-    
-    // Position within the array
-    long offset=i0*N1+i1;
     
     // Calculate the Laplacian
     #pragma unroll
@@ -46,5 +46,5 @@ __kernel void wave2d_4o (
     
     // Update the solution
     U2[offset]=2.0f*tempU1-tempU0
-        -(dt2*tempV*tempV)*(temp0*inv_dx02+temp1*invdx12);
+        -(dt2*tempV*tempV)*(temp0*inv_dx02+temp1*inv_dx12);
 }

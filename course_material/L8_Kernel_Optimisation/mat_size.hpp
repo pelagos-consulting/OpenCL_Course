@@ -1,10 +1,4 @@
-// Define the size of the domain
-#define N0 768
-#define N1 768
-
-// Spatial step in each direction
-#define D0 1.0
-#define D1 1.0
-
-// Courant number for stability
-#define CFL 0.4
+// Define the size of the arrays to be computed
+#define NCOLS_A 768
+#define NROWS_C 768
+#define NCOLS_C 768
