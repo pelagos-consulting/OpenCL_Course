@@ -91,12 +91,6 @@ int main(int argc, char** argv) {
     // We are going to do a simple array multiplication for this example, 
     // using raw binary files for input and output
     size_t nbytes_U;
-
-    // Read the input data into arrays and sanity check
-    float_type* array_U0 = (float_type*)h_read_binary("array_U0.dat", &nbytes_U);
-    assert(nbytes_U==N0*N1*sizeof(float_type));   
-    float_type* array_U1 = (float_type*)h_read_binary("array_U1.dat", &nbytes_U);
-    assert(nbytes_U==N0*N1*sizeof(float_type)); 
     
     // Read in the velocity from disk and find the maximum
     float_type* array_V = (float_type*)h_read_binary("array_V.dat", &nbytes_U);
@@ -108,6 +102,8 @@ int main(int argc, char** argv) {
 
     // Make up the timestep using maximum velocity
     float_type dt = CFL*std::min(D0, D1)/Vmax;
+    
+    printf("dt=%f, Vmax=%f\n", dt, Vmax);
     
     // Use a grid crossing time at maximum velocity to get the number of timesteps
     int NT = (int)std::max(D0*N0, D1*N1)/(dt*Vmax);
@@ -157,36 +153,6 @@ int main(int argc, char** argv) {
             "Filling buffer with zeroes."
         );
     }
-
-    // Upload arrays U0 and U1 to scratch
-    h_errchk(
-        clEnqueueWriteBuffer(
-            command_queue,
-            buffers_U[0],
-            CL_TRUE,
-            0,
-            nbytes_U,
-            array_U0,
-            0,
-            NULL,
-            NULL
-        ),
-        "Uploading buffer U0"
-    );
-    h_errchk(
-        clEnqueueWriteBuffer(
-            command_queue,
-            buffers_U[1],
-            CL_TRUE,
-            0,
-            nbytes_U,
-            array_U1,
-            0,
-            NULL,
-            NULL
-        ),
-        "Uploading buffer U1"
-    );
     
     // Now specify the kernel source and read it in
     size_t nbytes_src = 0;
@@ -327,8 +293,6 @@ int main(int argc, char** argv) {
     
     // Clean up memory that was allocated on the read   
     free(array_V);
-    free(array_U0);
-    free(array_U1);
     free(array_out);
     
     // Clean up command queues

@@ -30,6 +30,8 @@ __kernel void wave2d_4o (
     // Position within the array
     long offset=i0*N1+i1;
     
+    //printf("dt2=%g, inv_dx02=%g, inv_dx12=%g\n", dt2, inv_dx02, inv_dx12);
+    
     // Temporary storage for the finite difference coefficient
     float temp0=0.0f, temp1=0.0f, tempV=V[offset];
     float tempU0 = U0[offset];
@@ -39,12 +41,12 @@ __kernel void wave2d_4o (
     #pragma unroll
     for (int n=0; n<ncoeffs; n++) {
         // Stride in dim0 is N1
-        temp0+=coeffs[n]*U1[offset+(n-pad_l)*N1];
+        temp0+=coeffs[n]*U1[offset+n*N1-pad_l*N1];
         // Stride in dim1 is 1
         temp1+=coeffs[n]*U1[offset+n-pad_l];
     }
     
     // Update the solution
     U2[offset]=2.0f*tempU1-tempU0
-        -(dt2*tempV*tempV)*(temp0*inv_dx02+temp1*inv_dx12);
+        +((dt2*tempV*tempV)*(temp0*inv_dx02+temp1*inv_dx12));
 }
