@@ -8,4 +8,4 @@
 #define D1 1.0
 
 // Courant number for stability
-#define CFL 0.1
+#define CFL 0.4

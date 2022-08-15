@@ -137,13 +137,13 @@ int main(int argc, char** argv) {
         h_errchk(errcode, "Creating scratch buffer.");
         
         // Zero out buffers
-        cl_float zero=0.0f;
+        float_type zero=0.0f;
         h_errchk(
             clEnqueueFillBuffer(
                 command_queue,
                 buffers_U[n],
                 &zero,
-                sizeof(cl_float),
+                sizeof(float_type),
                 0,
                 nbytes_U,
                 0,
@@ -168,9 +168,27 @@ int main(int argc, char** argv) {
     cl_kernel kernel=clCreateKernel(program, "wave2d_4o", &errcode);
     h_errchk(errcode, "Creating wave2d_4o Kernel");
 
-    // Arguments for the kernel
+    // Set up arguments for the kernel
     cl_uint N0_k=N0, N1_k=N1;
     cl_float dt2=dt*dt, inv_dx02=1.0/(D0*D0), inv_dx12=1.0/(D1*D1);
+    
+    // time, pi^2 fm^2 t^2 for the Ricker wavelet
+    // Get the frequency of the wavelet
+    
+    // Number of points per wavelength
+    float_type ppw=10;
+    // Frequency of the Ricker Wavelet
+    float_type fm=Vmax/(ppw*std::max(D0,D1));
+    float_type pi=3.141592f;
+    float_type t=0.0f, pi2fm2t2=0.0f;
+    // Min-to-min time of the wavelet
+    float_type td=std::sqrt(6.0f)/(pi*fm);
+    
+    printf("dt=%g, fm=%g, Vmax=%g, dt2=%g\n", dt, fm, Vmax, dt2);
+    
+    // Coordinates of the Ricker wavelet
+    cl_uint P0=N0/2;
+    cl_uint P1=N1/2;
     
     // Set arguments to the kernel (not thread safe)
     h_errchk(
@@ -197,9 +215,17 @@ int main(int argc, char** argv) {
         clSetKernelArg(kernel, 8, sizeof(cl_float), &inv_dx12 ),
         "setting kernel argument 8"
     );
+    h_errchk(
+        clSetKernelArg(kernel, 9, sizeof(cl_uint), &P0 ),
+        "setting kernel argument 9"
+    );
+    h_errchk(
+        clSetKernelArg(kernel, 10, sizeof(cl_uint), &P1 ),
+        "setting kernel argument 10"
+    );
     
     // Number of dimensions in the kernel
-    size_t work_dim = 2;
+    size_t work_dim=2;
     
     // Desired local size
     const size_t local_size[]={ 64, 4 };
@@ -212,10 +238,24 @@ int main(int argc, char** argv) {
     cl_mem U0, U1, U2;
     
     for (int n=0; n<NT; n++) {
+        
+        // Fetch the command queue
+        command_queue = command_queues[n%nscratch];
+        
+        // Wait for all previous commands to finish
+        h_errchk(
+            clFinish(command_queue),
+            "Waiting for all previous things to finish"
+        );
+        
         // Get the wavefields
         U0 = buffers_U[n%nscratch];
         U1 = buffers_U[(n+1)%nscratch];
         U2 = buffers_U[(n+2)%nscratch];
+        
+        // Shifted time
+        t = n*dt-2.0*td;
+        pi2fm2t2 = pi*pi*fm*fm*t*t;
         
         // Set kernel arguments
         h_errchk(
@@ -230,14 +270,9 @@ int main(int argc, char** argv) {
             clSetKernelArg(kernel, 2, sizeof(cl_mem), &U2 ),
             "setting kernel argument 2"
         );
-        
-        // Fetch the command queue
-        command_queue = command_queues[n%nscratch];
-        
-        // Wait for all previous commands to finish
         h_errchk(
-            clFinish(command_queue),
-            "Waiting for all previous things to finish"
+            clSetKernelArg(kernel, 11, sizeof(cl_float), &pi2fm2t2 ),
+            "setting kernel argument 11"
         );
         
         // Enqueue the wave solver    
@@ -260,7 +295,7 @@ int main(int argc, char** argv) {
             clEnqueueReadBuffer(
                 command_queue,
                 U2,
-                CL_FALSE,
+                CL_TRUE,
                 0,
                 nbytes_U,
                 &array_out[n*N0*N1],
