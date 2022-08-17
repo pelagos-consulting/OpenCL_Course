@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
     cl_bool blocking = CL_TRUE;
     
     // Number of scratch buffers, must be at least 3
-    const int nscratch=4;
+    const int nscratch=5;
     
     // Number of command queues to generate
     cl_uint num_command_queues = nscratch;
@@ -237,10 +237,15 @@ int main(int argc, char** argv) {
     // Main loop
     cl_mem U0, U1, U2;
     
+    // Events
+    cl_event events[nscratch];
+    cl_event event;
+    
     for (int n=0; n<NT; n++) {
         
         // Fetch the command queue
         command_queue = command_queues[n%nscratch];
+        event = events[n%nscratch];
         
         // Wait for all previous commands to finish
         h_errchk(
@@ -286,7 +291,7 @@ int main(int argc, char** argv) {
                 local_size,
                 0,
                 NULL,
-                NULL), 
+                &event), 
             "Running the kernel"
         );
           
@@ -294,13 +299,13 @@ int main(int argc, char** argv) {
         h_errchk(
             clEnqueueReadBuffer(
                 command_queue,
-                U2,
+                U0,
                 CL_TRUE,
                 0,
                 nbytes_U,
                 &array_out[n*N0*N1],
-                0,
-                NULL,
+                1,
+                &event,
                 NULL), 
             "Asynchronous copy from U2 on device to host"
         );
