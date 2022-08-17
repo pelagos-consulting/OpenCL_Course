@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
     cl_bool profiling = CL_TRUE;
 
     // Do we enable blocking IO?
-    cl_bool blocking = CL_TRUE;
+    cl_bool blocking = CL_FALSE;
     
     // Number of scratch buffers, must be at least 3
     const int nscratch=5;
@@ -77,13 +77,13 @@ int main(int argc, char** argv) {
         &device,
         &context,
         (cl_uint)1,
-        (cl_uint)num_command_queues,
+        (cl_uint)(num_command_queues+1),
         ordering,
         profiling
     );
     
     // Command queue to do temporary things
-    cl_command_queue command_queue = command_queues[0];
+    cl_command_queue compute_queue = command_queues[nscratch];
     
     // Report on the device in use
     h_report_on_device(device);
@@ -124,6 +124,9 @@ int main(int argc, char** argv) {
     );
     h_errchk(errcode, "Creating buffer_V");
     
+    // Make up events
+    cl_event events[nscratch];
+    
     // Create scratch buffers for the computation
     cl_mem buffers_U[nscratch];
     for (int n=0; n<nscratch; n++) {
@@ -140,7 +143,7 @@ int main(int argc, char** argv) {
         float_type zero=0.0f;
         h_errchk(
             clEnqueueFillBuffer(
-                command_queue,
+                compute_queue,
                 buffers_U[n],
                 &zero,
                 sizeof(float_type),
@@ -148,7 +151,7 @@ int main(int argc, char** argv) {
                 nbytes_U,
                 0,
                 NULL,
-                NULL
+                &events[n]
             ),
             "Filling buffer with zeroes."
         );
@@ -237,19 +240,11 @@ int main(int argc, char** argv) {
     // Main loop
     cl_mem U0, U1, U2;
     
-    // Events
-    cl_event events[nscratch];
-    cl_event event;
-    
     for (int n=0; n<NT; n++) {
         
-        // Fetch the command queue
-        command_queue = command_queues[n%nscratch];
-        event = events[n%nscratch];
-        
-        // Wait for all previous commands to finish
+        // Wait for all previous copy commands to finish
         h_errchk(
-            clFinish(command_queue),
+            clFinish(command_queues[(n+2)%nscratch]),
             "Waiting for all previous things to finish"
         );
         
@@ -283,7 +278,7 @@ int main(int argc, char** argv) {
         // Enqueue the wave solver    
         h_errchk(
             clEnqueueNDRangeKernel(
-                command_queue,
+                compute_queue,
                 kernel,
                 work_dim,
                 NULL,
@@ -291,24 +286,27 @@ int main(int argc, char** argv) {
                 local_size,
                 0,
                 NULL,
-                &event), 
+                &events[n%nscratch]), 
             "Running the kernel"
         );
           
         // Read memory from the buffer to the host in an asynchronous manner
-        h_errchk(
-            clEnqueueReadBuffer(
-                command_queue,
-                U0,
-                CL_TRUE,
-                0,
-                nbytes_U,
-                &array_out[n*N0*N1],
-                1,
-                &event,
-                NULL), 
-            "Asynchronous copy from U2 on device to host"
-        );
+        if (n>0) {
+            cl_int copy_index=n-1;
+            h_errchk(
+                clEnqueueReadBuffer(
+                    command_queues[copy_index%nscratch],
+                    buffers_U[copy_index%nscratch],
+                    blocking,
+                    0,
+                    nbytes_U,
+                    &array_out[copy_index*N0*N1],
+                    1,
+                    &events[copy_index%nscratch],
+                    NULL), 
+                "Asynchronous copy from U2 on device to host"
+            );
+        }
     }
 
     // Make sure all work is done
