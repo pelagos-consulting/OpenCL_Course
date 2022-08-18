@@ -242,7 +242,7 @@ int main(int argc, char** argv) {
     
     for (int n=0; n<NT; n++) {
         
-        // Wait for all previous copy commands to finish
+        // Wait for the previous copy command to finish
         h_errchk(
             clFinish(command_queues[(n+2)%nscratch]),
             "Waiting for all previous things to finish"

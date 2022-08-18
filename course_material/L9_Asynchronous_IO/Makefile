@@ -6,7 +6,7 @@ include ../env
 INC_DIR=../include
 
 # List of applications to target
-TARGETS=wave2d_async.exe
+TARGETS=wave2d_async.exe wave2d_sync.exe
 
 all: $(TARGETS)
 
