@@ -235,6 +235,9 @@ int main(int argc, char** argv) {
     // Main loop
     cl_mem U0, U1, U2;
     
+    // Start the clock
+    auto t1 = std::chrono::high_resolution_clock::now();
+    
     for (int n=0; n<NT; n++) {        
         // Get the wavefields
         U0 = buffers_U[n%nscratch];
@@ -295,9 +298,15 @@ int main(int argc, char** argv) {
     }
 
     // Make sure all work is done
-    for (int i=0; i<nscratch; i++) {
-        clFinish(command_queues[i]);
-    }
+    h_errchk(
+        clFinish(compute_queue),
+        "Finishing the compute queue."
+    );
+    
+    // Stop the clock
+    auto t2 = std::chrono::high_resolution_clock::now();    
+    cl_double time_ms = (cl_double)std::chrono::duration_cast<std::chrono::microseconds>(t2-t1).count()/1000.0;
+    printf("The synchronous calculation took %d milliseconds.\n", time_ms);
     
     // Write out the result to file
     h_write_binary(array_out, "array_out.dat", nbytes_out);
