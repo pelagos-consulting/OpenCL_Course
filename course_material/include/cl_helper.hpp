@@ -503,7 +503,7 @@ void* h_alloc(size_t nbytes) {
 #else
     void* buffer = aligned_alloc(sizeof(cl_long16), nbytes);
 #endif
-    // Zero out contents for safety
+    // Zero out the contents of the allocation for safety
     memset(buffer, '\0', nbytes);
     return buffer;
 }
