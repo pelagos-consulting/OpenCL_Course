@@ -2,6 +2,8 @@ import numpy as np
 import ast
 import math
 from matplotlib import pyplot as plt
+from ipywidgets import widgets
+
 # Import axes machinery
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import subprocess
@@ -348,3 +350,32 @@ class TimingResults:
             fig.tight_layout()
             plt.show()
             
+def plot_slices(images):
+    
+    # Get the dimensions
+    nslices, N0, N1 = images.shape
+    
+    # Animate the result
+    fig, ax = plt.subplots(1,1, figsize=(8,6))
+    extent=[ -0.5, N1-0.5, -0.5, N0-0.5]
+    img = ax.imshow(
+        images[0,...], 
+        extent=extent, 
+        vmin=np.min(images), 
+        vmax=np.max(images),
+        cmap=plt.get_cmap("Greys_r")
+    )
+
+    ax.set_xlabel("Dimension 1")
+    ax.set_ylabel("Dimension 0")
+    ax.set_title("Images")
+
+    def update(n=0):
+        img.set_data(images[n,...])
+        plt.show()
+    
+    # Run the interaction
+    result = widgets.interact(
+        update,
+        n=(0, nslices-1, 1)
+    )

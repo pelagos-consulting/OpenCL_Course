@@ -75,57 +75,59 @@ int main(int argc, char** argv) {
     float_type* images_out = (float_type*)h_alloc(nbytes_output);
     
     // Assume that images_in will have dimensions (NIMAGES, N0, N1) and will have row-major ordering
-
-    // Read in images
     size_t nbytes;
-    float_type* images_in = (float_type*)h_read_file("images_in.dat", "rb", &nbytes);
-    assert(nbytes == NIMAGES*N0*N1*sizeof(float_type));
+    
+    // Read in the images
+    size_t nbytes_image = N0*N1*sizeof(float_type);
+    float_type* images_in = (float_type*)h_read_binary("images_in.dat", &nbytes);
+    assert(nbytes == NIMAGES*nbytes_image);
 
-    // Read in image Kernel
+    // Read in the image Kernel
     size_t nelements_image_kernel = (L0+R0+1)*(L1+R1+1);
-    float_type* image_kernel = (float_type*)h_read_file("image_kernel.dat", "rb", &nbytes);
+    float_type* image_kernel = (float_type*)h_read_binary("image_kernel.dat", &nbytes);
     assert(nbytes == nelements_image_kernel*sizeof(float_type));
 
     // Read kernel sources 
     const char* filename = "kernels.cl";
-    char* source = (char*)h_read_file(filename, "r", &nbytes);
+    char* source = (char*)h_read_binary(filename, &nbytes);
 
-    // Create Programs and kernels using this source
+    // Create Programs and kernels for all devices 
     cl_program *programs = (cl_program*)calloc(num_devices, sizeof(cl_program));
     cl_kernel *kernels = (cl_kernel*)calloc(num_devices, sizeof(cl_kernel));
     
+    const char* compiler_options = "";
     for (cl_uint n=0; n<num_devices; n++) {
         // Make the program from source
-        programs[n] = h_build_program(source, contexts[n], devices[n]);
+        programs[n] = h_build_program(source, contexts[n], devices[n], compiler_options);
         // And make the kernel
-        kernels[n] = clCreateKernel(programs[n], "xcorr", &ret_code);
-        h_errchk(ret_code, "Making a kernel");
+        kernels[n] = clCreateKernel(programs[n], "xcorr", &errcode);
+        h_errchk(errcode, "Making a kernel");
     }
 
-    // Create memory for images in and images out for each device
+    // Create OpenCL buffer for source, destination, and image kernel
     cl_mem *buffer_srces = (cl_mem*)calloc(num_devices, sizeof(cl_mem));
     cl_mem *buffer_dests = (cl_mem*)calloc(num_devices, sizeof(cl_mem));
     cl_mem *buffer_kerns = (cl_mem*)calloc(num_devices, sizeof(cl_mem));
    
-    // Create buffers
+    // Create input buffers for every device
     for (cl_uint n=0; n<num_devices; n++) {
         // Create buffers for sources
         buffer_srces[n] = clCreateBuffer(
                 contexts[n],
                 CL_MEM_READ_WRITE,
-                N0*N1*sizeof(float_type),
+                nbytes_image,
                 NULL,
-                &ret_code);
-        h_errchk(ret_code, "Creating buffers for sources");
+                &errcode);
+        h_errchk(errcode, "Creating buffers for sources");
 
         // Create buffers for destination
         buffer_dests[n] = clCreateBuffer(
                 contexts[n],
                 CL_MEM_READ_WRITE,
-                N0*N1*sizeof(float_type),
+                nbytes_image,
                 NULL,
-                &ret_code);
-        h_errchk(ret_code, "Creating buffers for destinations");
+                &errcode);
+        h_errchk(errcode, "Creating buffers for destinations");
 
         // Copy host memory for the image kernel
         buffer_kerns[n] = clCreateBuffer(
@@ -133,8 +135,8 @@ int main(int argc, char** argv) {
                 CL_MEM_COPY_HOST_PTR,
                 nelements_image_kernel*sizeof(float_type),
                 (void*)image_kernel,
-                &ret_code);
-        h_errchk(ret_code, "Creating buffers for image kernel");
+                &errcode);
+        h_errchk(errcode, "Creating buffers for image kernel");
 
         // Just for kernel arguments
         cl_int len0_src = N0, len1_src = N1, pad0_l = L0, pad0_r = R0, pad1_l = L1, pad1_r = R1;
@@ -150,22 +152,17 @@ int main(int argc, char** argv) {
         h_errchk(clSetKernelArg(kernels[n], 7, sizeof(cl_int), &pad1_l),    "Set kernel argument 7");
         h_errchk(clSetKernelArg(kernels[n], 8, sizeof(cl_int), &pad1_r),    "Set kernel argument 8");
     }
-
-    // Use OpenMP to dynamically distribute threads across the available workflow of images
-    //omp_set_dynamic(0);
-    //omp_set_num_threads(num_devices);
     
     // This counter keeps track of images process by all iterations
     auto t1 = std::chrono::high_resolution_clock::now();
     
+    // Keep track of how many images each device processed
     cl_uint* it_count = (cl_uint*)calloc(num_devices, sizeof(cl_uint)); 
     
-    // Enqueue the kernel
-    cl_uint work_dim2 = 2;
-            
+    // Make up the local and global sizes to use
+    cl_uint work_dim = 2;
     // Desired local size
     const size_t local_size[]={ 16, 16 };
-    
     // Fit the desired global_size
     const size_t global_size[]={ N0, N1 };
     h_fit_global_size(global_size, local_size, work_dim);
@@ -174,7 +171,7 @@ int main(int argc, char** argv) {
         printf("Processing iteration %d of %d\n", i+1, NITERS);
         
         #pragma omp parallel for default(none) schedule(dynamic, 1) num_threads(num_devices) \
-            shared(images_in, buffer_dests, buffer_srces, \
+            shared(blocking, local_size, global_size, work_dim, images_in, buffer_dests, buffer_srces, \
                     images_out, image_kernel, nelements_image_kernel, \
                     command_queues, kernels, buffer_kerns, it_count)
         for (cl_uint n=0; n<NIMAGES; n++) {
@@ -187,7 +184,7 @@ int main(int argc, char** argv) {
 
             //printf("Processing image %d of %d with device %d\n", n+1, NIMAGES, tid);
             
-            // Write from main memory to the source buffer
+            // Write an image from main memory to the source buffer
             h_errchk(clEnqueueWriteBuffer(
                         command_queues[tid],
                         buffer_srces[tid],
@@ -200,25 +197,23 @@ int main(int argc, char** argv) {
                         NULL), "Writing to source buffer");
             
             // Upload the images kernel
-            h_errchk(clEnqueueWriteBuffer(
-                        command_queues[tid],
-                        buffer_kerns[tid],
-                        blocking,
-                        0,
-                        nelements_image_kernel*sizeof(float_type),
-                        image_kernel,
-                        0,
-                        NULL,
-                        NULL), "Writing to image kernel buffer");
-
-            
+            //h_errchk(clEnqueueWriteBuffer(
+            //            command_queues[tid],
+            //            buffer_kerns[tid],
+            //            blocking,
+            //            0,
+            //            nelements_image_kernel*sizeof(float_type),
+            //            image_kernel,
+            //            0,
+            //            NULL,
+            //            NULL), "Writing to image kernel buffer");
 
 
             // Enqueue the kernel
             h_errchk(clEnqueueNDRangeKernel(
                         command_queues[tid],
                         kernels[tid],
-                        work_dims,
+                        work_dim,
                         NULL,
                         global_size,
                         local_size,
@@ -248,12 +243,12 @@ int main(int argc, char** argv) {
     for (cl_uint i = 0; i< num_devices; i++) {
         //h_report_on_device(devices[i]);
         float_type pct = 100*(float_type)it_count[i]/(float_type)num_images;
-        printf("Device %d processed %d of %d images (%0.2f\%)\n", i, it_count[i], num_images, pct);
+        printf("Device %d processed %d of %d images (%0.2f%%)\n", i, it_count[i], num_images, pct);
     }
     printf("Overall processing rate %0.2f images/s\n", (double)num_images/duration);
 
     // Write output data to output file
-    h_write_binary(images_out, "images_out.dat", )
+    h_write_binary(images_out, "images_out.dat", nbytes_output);
     
     // Free allocated memory
     free(source);
