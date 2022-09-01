@@ -535,7 +535,8 @@ void* h_read_binary(const char* filename, size_t *nbytes) {
     source[*nbytes] = '\0';
     
     // Read the file into the buffer and close
-    std::fread(buffer, 1, *nbytes, fp);
+    size_t bytes_read = std::fread(buffer, 1, *nbytes, fp);
+    assert(bytes_read == *nbytes);
     std::fclose(fp);
     return buffer;
 }

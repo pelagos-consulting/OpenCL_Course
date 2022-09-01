@@ -6,7 +6,7 @@ include ../env
 INC_DIR=../include
 
 # List of applications to target
-TARGETS=xcorr_answers.exe
+TARGETS=xcorr_answers.exe xcorr.exe
 
 all: $(TARGETS)
 

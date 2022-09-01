@@ -94,7 +94,8 @@ int main(int argc, char** argv) {
     assert(nbytes == nbytes_image_kernel);
 
     // Read kernel sources 
-    const char* filename = "kernels_answers.cl";
+    //const char* filename = "kernels_answers.cl"
+    const char* filename = "kernels.cl";
     char* source = (char*)h_read_binary(filename, &nbytes);
 
     // Create Programs and kernels for all devices 
@@ -119,7 +120,7 @@ int main(int argc, char** argv) {
     for (cl_uint n=0; n<num_devices; n++) {
         
         //// Begin Task 1 - Code to create the OpenCL buffers for each thread ////
-        
+               
         // Fill buffer_srces[n], buffer_dests[n], buffer_kerns[n] 
         // with buffers created by clCreateBuffer 
         // Use the h_errchk routine to check output
@@ -131,53 +132,25 @@ int main(int argc, char** argv) {
         // the array image_kernel contains the host-allocated 
         // memory for the image kernel
         
-        // Create buffers for sources
-        buffer_srces[n] = clCreateBuffer(
-                contexts[n],
-                CL_MEM_READ_WRITE,
-                nbytes_image,
-                NULL,
-                &errcode);
-        h_errchk(errcode, "Creating buffers for sources");
+        // Create buffer for sources
 
-        // Create buffers for destination
-        buffer_dests[n] = clCreateBuffer(
-                contexts[n],
-                CL_MEM_READ_WRITE,
-                nbytes_image,
-                NULL,
-                &errcode);
-        h_errchk(errcode, "Creating buffers for destinations");
+        // Create buffer for destination
 
         // Create buffer for the image kernel, copy from host memory image_kernel to fill this
-        buffer_kerns[n] = clCreateBuffer(
-                contexts[n],
-                CL_MEM_COPY_HOST_PTR,
-                nbytes_image_kernel,
-                (void*)image_kernel,
-                &errcode);
-        h_errchk(errcode, "Creating buffers for image kernel");
 
+        // Uncomment this to include the solution
+        //#include "task1_answer.hpp"
         //// End Task 1 //////////////////////////////////////////////////////////
+    
+        // Just for kernel arguments
+        cl_int len0_src = N0, len1_src = N1, pad0_l = L0, pad0_r = R0, pad1_l = L1, pad1_r = R1;
         
         //// Begin Task 2 - Code to set kernel arguments for each thread /////////
         
         // Set kernel arguments for kernels[n]
         
-        // Just for kernel arguments
-        cl_int len0_src = N0, len1_src = N1, pad0_l = L0, pad0_r = R0, pad1_l = L1, pad1_r = R1;
-        
-        // Set kernel arguments here for convenience
-        h_errchk(clSetKernelArg(kernels[n], 0, sizeof(buffer_srces[n]), &buffer_srces[n]), "Set kernel argument 0");
-        h_errchk(clSetKernelArg(kernels[n], 1, sizeof(buffer_dests[n]), &buffer_dests[n]), "Set kernel argument 1");
-        h_errchk(clSetKernelArg(kernels[n], 2, sizeof(buffer_kerns[n]), &buffer_kerns[n]), "Set kernel argument 2");
-        h_errchk(clSetKernelArg(kernels[n], 3, sizeof(cl_int), &len0_src),  "Set kernel argument 3");
-        h_errchk(clSetKernelArg(kernels[n], 4, sizeof(cl_int), &len1_src),  "Set kernel argument 4");
-        h_errchk(clSetKernelArg(kernels[n], 5, sizeof(cl_int), &pad0_l),    "Set kernel argument 5");
-        h_errchk(clSetKernelArg(kernels[n], 6, sizeof(cl_int), &pad0_r),    "Set kernel argument 6");
-        h_errchk(clSetKernelArg(kernels[n], 7, sizeof(cl_int), &pad1_l),    "Set kernel argument 7");
-        h_errchk(clSetKernelArg(kernels[n], 8, sizeof(cl_int), &pad1_r),    "Set kernel argument 8");
-    
+        // Uncomment this to include the solution
+        //#include "task2_answer.hpp"
         //// End Task 2 //////////////////////////////////////////////////////////
     }
     
@@ -216,19 +189,10 @@ int main(int argc, char** argv) {
             
             // Upload memory from images_in at offset
             // To buffer_srces[tid], using command_queues[tid]
-            h_errchk(clEnqueueWriteBuffer(
-                        command_queues[tid],
-                        buffer_srces[tid],
-                        blocking,
-                        0,
-                        nbytes_image,
-                        &images_in[offset],
-                        0,
-                        NULL,
-                        NULL), 
-                     "Writing to source buffer"
-            );
 
+            // Uncomment this to include the solution
+            //#include "task3_answer.hpp"
+            
             //// End Task 3 ///////////////////////////////////////////////////////////
             
             //// Task 4 is to complete the kernel in kernels.cl
@@ -237,37 +201,19 @@ int main(int argc, char** argv) {
             
             // Enqueue the kernel kernels[tid] using command_queues[tid]
             // local_size, and global_size
-            h_errchk(clEnqueueNDRangeKernel(
-                        command_queues[tid],
-                        kernels[tid],
-                        work_dim,
-                        NULL,
-                        global_size,
-                        local_size,
-                        0, 
-                        NULL,
-                        NULL), 
-                     "Running the xcorr kernel"
-            );
+            
+            // Uncomment this to include the solution
+            //#include "task5_answer.hpp"
             
             //// End Task 5 ///////////////////////////////////////////////////////////
             
             //// Begin Task 6 - Code to download memory from the compute device buffer
             
-            //// Download memory buffers_dests[tid] to hosts allocation
-            //// images_out at offset
-            h_errchk(clEnqueueReadBuffer(
-                        command_queues[tid],
-                        buffer_dests[tid],
-                        blocking,
-                        0,
-                        nbytes_image,
-                        &images_out[offset],
-                        0,
-                        NULL,
-                        NULL), 
-                     "Writing to buffer"
-            );
+            // Download memory buffers_dests[tid] to hosts allocation
+            // images_out at offset
+            
+            // Uncomment this to include the solution
+            //#include "task6_answer.hpp"
             
             //// End Task 6 ///////////////////////////////////////////////////////////
         }
