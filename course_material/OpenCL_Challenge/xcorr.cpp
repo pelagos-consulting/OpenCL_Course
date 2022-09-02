@@ -200,7 +200,7 @@ int main(int argc, char** argv) {
             //// Begin Task 5 - Code to enqueue the kernel ///////////////////////////
             
             // Enqueue the kernel kernels[tid] using command_queues[tid]
-            // local_size, and global_size
+            // work_dim, local_size, and global_size
             
             // Uncomment this to include the solution
             //#include "task5_answer.hpp"
