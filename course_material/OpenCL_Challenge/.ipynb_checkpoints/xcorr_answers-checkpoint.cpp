@@ -148,6 +148,22 @@ int main(int argc, char** argv) {
                 NULL,
                 &errcode);
         h_errchk(errcode, "Creating buffers for destinations");
+        
+        // Zero out the contents of buffers_dests[n]
+        float_type zero=0.0;
+        h_errchk(clEnqueueFillBuffer(
+                command_queues[n],
+                buffer_dests[n],
+                &zero,
+                sizeof(float_type),
+                0,
+                nbytes_image,
+                0,
+                NULL,
+                NULL
+            ),
+            "Filling buffer with zeros."
+        );
 
         // Create buffer for the image kernel, copy from host memory image_kernel to fill this
         buffer_kerns[n] = clCreateBuffer(

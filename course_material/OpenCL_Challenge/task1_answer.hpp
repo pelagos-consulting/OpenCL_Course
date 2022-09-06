@@ -29,6 +29,36 @@
                 &errcode);
         h_errchk(errcode, "Creating buffers for destinations");
 
+        // Zero out the contents of buffers_dests[n]
+        float_type zero=0.0;
+        h_errchk(clEnqueueFillBuffer(
+                command_queues[n],
+                buffer_dests[n],
+                &zero,
+                sizeof(float_type),
+                0,
+                nbytes_image,
+                0,
+                NULL,
+                NULL
+            ),
+            "Filling buffer with zeros."
+        );
+
+        
+            
+cl_int clEnqueueFillBuffer(
+    cl_command_queue command_queue,
+    cl_mem buffer,
+    const void* pattern,
+    size_t pattern_size,
+    size_t offset,
+    size_t size,
+    cl_uint num_events_in_wait_list,
+    const cl_event* event_wait_list,
+    cl_event* event);
+
+
         // Create buffer for the image kernel, copy from host memory image_kernel to fill this
         buffer_kerns[n] = clCreateBuffer(
                 contexts[n],

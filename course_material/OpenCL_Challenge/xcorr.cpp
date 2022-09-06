@@ -93,9 +93,12 @@ int main(int argc, char** argv) {
     float_type* image_kernel = (float_type*)h_read_binary("image_kernel.dat", &nbytes);
     assert(nbytes == nbytes_image_kernel);
 
-    // Read kernel sources 
-    //const char* filename = "kernels_answers.cl"
+    // Task 4 - Read kernel sources
+    
+    // Swap comments on these lines to use the answers kernel
+    //const char* filename = "kernels_answers.cl";
     const char* filename = "kernels.cl";
+    
     char* source = (char*)h_read_binary(filename, &nbytes);
 
     // Create Programs and kernels for all devices 
