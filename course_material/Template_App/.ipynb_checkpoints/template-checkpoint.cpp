@@ -8,12 +8,11 @@ Written by Dr Toby M. Potter
 #include <chrono>
 #include <iostream>
 
-// Define the size of the arrays to be computed
-#define NROWS_C 520
-#define NCOLS_C 1032
-
 // Bring in helper header to manage boilerplate code
 #include "cl_helper.hpp"
+
+// Define the size of the arrays to be computed
+#include "mat_size.hpp"
 
 int main(int argc, char** argv) {
     // Start the clock
@@ -81,7 +80,7 @@ int main(int argc, char** argv) {
     const char* kernel_source = (const char*)h_read_binary("kernels.c", &nbytes_src);
 
     // Turn this source code into a program
-    cl_program program = h_build_program(kernel_source, context, device);
+    cl_program program = h_build_program(kernel_source, context, device, "");
         
     // Create a kernel from the built program
     cl_kernel kernel=clCreateKernel(program, "template", &errcode);
