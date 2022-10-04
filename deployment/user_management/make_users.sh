@@ -12,6 +12,7 @@ do
     if id -u "$usr" > /dev/null 1>&1
     then
         # User exists
+        echo $usr
     else
         # Create the user and add to groups
         adduser $usr 
