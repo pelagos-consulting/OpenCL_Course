@@ -8,9 +8,7 @@ Written by Dr Toby M. Potter
 #include <iostream>
 
 // Define the size of the arrays to be computed
-#define NCOLS_A 72
-#define NROWS_C 72
-#define NCOLS_C 72
+#include "mat_size.hpp"
 
 // Bring in helper header to manage boilerplate code
 #include "cl_helper.hpp"

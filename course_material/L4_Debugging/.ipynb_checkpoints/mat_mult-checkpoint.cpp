@@ -12,6 +12,9 @@ Written by Dr Toby M. Potter
 #define NROWS_C 72
 #define NCOLS_C 72
 
+// Bring in the size of the matrices
+#include "mat_size.hpp"
+
 // Bring in helper header to manage boilerplate code
 #include "cl_helper.hpp"
 

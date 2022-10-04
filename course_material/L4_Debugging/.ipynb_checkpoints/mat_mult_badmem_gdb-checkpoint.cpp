@@ -8,9 +8,7 @@ Written by Dr Toby M. Potter
 #include <iostream>
 
 // Define the size of the arrays to be computed
-#define NCOLS_A 72
-#define NROWS_C 72
-#define NCOLS_C 72
+#include "mat_size.hpp"
 
 // Bring in helper header to manage boilerplate code
 #include "cl_helper.hpp"
@@ -140,6 +138,7 @@ int main(int argc, char** argv) {
         // Put debugging information here
         // -g and -s flags are Intel-specifc
         "-g -s kernels_mat_mult.c -cl-opt-disable"
+        // These flags work with AMD
         //"-g -cl-opt-disable"
     );
         
