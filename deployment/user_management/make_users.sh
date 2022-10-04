@@ -15,12 +15,16 @@ do
         echo $usr
     else
         # Create the user and add to groups
-        adduser $usr 
-        adduser $usr video
-        adduser $usr render
+        adduser $usr --disabled-password --gecos "" 
     fi
+
+    adduser $usr video
+    adduser $usr render
 
     #change password for user
     echo "$usr:$pass" >> $fname
     
 done
+
+# Batch change user passwords
+chpasswd < $fname
