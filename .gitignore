@@ -6,3 +6,4 @@
 *.obj
 *.trc
 *.edf
+deployment/
