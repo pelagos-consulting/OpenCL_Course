@@ -37,7 +37,7 @@ do
 
     #change password for user
     echo "$usr:$pass" >> $fname
-    echo "$usr:$pass" >> $export_fname    
+    echo "$usr:$pass" >> $fname_export   
     echo "jupyter-$usr:$pass" >> $fname
     
 done
