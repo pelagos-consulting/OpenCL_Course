@@ -15674,22 +15674,32 @@ $$S_{i+1} = S_{i} N_{i}.$$
 <ol>
 <li>Open the file using this <a href="image_creator.cpp">link</a> and have a look to see what the file is doing.</li>
 <li>Open a terminal and use <strong>cd</strong> to navigate to the <strong>src/L2_Survival_C++</strong> directory.</li>
-<li><p>Type <strong>make clean</strong> and then <strong>make</strong> (on Linux) to make the program <strong>image_creator.exe</strong>. Notice that we changed the makefile to compile with flags "-g -O0". This enables debugging symbols and turns off all optimisations that might hide code. We could also have compiled the source file directly by typing <br/><br/></p>
-<div class="highlight"><pre><span></span>g++ -g -O0 image_creator.cpp -o image_creator.exe
+<li>Type <strong>make clean</strong> and then <strong>make</strong> (on Linux) to make the program <strong>image_creator.exe</strong>. Notice that we changed the makefile to compile with flags "-g -O0". This enables debugging symbols and turns off all optimisations that might hide code. We could also have compiled the source file directly by typing <br/><br/><div class="highlight"><pre><span></span>g++ -g -O0 image_creator.cpp -o image_creator.exe
 </pre></div>
 </li>
-<li><p>Run the program <code>./image_creator.exe</code> to verify that it crashes.</p>
-</li>
+<li>Run the program <code>./image_creator.exe</code> to verify that it crashes.</li>
 <li>Run the program with GDB using the command<div class="highlight"><pre><span></span>gdb ./image_creator.exe
 </pre></div>
 </li>
 <li>Now within gdb type <code>run</code>
 to start the program. It will execute until it reaches the point of the crash.</li>
-<li>Still within GDB and after the crash type <code>print(i0)</code> to check the contents of <strong>i0</strong> the value of the outermost loop variable. Does this value make sense?</li>
+<li>Still within GDB and after the crash type <code>print i0</code> to check the contents of <strong>i0</strong> the value of the outermost loop variable. Does this value make sense?</li>
 <li>Modify <strong>image_creator.cpp</strong> to use a <strong>std::printf</strong> statement to print the value of <strong>i0</strong> for each iteration of the outermost loop (line 50). After you change the source you can type <code>make</code> from within the GDB window to make the program and type <code>run</code> to run the code again. Why do you think <strong>i0</strong> is exceeding the size of the array in dimension 0?</li>
-<li>Have a look at how <strong>i0</strong> is being handled. Hopefully the bug will become known at this point. Make the required fix to <strong>image_creator.cpp</strong> and rerun from GDB.</li>
+<li>Have a look at how <strong>i0</strong> is being handled. Hopefully the bug will become known at this point. Make the required fix to <strong>image_creator.cpp</strong>.</li>
+<li>You can run the <strong>make</strong> command within GDB to build the program again after changes are made. I have a Makefile that is set up to build the programs. Then perform the <strong>run</strong> command to run the program again.</li>
 <li>Run the sanity check below to see if the image has been created successfully.</li>
 </ol>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <h3 id="Debugging-using-breakpoints">Debugging using breakpoints<a class="anchor-link" href="#Debugging-using-breakpoints">&#182;</a></h3><p>Something weird is happening when we try to print the string <strong>str</strong>. We need to fix that.</p>
 <ol>
 <li><p>Within GDB use the command <code>break image_creator.cpp:26</code>
@@ -15702,6 +15712,17 @@ to set a breakpoint at line 26 of the file <strong>image_creator.cpp</strong>. T
 <li>Verify that the program is now producing the right results using the sanity checking Python code below.</li>
 <li>Within <strong>gdb</strong> type <code>del</code> to remove all breakpoints and then type <code>quit</code> to quit the program.</li>
 </ol>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <h3 id="If-you-get-stuck">If you get stuck<a class="anchor-link" href="#If-you-get-stuck">&#182;</a></h3><p>You can always peek at the solution <a href="image_creator_answers.cpp">here</a>. The bugs are fixed, and it can be compiled with either <strong>make</strong> or</p>
 <div class="highlight"><pre><span></span>g++ -g -O0 image_creator_answers.cpp -o image_creator_answers.exe
 </pre></div>
