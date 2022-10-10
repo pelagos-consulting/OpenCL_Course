@@ -113,6 +113,8 @@ cl_uint h_parse_args(int argc,
                      char** argv, 
                      cl_device_type *device_type) {
     
+    // Parse command line arguments to extract -cpu, -gpu, and device indices
+    
     // Default device index
     cl_uint dev_index = 0;
     

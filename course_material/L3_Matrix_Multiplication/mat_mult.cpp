@@ -2,14 +2,14 @@
 Written by Dr Toby M. Potter
 */
 
+//// Step 1. Setup headers ////
+
 #include <cassert>
 #include <cmath>
 #include <iostream>
 
-// Define the size of the arrays to be computed
-#define NCOLS_A 256
-#define NROWS_C 520
-#define NCOLS_C 1032
+// Bring in the size of the matrices
+#include "mat_size.hpp"
 
 // Bring in helper header to manage boilerplate code
 #include "cl_helper.hpp"
@@ -41,6 +41,8 @@ int main(int argc, char** argv) {
     // Pointer to an array of contexts
     cl_context *contexts = NULL;
     
+    //// Step 2. Discover resources ////
+    
     // Helper function to acquire devices
     h_acquire_devices(target_device,
                      &platforms,
@@ -57,6 +59,8 @@ int main(int argc, char** argv) {
     
     // Do we enable profiling?
     cl_bool profiling = CL_FALSE;
+    
+    //// Step 3. Allocate command queues and choose a compute device ////
     
     // Create the command queues
     cl_command_queue* command_queues = h_create_command_queues(
@@ -84,6 +88,8 @@ int main(int argc, char** argv) {
     // B is of size (N1_A, N1_C)    
     // C is of size (N0_C, N1_C)
     
+    //// Step 4. Read in matrices A and B from file ////
+    
     cl_uint N1_A = NCOLS_A, N0_C = NROWS_C, N1_C = NCOLS_C;
     size_t nbytes_A, nbytes_B, nbytes_C;
 
@@ -98,6 +104,8 @@ int main(int argc, char** argv) {
     
     // Make an array to store the result in array_C
     cl_float* array_C = (cl_float*)calloc(nbytes_C, 1);
+    
+    //// Step 5. Allocate OpenCL Buffers for matrices A, B, and C ////
     
     // Make Buffers on the compute device for matrices A, B, and C
     cl_mem buffer_A = clCreateBuffer(context, 
@@ -121,6 +129,8 @@ int main(int argc, char** argv) {
                                      &errcode);
     h_errchk(errcode, "Creating buffer_C");
 
+    //// Step 6. Build the program from source for the chosen compute device ////
+    
     // Now specify the kernel source and read it in
     size_t nbytes_src = 0;
     const char* kernel_source = (const char*)h_read_binary(
@@ -131,6 +141,8 @@ int main(int argc, char** argv) {
     // Turn this source code into a program
     cl_program program = h_build_program(kernel_source, context, device, NULL);
         
+    //// Step 7. Create a kernel from the compiled program and set arguments ////
+    
     // Create a kernel from the built program
     cl_kernel kernel=clCreateKernel(program, "mat_mult", &errcode);
     h_errchk(errcode, "Creating Kernel");
@@ -161,6 +173,8 @@ int main(int argc, char** argv) {
         "setting kernel argument 5"
     );
 
+    //// Step 8. Upload matrices A and B from the host to the OpenCL device Buffers ////
+    
     // Write memory from the host
     // to buffer_A and buffer_B on the compute device
     
@@ -192,6 +206,8 @@ int main(int argc, char** argv) {
                             NULL), 
         "Writing to buffer_B from host"
     );
+    
+    //// Step 9. Run the kernel to compute C from A and B ////
     
     // Number of dimensions in the kernel
     size_t work_dim=2;
@@ -232,6 +248,8 @@ int main(int argc, char** argv) {
         "Waiting on the kernel"
     );
     
+    //// Step 10. Copy the Buffer for matrix C back to the host ////
+    
     // Read memory from the buffer to the host
     h_errchk(
         clEnqueueReadBuffer(command_queue,
@@ -246,9 +264,13 @@ int main(int argc, char** argv) {
              "Copying matrix C from device to host"
     );
     
+    //// Step 11. Write the contents of matrix C to disk
+    
     // Write out the result to file
     h_write_binary(array_C, "array_C.dat", nbytes_C);
 
+    //// Step 12. Clean up arrays and release resources
+    
     // Free the OpenCL buffers
     h_errchk(
         clReleaseMemObject(buffer_A),
