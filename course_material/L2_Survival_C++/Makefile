@@ -9,7 +9,7 @@ INC_DIR=../include
 TARGETS=image_creator.exe image_creator_answers.exe
 
 # Override some flags
-#CXXFLAGS=-g
+CXXFLAGS=-g -std=c++11 -O0
 
 all: $(TARGETS)
 
