@@ -45,37 +45,37 @@
 38 TAUEVENT 0 "Bytes copied from Device to Host : .TAU application" TriggerValue
 39 TAUEVENT 0 "Bytes copied from Device to Host : cl_int clEnqueueReadBuffer(cl_command_queue, cl_mem, cl_bool, size_t, size_t, void *, cl_uint, const cl_event *, cl_event *) C" TriggerValue
 41 TAUEVENT 0 "Correlation ID : ReadBuffer" TriggerValue
-45 TAUEVENT 0 "CPU Cores | 1" TriggerValue
-46 TAUEVENT 0 "CPU MHz | 2199.938" TriggerValue
-47 TAUEVENT 0 "CPU Type | AMD EPYC 7571" TriggerValue
-48 TAUEVENT 0 "CPU Vendor | AuthenticAMD" TriggerValue
+45 TAUEVENT 0 "CPU Cores | 2" TriggerValue
+46 TAUEVENT 0 "CPU MHz | 3104.855" TriggerValue
+47 TAUEVENT 0 "CPU Type | Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz" TriggerValue
+48 TAUEVENT 0 "CPU Vendor | GenuineIntel" TriggerValue
 49 TAUEVENT 0 "CWD | /home/jupyter-lab00/OpenCL_Course/course_material/L5_Profiling" TriggerValue
-50 TAUEVENT 0 "Cache Size | 512 KB" TriggerValue
+50 TAUEVENT 0 "Cache Size | 36608 KB" TriggerValue
 51 TAUEVENT 0 "Command Line | ./mat_mult_profiling.exe" TriggerValue
 52 TAUEVENT 0 "Executable | /home/jupyter-lab00/OpenCL_Course/course_material/L5_Profiling/mat_mult_profiling.exe" TriggerValue
-53 TAUEVENT 0 "Hostname | ip-172-31-23-29" TriggerValue
-54 TAUEVENT 0 "Local Time | 2022-10-04T06:43:16+00:00" TriggerValue
-55 TAUEVENT 0 "Memory Size | 8058872 kB" TriggerValue
-56 TAUEVENT 0 "Node Name | ip-172-31-23-29" TriggerValue
+53 TAUEVENT 0 "Hostname | ip-10-0-0-73" TriggerValue
+54 TAUEVENT 0 "Local Time | 2022-10-11T08:54:12+00:00" TriggerValue
+55 TAUEVENT 0 "Memory Size | 16082424 kB" TriggerValue
+56 TAUEVENT 0 "Node Name | ip-10-0-0-73" TriggerValue
 57 TAUEVENT 0 "OMP_CHUNK_SIZE | 0" TriggerValue
 58 TAUEVENT 0 "OMP_DEFAULT_DEVICE | 0" TriggerValue
 59 TAUEVENT 0 "OMP_DYNAMIC | FALSE" TriggerValue
 60 TAUEVENT 0 "OMP_MAX_ACTIVE_LEVELS | 2147483647" TriggerValue
-61 TAUEVENT 0 "OMP_MAX_THREADS | 2" TriggerValue
+61 TAUEVENT 0 "OMP_MAX_THREADS | 4" TriggerValue
 62 TAUEVENT 0 "OMP_NUM_PLACES | 1" TriggerValue
-63 TAUEVENT 0 "OMP_NUM_PROCS | 2" TriggerValue
-64 TAUEVENT 0 "OMP_PLACE_NUM_PROCS | {0:2}" TriggerValue
-65 TAUEVENT 0 "OMP_PLACE_PROC_IDS | {0:[0,1]}" TriggerValue
+63 TAUEVENT 0 "OMP_NUM_PROCS | 4" TriggerValue
+64 TAUEVENT 0 "OMP_PLACE_NUM_PROCS | {0:4}" TriggerValue
+65 TAUEVENT 0 "OMP_PLACE_PROC_IDS | {0:[0,1,2,3]}" TriggerValue
 66 TAUEVENT 0 "OMP_PROC_BIND | FALSE" TriggerValue
 67 TAUEVENT 0 "OMP_SCHEDULE | STATIC" TriggerValue
 68 TAUEVENT 0 "OMP_THREAD_LIMIT | 2147483647" TriggerValue
 69 TAUEVENT 0 "OS Machine | x86_64" TriggerValue
 70 TAUEVENT 0 "OS Name | Linux" TriggerValue
 71 TAUEVENT 0 "OS Release | 5.15.0-1020-aws" TriggerValue
-72 TAUEVENT 0 "OS Version | #24~20.04.1-Ubuntu SMP Fri Sep 2 15:29:13 UTC 2022" TriggerValue
+72 TAUEVENT 0 "OS Version | #24-Ubuntu SMP Thu Sep 1 16:04:17 UTC 2022" TriggerValue
 73 TAUEVENT 0 "OpenMP Version | 4.5" TriggerValue
 74 TAUEVENT 0 "OpenMP Version String | 201511" TriggerValue
-75 TAUEVENT 0 "Starting Timestamp | 1664865796110387" TriggerValue
+75 TAUEVENT 0 "Starting Timestamp | 1665478452606191" TriggerValue
 76 TAUEVENT 0 "TAU Architecture | default" TriggerValue
 77 TAUEVENT 0 "TAU Config |  -bfd=download -dwarf=download -unwind=download -iowrapper -pdt=/opt/pdt/3.25.1 -ompt -iowrapper -opencl=/usr -cuda=/usr -prefix=/opt/tau/2.31.1" TriggerValue
 78 TAUEVENT 0 "TAU Makefile | /opt/tau/2.31.1/x86_64/lib/Makefile.tau-ompt-pdt-openmp" TriggerValue
@@ -125,10 +125,10 @@
 122 TAUEVENT 0 "TAU_TRACK_SIGNALS | off" TriggerValue
 123 TAUEVENT 0 "TAU_TRACK_UNIFIED_MEMORY | off" TriggerValue
 124 TAUEVENT 0 "TAU_VERBOSE_RANK | -1" TriggerValue
-125 TAUEVENT 0 "Timestamp | 1664865796110558" TriggerValue
-126 TAUEVENT 0 "UTC Time | 2022-10-04T06:43:16Z" TriggerValue
-127 TAUEVENT 0 "pid | 1742" TriggerValue
-128 TAUEVENT 0 "tid | 1742" TriggerValue
+125 TAUEVENT 0 "Timestamp | 1665478452606369" TriggerValue
+126 TAUEVENT 0 "UTC Time | 2022-10-11T08:54:12Z" TriggerValue
+127 TAUEVENT 0 "pid | 2415" TriggerValue
+128 TAUEVENT 0 "tid | 2415" TriggerValue
 129 TAUEVENT 0 "username | jupyter-lab00" TriggerValue
 60000 TRACER 0 "EV_INIT" none
 60001 TRACER 0 "FLUSH" EntryExit

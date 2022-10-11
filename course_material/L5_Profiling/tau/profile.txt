@@ -1,31 +1,31 @@
-Reading Profile files in profile.*
+Reading Profile files in ./tau/profile.*
 
 NODE 0;CONTEXT 0;THREAD 0:
 ---------------------------------------------------------------------------------------
 %Time    Exclusive    Inclusive       #Call      #Subrs  Inclusive Name
               msec   total msec                          usec/call 
 ---------------------------------------------------------------------------------------
-100.0           18        1,351           1          58    1351825 .TAU application
- 59.8          808          808           2           0     404169 cl_context clCreateContext(const cl_context_properties *, cl_uint, const cl_device_id *, void (*)(const char *, const void *, size_t, void *), void *, cl_int *) C
- 20.8          281          281           4           0      70262 cl_int clWaitForEvents(cl_uint, const cl_event *) C
-  9.1          123          123           2           0      61592 cl_int clGetPlatformIDs(cl_uint, cl_platform_id *, cl_uint *) C
-  8.7          117          117           1           0     117608 cl_int clBuildProgram(cl_program, cl_uint, const cl_device_id *, const char *, void (*)(cl_program, void *), void *) C
-  0.1            1            1           1           0       1200 cl_int clEnqueueReadBuffer(cl_command_queue, cl_mem, cl_bool, size_t, size_t, void *, cl_uint, const cl_event *, cl_event *) C
-  0.1        0.785        0.785           2           0        392 cl_int clEnqueueWriteBuffer(cl_command_queue, cl_mem, cl_bool, size_t, size_t, const void *, cl_uint, const cl_event *, cl_event *) C
-  0.0        0.469        0.469           1           0        469 cl_kernel clCreateKernel(cl_program, const char *, cl_int *) C
-  0.0        0.091        0.091           1           0         91 cl_int clEnqueueNDRangeKernel(cl_command_queue, cl_kernel, cl_uint, const size_t *, const size_t *, const size_t *, cl_uint, const cl_event *, cl_event *) C
-  0.0        0.052        0.052           2           0         26 cl_int clFinish(cl_command_queue) C
-  0.0        0.052        0.052           2           0         26 cl_int clReleaseContext(cl_context) C
-  0.0        0.036        0.036           3           0         12 cl_mem clCreateBuffer(cl_context, cl_mem_flags, size_t, void *, cl_int *) C
-  0.0        0.035        0.035           2           0         18 cl_command_queue clCreateCommandQueue(cl_context, cl_device_id, cl_command_queue_properties, cl_int *) C
-  0.0        0.032        0.032           2           0         16 cl_int clReleaseCommandQueue(cl_command_queue) C
-  0.0        0.024        0.024           8           0          3 cl_int clGetDeviceIDs(cl_platform_id, cl_device_type, cl_uint, cl_device_id *, cl_uint *) C
-  0.0        0.022        0.022           7           0          3 cl_int clGetDeviceInfo(cl_device_id, cl_device_info, size_t, void *, size_t *) C
-  0.0        0.015        0.015           1           0         15 cl_program clCreateProgramWithSource(cl_context, cl_uint, const char **, const size_t *, cl_int *) C
-  0.0        0.007        0.007           8           0          1 cl_int clGetEventProfilingInfo(cl_event, cl_profiling_info, size_t, void *, size_t *) C
-  0.0        0.005        0.005           2           0          2 cl_int clGetCommandQueueInfo(cl_command_queue, cl_command_queue_info, size_t, void *, size_t *) C
+100.0          116          966           1          56     966120 .TAU application
+ 46.4          448          448           2           0     224038 cl_context clCreateContext(const cl_context_properties *, cl_uint, const cl_device_id *, void (*)(const char *, const void *, size_t, void *), void *, cl_int *) C
+ 18.5          178          178           2           0      89496 cl_int clGetPlatformIDs(cl_uint, cl_platform_id *, cl_uint *) C
+ 12.2          117          117           2           0      58718 cl_int clReleaseContext(cl_context) C
+  5.6           53           53           4           0      13412 cl_int clWaitForEvents(cl_uint, const cl_event *) C
+  5.2           49           49           1           0      49906 cl_int clBuildProgram(cl_program, cl_uint, const cl_device_id *, const char *, void (*)(cl_program, void *), void *) C
+  0.1        0.634        0.634           2           0        317 cl_int clEnqueueWriteBuffer(cl_command_queue, cl_mem, cl_bool, size_t, size_t, const void *, cl_uint, const cl_event *, cl_event *) C
+  0.1        0.514        0.514           1           0        514 cl_int clEnqueueReadBuffer(cl_command_queue, cl_mem, cl_bool, size_t, size_t, void *, cl_uint, const cl_event *, cl_event *) C
+  0.0        0.341        0.341           1           0        341 cl_kernel clCreateKernel(cl_program, const char *, cl_int *) C
+  0.0         0.04         0.04           2           0         20 cl_int clFinish(cl_command_queue) C
+  0.0        0.032        0.032           2           0         16 cl_command_queue clCreateCommandQueue(cl_context, cl_device_id, cl_command_queue_properties, cl_int *) C
+  0.0        0.031        0.031           3           0         10 cl_mem clCreateBuffer(cl_context, cl_mem_flags, size_t, void *, cl_int *) C
+  0.0         0.03         0.03           1           0         30 cl_int clEnqueueNDRangeKernel(cl_command_queue, cl_kernel, cl_uint, const size_t *, const size_t *, const size_t *, cl_uint, const cl_event *, cl_event *) C
+  0.0        0.014        0.014           7           0          2 cl_int clGetDeviceInfo(cl_device_id, cl_device_info, size_t, void *, size_t *) C
+  0.0        0.014        0.014           2           0          7 cl_int clReleaseCommandQueue(cl_command_queue) C
+  0.0        0.012        0.012           1           0         12 cl_program clCreateProgramWithSource(cl_context, cl_uint, const char **, const size_t *, cl_int *) C
+  0.0        0.009        0.009           6           0          2 cl_int clGetDeviceIDs(cl_platform_id, cl_device_type, cl_uint, cl_device_id *, cl_uint *) C
   0.0        0.005        0.005           6           0          1 cl_int clSetKernelArg(cl_kernel, cl_uint, size_t, const void *) C
-  0.0        0.004        0.004           1           0          4 cl_int clGetKernelInfo(cl_kernel, cl_kernel_info, size_t, void *, size_t *) C
+  0.0        0.004        0.004           2           0          2 cl_int clGetCommandQueueInfo(cl_command_queue, cl_command_queue_info, size_t, void *, size_t *) C
+  0.0        0.004        0.004           8           0          0 cl_int clGetEventProfilingInfo(cl_event, cl_profiling_info, size_t, void *, size_t *) C
+  0.0        0.003        0.003           1           0          3 cl_int clGetKernelInfo(cl_kernel, cl_kernel_info, size_t, void *, size_t *) C
 ---------------------------------------------------------------------------------------
 
 USER EVENTS Profile :NODE 0, CONTEXT 0, THREAD 0
@@ -52,67 +52,67 @@ NODE 0;CONTEXT 0;THREAD 2:
 %Time    Exclusive    Inclusive       #Call      #Subrs  Inclusive Name
               msec   total msec                          usec/call 
 ---------------------------------------------------------------------------------------
-100.0        1,066        1,349           1           4    1349002 .TAU application
- 20.8          280          280           1           0     280932 mat_mult
-  0.1            1            1           1           0       1018 ReadBuffer
-  0.1        0.752        0.752           2           0        376 WriteBuffer
+100.0          709          764           1           4     764318 .TAU application
+  7.0           53           53           1           0      53618 mat_mult
+  0.1         0.54         0.54           2           0        270 WriteBuffer
+  0.1        0.456        0.456           1           0        456 ReadBuffer
 
 FUNCTION SUMMARY (total):
 ---------------------------------------------------------------------------------------
 %Time    Exclusive    Inclusive       #Call      #Subrs  Inclusive Name
               msec   total msec                          usec/call 
 ---------------------------------------------------------------------------------------
-100.0        1,085        2,700           3          62     900276 .TAU application
- 29.9          808          808           2           0     404169 cl_context clCreateContext(const cl_context_properties *, cl_uint, const cl_device_id *, void (*)(const char *, const void *, size_t, void *), void *, cl_int *) C
- 10.4          281          281           4           0      70262 cl_int clWaitForEvents(cl_uint, const cl_event *) C
- 10.4          280          280           1           0     280932 mat_mult
-  4.6          123          123           2           0      61592 cl_int clGetPlatformIDs(cl_uint, cl_platform_id *, cl_uint *) C
-  4.4          117          117           1           0     117608 cl_int clBuildProgram(cl_program, cl_uint, const cl_device_id *, const char *, void (*)(cl_program, void *), void *) C
-  0.0            1            1           1           0       1200 cl_int clEnqueueReadBuffer(cl_command_queue, cl_mem, cl_bool, size_t, size_t, void *, cl_uint, const cl_event *, cl_event *) C
-  0.0            1            1           1           0       1018 ReadBuffer
-  0.0        0.785        0.785           2           0        392 cl_int clEnqueueWriteBuffer(cl_command_queue, cl_mem, cl_bool, size_t, size_t, const void *, cl_uint, const cl_event *, cl_event *) C
-  0.0        0.752        0.752           2           0        376 WriteBuffer
-  0.0        0.469        0.469           1           0        469 cl_kernel clCreateKernel(cl_program, const char *, cl_int *) C
-  0.0        0.091        0.091           1           0         91 cl_int clEnqueueNDRangeKernel(cl_command_queue, cl_kernel, cl_uint, const size_t *, const size_t *, const size_t *, cl_uint, const cl_event *, cl_event *) C
-  0.0        0.052        0.052           2           0         26 cl_int clFinish(cl_command_queue) C
-  0.0        0.052        0.052           2           0         26 cl_int clReleaseContext(cl_context) C
-  0.0        0.036        0.036           3           0         12 cl_mem clCreateBuffer(cl_context, cl_mem_flags, size_t, void *, cl_int *) C
-  0.0        0.035        0.035           2           0         18 cl_command_queue clCreateCommandQueue(cl_context, cl_device_id, cl_command_queue_properties, cl_int *) C
-  0.0        0.032        0.032           2           0         16 cl_int clReleaseCommandQueue(cl_command_queue) C
-  0.0        0.024        0.024           8           0          3 cl_int clGetDeviceIDs(cl_platform_id, cl_device_type, cl_uint, cl_device_id *, cl_uint *) C
-  0.0        0.022        0.022           7           0          3 cl_int clGetDeviceInfo(cl_device_id, cl_device_info, size_t, void *, size_t *) C
-  0.0        0.015        0.015           1           0         15 cl_program clCreateProgramWithSource(cl_context, cl_uint, const char **, const size_t *, cl_int *) C
-  0.0        0.007        0.007           8           0          1 cl_int clGetEventProfilingInfo(cl_event, cl_profiling_info, size_t, void *, size_t *) C
-  0.0        0.005        0.005           2           0          2 cl_int clGetCommandQueueInfo(cl_command_queue, cl_command_queue_info, size_t, void *, size_t *) C
+100.0          826        1,730           3          60     576813 .TAU application
+ 25.9          448          448           2           0     224038 cl_context clCreateContext(const cl_context_properties *, cl_uint, const cl_device_id *, void (*)(const char *, const void *, size_t, void *), void *, cl_int *) C
+ 10.3          178          178           2           0      89496 cl_int clGetPlatformIDs(cl_uint, cl_platform_id *, cl_uint *) C
+  6.8          117          117           2           0      58718 cl_int clReleaseContext(cl_context) C
+  3.1           53           53           4           0      13412 cl_int clWaitForEvents(cl_uint, const cl_event *) C
+  3.1           53           53           1           0      53618 mat_mult
+  2.9           49           49           1           0      49906 cl_int clBuildProgram(cl_program, cl_uint, const cl_device_id *, const char *, void (*)(cl_program, void *), void *) C
+  0.0        0.634        0.634           2           0        317 cl_int clEnqueueWriteBuffer(cl_command_queue, cl_mem, cl_bool, size_t, size_t, const void *, cl_uint, const cl_event *, cl_event *) C
+  0.0         0.54         0.54           2           0        270 WriteBuffer
+  0.0        0.514        0.514           1           0        514 cl_int clEnqueueReadBuffer(cl_command_queue, cl_mem, cl_bool, size_t, size_t, void *, cl_uint, const cl_event *, cl_event *) C
+  0.0        0.456        0.456           1           0        456 ReadBuffer
+  0.0        0.341        0.341           1           0        341 cl_kernel clCreateKernel(cl_program, const char *, cl_int *) C
+  0.0         0.04         0.04           2           0         20 cl_int clFinish(cl_command_queue) C
+  0.0        0.032        0.032           2           0         16 cl_command_queue clCreateCommandQueue(cl_context, cl_device_id, cl_command_queue_properties, cl_int *) C
+  0.0        0.031        0.031           3           0         10 cl_mem clCreateBuffer(cl_context, cl_mem_flags, size_t, void *, cl_int *) C
+  0.0         0.03         0.03           1           0         30 cl_int clEnqueueNDRangeKernel(cl_command_queue, cl_kernel, cl_uint, const size_t *, const size_t *, const size_t *, cl_uint, const cl_event *, cl_event *) C
+  0.0        0.014        0.014           7           0          2 cl_int clGetDeviceInfo(cl_device_id, cl_device_info, size_t, void *, size_t *) C
+  0.0        0.014        0.014           2           0          7 cl_int clReleaseCommandQueue(cl_command_queue) C
+  0.0        0.012        0.012           1           0         12 cl_program clCreateProgramWithSource(cl_context, cl_uint, const char **, const size_t *, cl_int *) C
+  0.0        0.009        0.009           6           0          2 cl_int clGetDeviceIDs(cl_platform_id, cl_device_type, cl_uint, cl_device_id *, cl_uint *) C
   0.0        0.005        0.005           6           0          1 cl_int clSetKernelArg(cl_kernel, cl_uint, size_t, const void *) C
-  0.0        0.004        0.004           1           0          4 cl_int clGetKernelInfo(cl_kernel, cl_kernel_info, size_t, void *, size_t *) C
+  0.0        0.004        0.004           2           0          2 cl_int clGetCommandQueueInfo(cl_command_queue, cl_command_queue_info, size_t, void *, size_t *) C
+  0.0        0.004        0.004           8           0          0 cl_int clGetEventProfilingInfo(cl_event, cl_profiling_info, size_t, void *, size_t *) C
+  0.0        0.003        0.003           1           0          3 cl_int clGetKernelInfo(cl_kernel, cl_kernel_info, size_t, void *, size_t *) C
 
 FUNCTION SUMMARY (mean):
 ---------------------------------------------------------------------------------------
 %Time    Exclusive    Inclusive       #Call      #Subrs  Inclusive Name
               msec   total msec                          usec/call 
 ---------------------------------------------------------------------------------------
-100.0          361          900           1     20.6667     900276 .TAU application
- 29.9          269          269    0.666667           0     404169 cl_context clCreateContext(const cl_context_properties *, cl_uint, const cl_device_id *, void (*)(const char *, const void *, size_t, void *), void *, cl_int *) C
- 10.4           93           93     1.33333           0      70262 cl_int clWaitForEvents(cl_uint, const cl_event *) C
- 10.4           93           93    0.333333           0     280933 mat_mult
-  4.6           41           41    0.666667           0      61592 cl_int clGetPlatformIDs(cl_uint, cl_platform_id *, cl_uint *) C
-  4.4           39           39    0.333333           0     117608 cl_int clBuildProgram(cl_program, cl_uint, const cl_device_id *, const char *, void (*)(cl_program, void *), void *) C
-  0.0          0.4          0.4    0.333333           0       1200 cl_int clEnqueueReadBuffer(cl_command_queue, cl_mem, cl_bool, size_t, size_t, void *, cl_uint, const cl_event *, cl_event *) C
-  0.0        0.339        0.339    0.333333           0       1018 ReadBuffer
-  0.0        0.262        0.262    0.666667           0        393 cl_int clEnqueueWriteBuffer(cl_command_queue, cl_mem, cl_bool, size_t, size_t, const void *, cl_uint, const cl_event *, cl_event *) C
-  0.0        0.251        0.251    0.666667           0        376 WriteBuffer
-  0.0        0.156        0.156    0.333333           0        469 cl_kernel clCreateKernel(cl_program, const char *, cl_int *) C
-  0.0       0.0303       0.0303    0.333333           0         91 cl_int clEnqueueNDRangeKernel(cl_command_queue, cl_kernel, cl_uint, const size_t *, const size_t *, const size_t *, cl_uint, const cl_event *, cl_event *) C
-  0.0       0.0173       0.0173    0.666667           0         26 cl_int clFinish(cl_command_queue) C
-  0.0       0.0173       0.0173    0.666667           0         26 cl_int clReleaseContext(cl_context) C
-  0.0        0.012        0.012           1           0         12 cl_mem clCreateBuffer(cl_context, cl_mem_flags, size_t, void *, cl_int *) C
-  0.0       0.0117       0.0117    0.666667           0         18 cl_command_queue clCreateCommandQueue(cl_context, cl_device_id, cl_command_queue_properties, cl_int *) C
-  0.0       0.0107       0.0107    0.666667           0         16 cl_int clReleaseCommandQueue(cl_command_queue) C
-  0.0        0.008        0.008     2.66667           0          3 cl_int clGetDeviceIDs(cl_platform_id, cl_device_type, cl_uint, cl_device_id *, cl_uint *) C
-  0.0      0.00733      0.00733     2.33333           0          3 cl_int clGetDeviceInfo(cl_device_id, cl_device_info, size_t, void *, size_t *) C
-  0.0        0.005        0.005    0.333333           0         15 cl_program clCreateProgramWithSource(cl_context, cl_uint, const char **, const size_t *, cl_int *) C
-  0.0      0.00233      0.00233     2.66667           0          1 cl_int clGetEventProfilingInfo(cl_event, cl_profiling_info, size_t, void *, size_t *) C
-  0.0      0.00167      0.00167    0.666667           0          3 cl_int clGetCommandQueueInfo(cl_command_queue, cl_command_queue_info, size_t, void *, size_t *) C
+100.0          275          576           1          20     576813 .TAU application
+ 25.9          149          149    0.666667           0     224038 cl_context clCreateContext(const cl_context_properties *, cl_uint, const cl_device_id *, void (*)(const char *, const void *, size_t, void *), void *, cl_int *) C
+ 10.3           59           59    0.666667           0      89496 cl_int clGetPlatformIDs(cl_uint, cl_platform_id *, cl_uint *) C
+  6.8           39           39    0.666667           0      58718 cl_int clReleaseContext(cl_context) C
+  3.1           17           17     1.33333           0      13412 cl_int clWaitForEvents(cl_uint, const cl_event *) C
+  3.1           17           17    0.333333           0      53618 mat_mult
+  2.9           16           16    0.333333           0      49906 cl_int clBuildProgram(cl_program, cl_uint, const cl_device_id *, const char *, void (*)(cl_program, void *), void *) C
+  0.0        0.211        0.211    0.666667           0        317 cl_int clEnqueueWriteBuffer(cl_command_queue, cl_mem, cl_bool, size_t, size_t, const void *, cl_uint, const cl_event *, cl_event *) C
+  0.0         0.18         0.18    0.666667           0        270 WriteBuffer
+  0.0        0.171        0.171    0.333333           0        514 cl_int clEnqueueReadBuffer(cl_command_queue, cl_mem, cl_bool, size_t, size_t, void *, cl_uint, const cl_event *, cl_event *) C
+  0.0        0.152        0.152    0.333333           0        456 ReadBuffer
+  0.0        0.114        0.114    0.333333           0        341 cl_kernel clCreateKernel(cl_program, const char *, cl_int *) C
+  0.0       0.0133       0.0133    0.666667           0         20 cl_int clFinish(cl_command_queue) C
+  0.0       0.0107       0.0107    0.666667           0         16 cl_command_queue clCreateCommandQueue(cl_context, cl_device_id, cl_command_queue_properties, cl_int *) C
+  0.0       0.0103       0.0103           1           0         10 cl_mem clCreateBuffer(cl_context, cl_mem_flags, size_t, void *, cl_int *) C
+  0.0         0.01         0.01    0.333333           0         30 cl_int clEnqueueNDRangeKernel(cl_command_queue, cl_kernel, cl_uint, const size_t *, const size_t *, const size_t *, cl_uint, const cl_event *, cl_event *) C
+  0.0      0.00467      0.00467     2.33333           0          2 cl_int clGetDeviceInfo(cl_device_id, cl_device_info, size_t, void *, size_t *) C
+  0.0      0.00467      0.00467    0.666667           0          7 cl_int clReleaseCommandQueue(cl_command_queue) C
+  0.0        0.004        0.004    0.333333           0         12 cl_program clCreateProgramWithSource(cl_context, cl_uint, const char **, const size_t *, cl_int *) C
+  0.0        0.003        0.003           2           0          2 cl_int clGetDeviceIDs(cl_platform_id, cl_device_type, cl_uint, cl_device_id *, cl_uint *) C
   0.0      0.00167      0.00167           2           0          1 cl_int clSetKernelArg(cl_kernel, cl_uint, size_t, const void *) C
-  0.0      0.00133      0.00133    0.333333           0          4 cl_int clGetKernelInfo(cl_kernel, cl_kernel_info, size_t, void *, size_t *) C
+  0.0      0.00133      0.00133    0.666667           0          2 cl_int clGetCommandQueueInfo(cl_command_queue, cl_command_queue_info, size_t, void *, size_t *) C
+  0.0      0.00133      0.00133     2.66667           0          0 cl_int clGetEventProfilingInfo(cl_event, cl_profiling_info, size_t, void *, size_t *) C
+  0.0        0.001        0.001    0.333333           0          3 cl_int clGetKernelInfo(cl_kernel, cl_kernel_info, size_t, void *, size_t *) C
