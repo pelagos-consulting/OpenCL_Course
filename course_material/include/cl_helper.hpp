@@ -106,7 +106,7 @@ void h_show_options(const char* name) {
     std::printf("Options:\n"); 
     std::printf("\t-gpu,--gpu\t use a GPU\n");
     std::printf("\t-cpu,--cpu\t use a CPU\n");
-    std::printf("\tDEVICE_INDEX is a number > 0\n"); 
+    std::printf("\tDEVICE_INDEX is a number >= 0\n"); 
 }
 
 cl_uint h_parse_args(int argc, 
