@@ -25,9 +25,6 @@
     #include "CL/opencl.h"
 #endif
 
-// Exit code to use when crashing out
-#define OCL_EXIT -20
-
 // Make a lookup table for error codes
 std::map<cl_int, const char*> error_codes {
     {CL_SUCCESS, "CL_SUCCESS"},
@@ -89,6 +86,38 @@ std::map<cl_int, const char*> error_codes {
     {CL_PROFILING_INFO_NOT_AVAILABLE, "CL_PROFILING_INFO_NOT_AVAILABLE"},
 };
 
+#define H_ERRCHK(cmd) \
+{\
+    cl_int errcode = cmd; \
+    if (errcode != CL_SUCCESS) { \
+        if (error_codes.count(errcode)>0) { \
+            std::printf("Error, Opencl call failed at %s:%d with error code %s (%d)\n", \
+                    __FILE__, __LINE__, error_codes[errcode], errcode); \
+        } else { \
+            std::printf("Error, Opencl call failed at %s:%d with error code (%d)\n", \
+                    __FILE__, __LINE__, errcode); \
+        }\
+        exit(EXIT_FAILURE);\
+    }\
+}
+
+// Function to check error codes
+void h_errchk(cl_int errcode, const char *message) {
+    if (errcode!=CL_SUCCESS) {
+        // Is the error code in the map
+        if (error_codes.count(errcode)>0) {
+            std::printf("Error, Opencl call failed at \"%s\" with error code %s (%d)\n", 
+                    message, error_codes[errcode], errcode);
+        } else {
+            // We don't know how to handle the error code, so just print it
+            std::printf("Error, OpenCL call failed at \"%s\" with error code %d\n", 
+                    message, errcode);
+        }
+        // We have failed one way or the other, so just exit
+        exit(EXIT_FAILURE);
+    }
+};
+
 size_t h_lcm(size_t n1, size_t n2) {
     // Get the least common multiple of two numbers
     size_t number = std::max(n1, n2);
@@ -106,7 +135,7 @@ void h_show_options(const char* name) {
     std::printf("Options:\n"); 
     std::printf("\t-gpu,--gpu\t use a GPU\n");
     std::printf("\t-cpu,--cpu\t use a CPU\n");
-    std::printf("\tDEVICE_INDEX is a number > 0\n"); 
+    std::printf("\tDEVICE_INDEX is a number >= 0\n"); 
 }
 
 cl_uint h_parse_args(int argc, 
@@ -146,22 +175,7 @@ cl_uint h_parse_args(int argc,
     return(dev_index);
 }
 
-// Function to check error code
-void h_errchk(cl_int errcode, const char *message) {
-    if (errcode!=CL_SUCCESS) {
-        // Is the error code in the map
-        if (error_codes.count(errcode)>0) {
-            std::printf("Error, Opencl call failed at \"%s\" with error code %s (%d)\n", 
-                    message, error_codes[errcode], errcode);
-        } else {
-            // We don't know how to handle the error code, so just print it
-            std::printf("Error, OpenCL call failed at \"%s\" with error code %d\n", 
-                    message, errcode);
-        }
-        // We have failed one way or the other, so just exit
-        exit(OCL_EXIT);
-    }
-};
+
 
 // Function to create lists of contexts and devices that map to available hardware
 void h_acquire_devices(
@@ -215,7 +229,7 @@ void h_acquire_devices(
     // Check to make sure we have more than one suitable device
     if (num_devices == 0) {
         std::printf("Failed to find a suitable compute device\n");
-        exit(OCL_EXIT);
+        exit(EXIT_FAILURE);
     }
 
     // Allocate flat 1D allocations for device ID's and contexts,
@@ -400,7 +414,7 @@ cl_program h_build_program(const char* source,
         // Print the build log
         std::printf("Build log is %s\n", buildlog);
         free(buildlog);
-        exit(OCL_EXIT);
+        exit(EXIT_FAILURE);
     }
 
     return program;
@@ -487,7 +501,7 @@ void h_write_binary(void* data, const char* filename, size_t nbytes) {
     std::FILE *fp = std::fopen(filename, "wb");
     if (fp == NULL) {
         std::printf("Error in writing file %s", filename);
-        exit(OCL_EXIT);
+        exit(EXIT_FAILURE);
     }
     
     // Write the data to file
@@ -515,7 +529,7 @@ void* h_read_binary(const char* filename, size_t *nbytes) {
     std::FILE *fp = std::fopen(filename, "rb");
     if (fp == NULL) {
         std::printf("Error in reading file %s", filename);
-        exit(OCL_EXIT);
+        exit(EXIT_FAILURE);
     }
     
     // Seek to the end of the file
