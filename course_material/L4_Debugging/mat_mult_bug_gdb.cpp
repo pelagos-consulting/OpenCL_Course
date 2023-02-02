@@ -149,12 +149,21 @@ int main(int argc, char** argv) {
     );
 
     // Turn this source code into a program
-    cl_program program = h_build_program(kernel_source, context, device, NULL);
-        
+    cl_program program = h_build_program(
+        kernel_source, 
+        context, 
+        device,
+        // Put debugging information here
+        // -g and -s flags are Intel-specifc
+        "-g -s kernels_mat_mult.c -cl-opt-disable"
+        // These flags work with AMD
+        //"-g -cl-opt-disable"
+    );
+       
     //// Step 7. Create a kernel from the compiled program and set arguments ////
     
     // Create a kernel from the built program
-    cl_kernel kernel=clCreateKernel(program, "mat_mult_memcheck", &errcode);
+    cl_kernel kernel=clCreateKernel(program, "mat_mult_bug", &errcode);
     H_ERRCHK(errcode);
     
     // Set arguments to the kernel (not thread safe)

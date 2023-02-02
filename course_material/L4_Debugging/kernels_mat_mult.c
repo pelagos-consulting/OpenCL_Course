@@ -10,8 +10,8 @@ __kernel void mat_mult (__global float* A,
     
     // i0 and i1 represent the coordinates in Matrix C 
     // We assume row-major ordering for the matrices 
-    size_t i0=get_global_id(0); 
-    size_t i1=get_global_id(1); 
+    size_t i0=get_global_id(1); 
+    size_t i1=get_global_id(0); 
     
     // Scratch variable
     float temp=0.0; 
@@ -35,7 +35,7 @@ __kernel void mat_mult (__global float* A,
 }
 
 // standard matrix multiply kernel 
-__kernel void mat_mult_badmem (__global float* A, 
+__kernel void mat_mult_bug (__global float* A, 
                         __global float* B, 
                         __global float* C, 
                         unsigned int N1_A, 
@@ -46,8 +46,8 @@ __kernel void mat_mult_badmem (__global float* A,
     
     // i0 and i1 represent the coordinates in Matrix C 
     // We assume row-major ordering for the matrices 
-    size_t i0=get_global_id(0); 
-    size_t i1=get_global_id(1); 
+    size_t i0=get_global_id(1); 
+    size_t i1=get_global_id(0); 
     
     // Scratch variable
     float temp=0.0; 
@@ -84,8 +84,8 @@ __kernel void mat_mult_printf (__global float* A,
     
     // i0 and i1 represent the coordinates in Matrix C 
     // We assume row-major ordering for the matrices 
-    size_t i0=get_global_id(0); 
-    size_t i1=get_global_id(1); 
+    size_t i0=get_global_id(1); 
+    size_t i1=get_global_id(0); 
     
     // Scratch variable
     float temp=0.0; 
@@ -125,8 +125,8 @@ __kernel void mat_memcheck (__global float* A,
     
     // i0 and i1 represent the coordinates in Matrix C 
     // We assume row-major ordering for the matrices 
-    size_t i0=get_global_id(0); 
-    size_t i1=get_global_id(1); 
+    size_t i0=get_global_id(1); 
+    size_t i1=get_global_id(0); 
     
     // Scratch variable
     float temp=0.0; 

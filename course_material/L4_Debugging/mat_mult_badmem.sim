@@ -1,7 +1,7 @@
 kernels_mat_mult.c # File containing OpenCL program (can be OpenCL C or SPIR)
 mat_mult_badmem    # Name of the kernel to run
-72 80 1     # NDRange
-4 16 1      # Work-group size
+80 72 1     # NDRange
+16 4 1      # Work-group size
 
 # First argument 'global float *A'
 # Alocation of 72*72*4 = 20736 

@@ -10,11 +10,8 @@ __kernel void mat_elementwise (
     
     // i0 and i1 represent the coordinates in Matrix C 
     // We assume row-major ordering for the matrices 
-    size_t i0=get_global_id(0); 
-    size_t i1=get_global_id(1); 
-
-    /// Insert missing kernel code ///
-    /// To perform Hadamard matrix multiplication ///
+    size_t i0=get_global_id(1); 
+    size_t i1=get_global_id(0); 
     
     // Guard mechanism to make sure we do not go
     // outside the boundaries of matrix C 

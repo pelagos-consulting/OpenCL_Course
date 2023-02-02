@@ -154,7 +154,7 @@ int main(int argc, char** argv) {
     //// Step 7. Create a kernel from the compiled program and set arguments ////
     
     // Create a kernel from the built program
-    cl_kernel kernel=clCreateKernel(program, "mat_mult_memcheck", &errcode);
+    cl_kernel kernel=clCreateKernel(program, "mat_mult_bug", &errcode);
     H_ERRCHK(errcode);
     
     // Set arguments to the kernel (not thread safe)
