@@ -13,8 +13,8 @@ __kernel void mat_elementwise (
     size_t i0=get_global_id(1); 
     size_t i1=get_global_id(0); 
 
-    /// Insert missing kernel code ///
-    /// To perform Hadamard matrix multiplication ///
+    //// Step 1. Insert missing kernel code ////
+    //// To perform Hadamard matrix multiplication ////
 
     // Guard mechanism to make sure we do not go
     // outside the boundaries of matrix C 
@@ -26,4 +26,6 @@ __kernel void mat_elementwise (
         // Number of rows in C is same as number of rows in A
         F[offset]=D[offset]*E[offset];
     }
+
+    //// End code: ////
 } 

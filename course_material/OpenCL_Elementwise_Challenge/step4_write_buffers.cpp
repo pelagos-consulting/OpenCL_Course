@@ -1,0 +1,27 @@
+    H_ERRCHK(
+        clEnqueueWriteBuffer(
+            command_queue,
+            D_d,
+            blocking,
+            0,
+            nbytes_D,
+            D_h,
+            0,
+            NULL,
+            NULL
+        ) 
+    );
+
+    H_ERRCHK(
+        clEnqueueWriteBuffer(
+            command_queue,
+            E_d,
+            blocking,
+            0,
+            nbytes_E,
+            E_h,
+            0,
+            NULL,
+            NULL
+        ) 
+    );

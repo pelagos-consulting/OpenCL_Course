@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
     cl_bool ordering = CL_FALSE;
     
     // Do we enable profiling?
-    cl_bool profiling = CL_FALSE;
+    cl_bool profiling = CL_TRUE;
     
     // Create the command queues
     cl_command_queue* command_queues = h_create_command_queues(
@@ -101,6 +101,9 @@ int main(int argc, char** argv) {
     m_random(D_h, N0_F, N1_F);
     m_random(E_h, N0_F, N1_F);
 
+    //// Step 2. Use clCreateBuffer to allocate OpenCL buffers
+    //// for arrays D_d, E_d, and F_d. ////
+
     // Make Buffers on the compute device for matrices D, E, and F
     cl_mem D_d = clCreateBuffer(context, 
                                      CL_MEM_READ_WRITE, 
@@ -123,6 +126,8 @@ int main(int argc, char** argv) {
                                      &errcode);
     H_ERRCHK(errcode);
 
+    //// End code: ////
+
     // Now specify the kernel source and read it in
     size_t nbytes_src = 0;
     const char* kernel_source = (const char*)h_read_binary(
@@ -132,7 +137,12 @@ int main(int argc, char** argv) {
 
     // Turn this source code into a program
     cl_program program = h_build_program(kernel_source, context, device, NULL);
-        
+
+    //// Step 3. Create the kernel and set kernel arguments ////
+    //// Use clCreateKernel to create a kernel from program
+    //// Use clSetKernelArg to set kernel arguments ////
+    //// Select the kernel called mat_elementwise ////
+
     // Create a kernel from the built program
     cl_kernel kernel=clCreateKernel(program, "mat_elementwise", &errcode);
     H_ERRCHK(errcode);
@@ -144,14 +154,17 @@ int main(int argc, char** argv) {
     H_ERRCHK(clSetKernelArg(kernel, 3, sizeof(cl_uint), &N0_F));
     H_ERRCHK(clSetKernelArg(kernel, 4, sizeof(cl_uint), &N1_F));
 
+    //// End code: ////
+
     // Write memory from the host
     // to D_d and E_d on the compute device
     
     // Do we enable a blocking write?
     cl_bool blocking=CL_TRUE;
     
-    //// Insert code here to copy D_h and E_h //// 
-    //// to Buffers D_d and E_d               ////
+    //// Step 4. Copy D_h and E_h to Buffers D_d and E_d
+    //// Use clEnqueueWriteBuffer to copy memory ////
+    //// from the host to the buffer ////
     
     H_ERRCHK(
         clEnqueueWriteBuffer(
@@ -181,7 +194,7 @@ int main(int argc, char** argv) {
         ) 
     );
     
-    //// End insert code                           ////
+    //// End code: ////
     
     // Number of dimensions in the kernel
     size_t work_dim=2;
@@ -199,6 +212,13 @@ int main(int argc, char** argv) {
                       work_dim
     );
     
+    //// Step 5. Enqueue the kernel and wait for it to finish ////
+    //// Create a cl_event called kernel_event ////
+    //// Use clEnqueueNDRangeKernel to enqueue the kernel ////
+    //// Use command_queue, kernel, work_dim, global_size, ////
+    //// local_size, and kernel_event as parameters ////
+    //// Use clWaitForEvents //// to wait on kernel_event
+
     // Event for the kernel
     cl_event kernel_event;
     
@@ -220,7 +240,11 @@ int main(int argc, char** argv) {
     // Wait on the kernel to finish
     H_ERRCHK(clWaitForEvents(1, &kernel_event));
     
-    // Read memory from the buffer to the host
+    //// End code: ////
+
+    //// Step 6. Read memory from F_d back to F_h on the host ////
+    //// Use clEnqueueReadBuffer to perform the copy
+
     H_ERRCHK(
         clEnqueueReadBuffer(
             command_queue,
@@ -234,6 +258,8 @@ int main(int argc, char** argv) {
             NULL
         ) 
     );
+
+    //// End code: ////
 
     // Check the answer against a known solution
     float* F_answer_h = (float*)calloc(nbytes_F, 1);
@@ -260,11 +286,15 @@ int main(int argc, char** argv) {
     h_write_binary(E_h, "array_E.dat", nbytes_E);
     h_write_binary(F_h, "array_F.dat", nbytes_F);
 
-    // Free the OpenCL buffers
+    //// Step 7. Free the OpenCL buffers D_d, E_d, and F_d ////
+    //// Use clReleaseMemObject to free the buffers ////
+
     H_ERRCHK(clReleaseMemObject(D_d));
     H_ERRCHK(clReleaseMemObject(E_d));
     H_ERRCHK(clReleaseMemObject(F_d));
     
+    //// End code: ////
+
     // Clean up memory that was allocated on the host 
     free(D_h);
     free(E_h);
