@@ -15,7 +15,7 @@ __kernel void mat_elementwise (
     
     // Guard mechanism to make sure we do not go
     // outside the boundaries of matrix C 
-    if ((i0<=N0_F) && (i1<N1_F)) {
+    if ((i0<N0_F) && (i1<N1_F)) {
         
         // Create an offset
         size_t offset = i0*N1_F+i1;
