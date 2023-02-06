@@ -151,8 +151,8 @@ int main(int argc, char** argv) {
     H_ERRCHK(clSetKernelArg(kernel, 0, sizeof(cl_mem), &D_d));
     H_ERRCHK(clSetKernelArg(kernel, 1, sizeof(cl_mem), &E_d));
     H_ERRCHK(clSetKernelArg(kernel, 2, sizeof(cl_mem), &F_d));
-    H_ERRCHK(clSetKernelArg(kernel, 3, sizeof(cl_uint), &N0_F));
-    H_ERRCHK(clSetKernelArg(kernel, 4, sizeof(cl_uint), &N1_F));
+    H_ERRCHK(clSetKernelArg(kernel, 3, sizeof(cl_uint), &N1_F));
+    H_ERRCHK(clSetKernelArg(kernel, 4, sizeof(cl_uint), &N0_F));
 
     //// End code: ////
 

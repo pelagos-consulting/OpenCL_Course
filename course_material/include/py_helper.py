@@ -104,6 +104,7 @@ class Hadamard:
         # Read in the output from OpenCL
         self.D = np.fromfile("array_D.dat", dtype=self.dtype).reshape((self.NROWS_F, self.NCOLS_F))
         self.E = np.fromfile("array_E.dat", dtype=self.dtype).reshape((self.NROWS_F, self.NCOLS_F))
+        self.run_compute()
 
     def make_data(self):
     
