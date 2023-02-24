@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
     cl_bool ordering = CL_FALSE;
     
     // Do we enable profiling?
-    cl_bool profiling = CL_FALSE;
+    cl_bool profiling = CL_TRUE;
     
     // Create the command queues
     cl_command_queue* command_queues = h_create_command_queues(
@@ -150,6 +150,8 @@ int main(int argc, char** argv) {
     // Do we enable a blocking write?
     cl_bool blocking=CL_TRUE;
    
+    // Event to store profiling information
+    cl_event io_event;
 
     //// Use clEnqueueWriteBuffer to copy memory ////
     //// from the host to the buffer ////
@@ -164,10 +166,16 @@ int main(int argc, char** argv) {
             D_h,
             0,
             NULL,
-            NULL
+            &io_event
         ) 
     );
 
+    // Print out the time for the event
+    h_get_event_time_ms(
+        &io_event,
+        "Uploading Buffer D",
+        &nbytes_D
+    );
 
     H_ERRCHK(
         clEnqueueWriteBuffer(
@@ -179,10 +187,17 @@ int main(int argc, char** argv) {
             E_h,
             0,
             NULL,
-            NULL
+            &io_event
         ) 
     );
 
+
+    // Print out the time for the event
+    h_get_event_time_ms(
+        &io_event,
+        "Uploading Buffer E",
+        &nbytes_E
+    );
     
     // Number of dimensions in the kernel
     size_t work_dim=2;
@@ -218,8 +233,14 @@ int main(int argc, char** argv) {
         ) 
     );
 
-    // Wait on the kernel to finish
-    H_ERRCHK(clWaitForEvents(1, &kernel_event));
+        // Get profiling information on the kernel event
+    h_get_event_time_ms(
+        &kernel_event,
+        "Kernel execution",
+        NULL
+    );
+
+    
 
     H_ERRCHK(
         clEnqueueReadBuffer(
@@ -231,10 +252,16 @@ int main(int argc, char** argv) {
             F_h,
             1,
             &kernel_event,
-            NULL
+            &io_event
         ) 
     );
 
+    // Get profiling information on the IO event
+    h_get_event_time_ms(
+        &io_event,
+        "Downloading Buffer F",
+        &nbytes_F
+    );
 
     // Check the answer against a known solution
     float* F_answer_h = (float*)calloc(nbytes_F, 1);
