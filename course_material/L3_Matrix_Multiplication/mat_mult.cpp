@@ -18,7 +18,7 @@ Written by Dr Toby M. Potter
 #include "cl_helper.hpp"
 
 int main(int argc, char** argv) {
-    
+   
     // Parse arguments and set the target device
     cl_device_type target_device;
     cl_uint dev_index = h_parse_args(argc, argv, &target_device);
@@ -75,7 +75,9 @@ int main(int argc, char** argv) {
         profiling
     );
 
-    // Make sure command line arguments are sane
+    // Choose the first available context 
+    // and compute device to use
+    // Also make sure command line arguments are sane
     assert(dev_index < num_devices);
     cl_context context = contexts[dev_index];
     cl_command_queue command_queue = command_queues[dev_index];
@@ -198,7 +200,7 @@ int main(int argc, char** argv) {
             0,
             NULL,
             NULL
-        ) 
+        )
     );
     
     //// Step 9. Run the kernel to compute C from A and B ////
@@ -234,9 +236,9 @@ int main(int argc, char** argv) {
             0,
             NULL,
             &kernel_event
-        ) 
+        )
     );
-    
+
     // Wait on the kernel to finish
     H_ERRCHK(clWaitForEvents(1, &kernel_event));
     
@@ -254,7 +256,7 @@ int main(int argc, char** argv) {
             1,
             &kernel_event,
             NULL
-        ) 
+        )
     );
     
     //// Step 11. Test the answer against a known solution

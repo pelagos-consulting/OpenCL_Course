@@ -46,16 +46,16 @@ __kernel void mat_mult_local (
     
     // i0 and i1 represent the coordinates in Matrix C 
     // We assume row-major ordering for the matrices 
-    size_t i0=get_global_id(0); 
-    size_t i1=get_global_id(1); 
+    size_t i0=get_global_id(1); 
+    size_t i1=get_global_id(0); 
     
     // Location within the workgroup
-    size_t s0=get_local_id(0);
-    size_t s1=get_local_id(1);
+    size_t s0=get_local_id(1);
+    size_t s1=get_local_id(0);
     
     // Local size
-    size_t L0=get_local_size(0);
-    size_t L1=get_local_size(1);
+    size_t L0=get_local_size(1);
+    size_t L1=get_local_size(0);
     
     // start and end
     size_t start0, end0, start1, end1;
@@ -124,18 +124,18 @@ __kernel void mat_mult_local_transp_vec (
     
     // i0 and i1 represent the coordinates in Matrix C 
     // We assume row-major ordering for the matrices 
-    size_t i0=get_global_id(0); 
-    size_t i1=get_global_id(1);
+    size_t i0=get_global_id(1); 
+    size_t i1=get_global_id(0);
     
     //printf("%zu %zu\n", i0, i1);
     
     // Location within the workgroup
-    size_t s0=get_local_id(0);
-    size_t s1=get_local_id(1);
+    size_t s0=get_local_id(1);
+    size_t s1=get_local_id(0);
     
     // Size of the workgroup
-    size_t L0=get_local_size(0);
-    size_t L1=get_local_size(1);
+    size_t L0=get_local_size(1);
+    size_t L1=get_local_size(0);
     
     // start and end
     size_t start0, end0, start1, end1;
