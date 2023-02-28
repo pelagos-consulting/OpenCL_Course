@@ -6,7 +6,7 @@ include ../env
 INC_DIR=../include
 
 # List of applications to target
-TARGETS=image_creator.exe image_creator_answers.exe
+TARGETS=image_creator.exe image_creator_answer.exe mat_mult_answer.exe mat_mult.exe
 
 # Override some flags
 CXXFLAGS=-g -std=c++11 -O0

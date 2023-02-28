@@ -1,2 +1,3 @@
-#define N0 8
-#define N1 4
+#define NROWS_C 4
+#define NCOLS_C 6
+#define NCOLS_A 3
