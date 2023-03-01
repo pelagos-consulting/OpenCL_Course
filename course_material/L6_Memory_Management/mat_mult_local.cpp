@@ -231,7 +231,7 @@ int main(int argc, char** argv) {
     size_t work_dim=2;
     
     // Desired local size
-    const size_t local_size[]={ 16, 4 };
+    const size_t local_size[]={ 8, 8 };
     
     // Desired global_size
     const size_t global_size[]={ N1_C, N0_C };
