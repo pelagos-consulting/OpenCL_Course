@@ -170,7 +170,7 @@ int main(int argc, char** argv) {
     cl_program program = h_build_program(kernel_source, context, device, NULL);
         
     // Create a kernel from the built program
-    cl_kernel kernel=clCreateKernel(program, "mat_mult_local", &errcode);
+    cl_kernel kernel=clCreateKernel(program, "mat_mult_localB", &errcode);
     H_ERRCHK(errcode);
 
     //// Step 8. Upload matrices A and B from the host to the OpenCL device Buffers ////

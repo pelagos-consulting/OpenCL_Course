@@ -86,37 +86,30 @@ std::map<cl_int, const char*> error_codes {
     {CL_PROFILING_INFO_NOT_AVAILABLE, "CL_PROFILING_INFO_NOT_AVAILABLE"},
 };
 
-#define H_ERRCHK(cmd) \
-{\
-    cl_int errcode = cmd; \
-    if (errcode != CL_SUCCESS) { \
-        if (error_codes.count(errcode)>0) { \
-            std::printf("Error, Opencl call failed at %s:%d with error code %s (%d)\n", \
-                    __FILE__, __LINE__, error_codes[errcode], errcode); \
-        } else { \
-            std::printf("Error, Opencl call failed at %s:%d with error code (%d)\n", \
-                    __FILE__, __LINE__, errcode); \
-        }\
-        exit(EXIT_FAILURE);\
-    }\
-}
-
 // Function to check error codes
 void h_errchk(cl_int errcode, const char *message) {
     if (errcode!=CL_SUCCESS) {
         // Is the error code in the map
         if (error_codes.count(errcode)>0) {
-            std::printf("Error, Opencl call failed at \"%s\" with error code %s (%d)\n", 
+            std::fprintf(stderr, "Error, Opencl call failed at \"%s\" with error code %s (%d)\n", 
                     message, error_codes[errcode], errcode);
         } else {
             // We don't know how to handle the error code, so just print it
-            std::printf("Error, OpenCL call failed at \"%s\" with error code %d\n", 
+            std::fprintf(stderr, "Error, OpenCL call failed at \"%s\" with error code %d\n", 
                     message, errcode);
         }
         // We have failed one way or the other, so just exit
         exit(EXIT_FAILURE);
     }
 };
+
+// Macro to check error codes
+#define H_ERRCHK(cmd) \
+{\
+    std::string msg = __FILE__;\
+    msg += ":" + std::to_string(__LINE__);\
+    h_errchk(cmd, msg.c_str());\
+}
 
 size_t h_lcm(size_t n1, size_t n2) {
     // Get the least common multiple of two numbers

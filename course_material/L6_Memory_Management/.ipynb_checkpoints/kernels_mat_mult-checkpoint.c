@@ -11,26 +11,34 @@ __constant float coeffs[] = {1.0, -2.0, 1.0};
 // Kernel function to get the start and end values
 // for filling a shared memory array
 void get_start_end(
-    size_t local_length, 
+    // Number of work-items along a dimension of workgroup
+    size_t local_length,
+    // Number of items in the array
     size_t array_length,
+    // Index of work item along dimension of workgroup
     size_t local_index,
+    // Starting position of the copy
     size_t *start,
+    // End position of the copy
     size_t *end) {
   
-    // Work out the jumps
-    size_t jump=array_length/local_length;
-    if (array_length%local_length) jump++;
-    *start=local_index*jump;
-    *end=(local_index+1)*jump;
+    // Work out the jump size
+    size_t jump_size=array_length/local_length;
+    if (array_length%local_length) jump_size++;
+    
+    // Starting position for the copy
+    *start=local_index*jump_size;
+    // End position for the copy
+    *end=(local_index+1)*jump_size;
+    // Limit end so we don't go off the end
     *end=min(*end,array_length);
 }    
 
-// Matrix multiply kernel that uses local memory
+// Matrix multiply kernel that uses local memory for B
 __kernel void mat_mult_local (
                         __global float* A, 
                         __global float* B, 
                         __global float* C,
-                        __local  float* shared_A,
                         __local  float* shared_B,
                         unsigned int N1_A, 
                         unsigned int N0_C,
@@ -38,6 +46,7 @@ __kernel void mat_mult_local (
     
     // A is of size (N0_C, N1_A)
     // B is of size (N1_A, N1_C)
+    // shared_B is of size (L1, N1_A)
     // C is of size (N0_C, N1_C)
     
     // Make a local scratch array for demonstration purposes
@@ -46,41 +55,32 @@ __kernel void mat_mult_local (
     
     // i0 and i1 represent the coordinates in Matrix C 
     // We assume row-major ordering for the matrices 
-    size_t i0=get_global_id(0); 
-    size_t i1=get_global_id(1); 
+    size_t i0=get_global_id(1); 
+    size_t i1=get_global_id(0); 
     
     // Location within the workgroup
-    size_t s0=get_local_id(0);
-    size_t s1=get_local_id(1);
+    size_t s0=get_local_id(1);
+    size_t s1=get_local_id(0);
     
     // Local size
-    size_t L0=get_local_size(0);
-    size_t L1=get_local_size(1);
+    size_t L0=get_local_size(1);
+    size_t L1=get_local_size(0);
     
     // start and end
-    size_t start0, end0, start1, end1;
+    size_t start, end;
     
-    // Fill shared memory
+    // Fill shared_B
     
-    // Get the start1 and end1 lengths to fill a block
-    get_start_end(L1, N1_A, s1, &start1, &end1);
-    // Fill shared_A with the rows of A
-    if (i0<N0_C) {
-        for (size_t n=start1; n<end1; n++) {
-            shared_A[s0*N1_A+n]=A[i0*N1_A+n]; 
-        }
-    }   
-    
-    // Get the start0 and end0 lengths
-    get_start_end(L0, N1_A, s0, &start0, &end0);
+    // Get the start and end lengths
+    get_start_end(L0, N1_A, s0, &start, &end);
     // Fill the columns of shared with B
     if (i1<N1_C) {
-        for (size_t n=start0; n<end0; n++) {
-            shared_B[s1*N1_A+n]=B[n*N1_C+i1]; 
+        for (size_t n=start; n<end; n++) {
+            shared_B[s1*N1_A+n]=B[i1+n*N1_C]; 
         }
     }
     
-    // Enqueue a local barrier to make sure shared memory is filled
+    // Enqueue a local barrier to make sure all the work items finish
     barrier(CLK_LOCAL_MEM_FENCE);
     
     // Scratch variable whose allocation uses constant memory pi
@@ -95,106 +95,17 @@ __kernel void mat_mult_local (
             
             // A is of size (N0_C, N1_A)
             // B is of size (N1_A, N1_C)
+            // shared_B is of size (L1, N1_A)
             // C is of size (N0_C, N1_C)
             
             // Loop across row i0 of A
-            // and down column i1 of B
-            temp+=shared_A[s0*N1_A+n]*shared_B[s1*N1_A+n]; 
+            // and across row s1 of shared_B
+            temp+=A[i0*N1_A+n]*shared_B[s1*N1_A+n]; 
         } 
         // Number of rows in C is same as number of rows in A
         C[i0*N1_C+i1]=temp;
     }
 }
-
-// Matrix multiply kernel that uses local memory
-__kernel void mat_mult_local_atomic (
-                        __global float* A, 
-                        __global float* B, 
-                        __global float* C,
-                        __local  float* shared_A,
-                        __local  float* shared_B,
-                        unsigned int N1_A, 
-                        unsigned int N0_C,
-                        unsigned int N1_C,
-                        // Atomic test variable
-                        __global unsigned int* T) { 
-    
-    
-    
-    // A is of size (N0_C, N1_A)
-    // B is of size (N1_A, N1_C)
-    // C is of size (N0_C, N1_C)
-    
-    // Increment atomically
-    atomic_add(T, 1);
-    
-    // Make a local scratch array for demonstration purposes
-    // (not actually used)
-    __local float scratch[10];
-    
-    // i0 and i1 represent the coordinates in Matrix C 
-    // We assume row-major ordering for the matrices 
-    size_t i0=get_global_id(0); 
-    size_t i1=get_global_id(1); 
-    
-    // Location within the workgroup
-    size_t s0=get_local_id(0);
-    size_t s1=get_local_id(1);
-    
-    // Local size
-    size_t L0=get_local_size(0);
-    size_t L1=get_local_size(1);
-    
-    // start and end
-    size_t start0, end0, start1, end1;
-    
-    // Fill shared memory
-    
-    // Get the start1 and end1 lengths to fill a block
-    get_start_end(L1, N1_A, s1, &start1, &end1);
-    // Fill shared_A with the rows of A
-    if (i0<N0_C) {
-        for (size_t n=start1; n<end1; n++) {
-            shared_A[s0*N1_A+n]=A[i0*N1_A+n]; 
-        }
-    }   
-    
-    // Get the start0 and end0 lengths
-    get_start_end(L0, N1_A, s0, &start0, &end0);
-    // Fill the columns of shared with B
-    if (i1<N1_C) {
-        for (size_t n=start0; n<end0; n++) {
-            shared_B[s1*N1_A+n]=B[n*N1_C+i1]; 
-        }
-    }
-    
-    // Enqueue a local barrier to make sure shared memory is filled
-    barrier(CLK_LOCAL_MEM_FENCE);
-    
-    // Scratch variable whose allocation uses constant memory pi
-    float temp=0.0*pi; 
-    
-    // Guard mechanism to make sure we do not go
-    // outside the boundaries of matrix C
-    if ((i0<N0_C) && (i1<N1_C)) {
-        
-        // Loop over columns of A and rows of B 
-        for (size_t n=0; n<N1_A; n++) {
-            
-            // A is of size (N0_C, N1_A)
-            // B is of size (N1_A, N1_C)
-            // C is of size (N0_C, N1_C)
-            
-            // Loop across row i0 of A
-            // and down column i1 of B
-            temp+=shared_A[s0*N1_A+n]*shared_B[s1*N1_A+n]; 
-        } 
-        // Number of rows in C is same as number of rows in A
-        C[i0*N1_C+i1]=temp;
-    }
-}
-
-
 
 // Local memory matrix multiply kernel
 // where B has been transposed and using vectors
@@ -214,18 +125,18 @@ __kernel void mat_mult_local_transp_vec (
     
     // i0 and i1 represent the coordinates in Matrix C 
     // We assume row-major ordering for the matrices 
-    size_t i0=get_global_id(0); 
-    size_t i1=get_global_id(1);
+    size_t i0=get_global_id(1); 
+    size_t i1=get_global_id(0);
     
     //printf("%zu %zu\n", i0, i1);
     
     // Location within the workgroup
-    size_t s0=get_local_id(0);
-    size_t s1=get_local_id(1);
+    size_t s0=get_local_id(1);
+    size_t s1=get_local_id(0);
     
     // Size of the workgroup
-    size_t L0=get_local_size(0);
-    size_t L1=get_local_size(1);
+    size_t L0=get_local_size(1);
+    size_t L1=get_local_size(0);
     
     // start and end
     size_t start0, end0, start1, end1;

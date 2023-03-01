@@ -91,11 +91,11 @@ void h_errchk(cl_int errcode, const char *message) {
     if (errcode!=CL_SUCCESS) {
         // Is the error code in the map
         if (error_codes.count(errcode)>0) {
-            std::printf("Error, Opencl call failed at \"%s\" with error code %s (%d)\n", 
+            std::fprintf(stderr, "Error, Opencl call failed at \"%s\" with error code %s (%d)\n", 
                     message, error_codes[errcode], errcode);
         } else {
             // We don't know how to handle the error code, so just print it
-            std::printf("Error, OpenCL call failed at \"%s\" with error code %d\n", 
+            std::fprintf(stderr, "Error, OpenCL call failed at \"%s\" with error code %d\n", 
                     message, errcode);
         }
         // We have failed one way or the other, so just exit
@@ -106,7 +106,9 @@ void h_errchk(cl_int errcode, const char *message) {
 // Macro to check error codes
 #define H_ERRCHK(cmd) \
 {\
-    h_errchk(cmd, "__FILE__:__LINE__");\
+    std::string msg = __FILE__;\
+    msg += ":" + std::to_string(__LINE__);\
+    h_errchk(cmd, msg.c_str());\
 }
 
 size_t h_lcm(size_t n1, size_t n2) {
