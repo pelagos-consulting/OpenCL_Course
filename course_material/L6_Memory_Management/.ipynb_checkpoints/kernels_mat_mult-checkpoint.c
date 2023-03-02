@@ -107,107 +107,88 @@ __kernel void mat_mult_local (
     }
 }
 
-// Local memory matrix multiply kernel
-// where B has been transposed and using vectors
-__kernel void mat_mult_local_transp_vec (
-                        __global float8* A_star, 
-                        __global float8* BT_star, 
+// Matrix multiply kernel that uses local memory for B
+__kernel void mat_mult_local_vector (
+                        __global float8* A, 
+                        __global float* B, 
                         __global float* C,
-                        __local  float8* shared_A_star,
-                        __local  float8* shared_BT_star,
-                        unsigned int N1_A_v, 
+                        __local  float8* shared_B,
+                        unsigned int N1_A, 
                         unsigned int N0_C,
-                        unsigned int N1_C) { 
+                        unsigned int N1_C,
+                        // N1_A_v is the number of float8 vectors along N1_A axis
+                        // We have asserted that N1_A%8 == 0
+                        unsigned int N1_A_v) { 
     
-    // A_star is of size (N0_C, N1_A_v)
-    // BT_star is of size (N1_C, N1_A_v)
+    // A is of size (N0_C, N1_A)
+    // B is of size (N1_A, N1_C)
+    // shared_B is of size (L1, N1_A)
     // C is of size (N0_C, N1_C)
+    
+    // Make a local scratch array for demonstration purposes
+    // (not actually used)
+    __local float scratch[10];
     
     // i0 and i1 represent the coordinates in Matrix C 
     // We assume row-major ordering for the matrices 
     size_t i0=get_global_id(1); 
-    size_t i1=get_global_id(0);
-    
-    //printf("%zu %zu\n", i0, i1);
+    size_t i1=get_global_id(0); 
     
     // Location within the workgroup
     size_t s0=get_local_id(1);
     size_t s1=get_local_id(0);
     
-    // Size of the workgroup
+    // Local size
     size_t L0=get_local_size(1);
     size_t L1=get_local_size(0);
     
     // start and end
-    size_t start0, end0, start1, end1;
+    size_t start, end;
     
-    // Get the start1 and end1 lengths to fill a block
-    get_start_end(L1, N1_A_v, s1, &start1, &end1);
-    // Fill shared_A with the rows of A
-    if (i0<N0_C) {
-        for (size_t n=start1; n<end1; n++) {
-            shared_A_star[s0*N1_A_v+n]=A_star[i0*N1_A_v+n]; 
-        }
-    }   
+    // Fill shared_B
     
-    // Get the start0 and end0 lengths
-    get_start_end(L0, N1_A_v, s0, &start0, &end0);
-    // Fill the rows of shared_BT_star with BT_star
+    // Get the start and end lengths
+    get_start_end(L0, N1_A_v, s0, &start, &end);
+    // Fill the columns of shared with B
     if (i1<N1_C) {
-        for (size_t n=start0; n<end0; n++) {
-            shared_BT_star[s1*N1_A_v+n]=BT_star[i1*N1_A_v+n]; 
+        for (size_t n=start; n<end; n++) {
+            // Bn is the starting location in B
+            __global float* Bn=&B[i1+n*8*N1_C];
+            // SBn is the starting location for shared_B
+            __local float8* SBn=&shared_B[s1*N1_A_v+n];
+            // Fill individual components of the vector
+            (*SBn).s0 = Bn[0*N1_C]; (*SBn).s1 = Bn[1*N1_C];
+            (*SBn).s2 = Bn[2*N1_C]; (*SBn).s3 = Bn[3*N1_C];            
+            (*SBn).s4 = Bn[4*N1_C]; (*SBn).s5 = Bn[5*N1_C];
+            (*SBn).s6 = Bn[6*N1_C]; (*SBn).s7 = Bn[7*N1_C];              
         }
     }
     
-    // Enqueue a local barrier to make sure shared memory is filled
+    // Temporary scratch vector
+    float8 temp=(float8)(0.0f);
+    
+    // Enqueue a local barrier to make sure all the work items finish
     barrier(CLK_LOCAL_MEM_FENCE);
-    
-    // Scratch variable whose allocation uses constant memory pi
-    float8 temp=(float8)(0.0f); 
-    
+
     // Guard mechanism to make sure we do not go
     // outside the boundaries of matrix C
     if ((i0<N0_C) && (i1<N1_C)) {
         
-        // Loop over columns of shared_A_star 
-        // and columns of BT_star 
+        // Loop over columns of A and rows of B 
         for (size_t n=0; n<N1_A_v; n++) {
             
-            // Local size
-            // shared_A_star is of size (L0, N1_A_v)
-            // shared_BT_star is of size (L1, N1_A_v)    
+            // A is of size (N0_C, N1_A)
+            // B is of size (N1_A, N1_C)
+            // shared_B is of size (L1, N1_A)
             // C is of size (N0_C, N1_C)
             
             // Loop across row i0 of A
-            // and down column i1 of B
-            temp+=shared_A_star[s0*N1_A_v+n]*shared_BT_star[s1*N1_A_v+n]; 
+            // and across row s1 of shared_B
+            temp+=A[i0*N1_A_v+n]*shared_B[s1*N1_A_v+n];
         } 
-        
-        // Number of rows in C is same as number of rows in A
-        
-        // sum over the elements of the vector
-        C[i0*N1_C+i1]=(
-            temp.s0+temp.s1+temp.s2+temp.s3
-            +temp.s4+temp.s5+temp.s6+temp.s7
-        );
+        // Use vector indexing to collapse the vector
+        C[i0*N1_C+i1]=temp.s0+temp.s1+temp.s2+temp.s3+
+            temp.s4+temp.s5+temp.s6+temp.s7;
     }
 }
 
-// Local memory matrix multiply kernel 
-__kernel void transpose (__global float* src, 
-                        __global float* dest, 
-                        unsigned int N0_src,
-                        unsigned int N1_src) { 
-    
-    // src is of size (N0_src, N1_src)
-    // dest is of size (N1_src, N0_src)
-    
-    // i0 and i1 represent the coordinates in Matrix C 
-    // We assume row-major ordering for the matrices 
-    size_t i0=get_global_id(0); 
-    size_t i1=get_global_id(1); 
-    
-    if ((i0<N0_src) && (i1<N1_src)) {
-        dest[i1*N0_src+i0]=src[i0*N1_src+i1];
-    }
-}
