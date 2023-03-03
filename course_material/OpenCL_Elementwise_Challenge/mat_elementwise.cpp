@@ -18,7 +18,7 @@ Written by Dr Toby M. Potter
 #include "mat_helper.hpp"
 
 int main(int argc, char** argv) {
-    
+
     // Parse arguments and set the target device
     cl_device_type target_device;
     cl_uint dev_index = h_parse_args(argc, argv, &target_device);
@@ -199,6 +199,9 @@ int main(int argc, char** argv) {
     
     std::cout << "The residual (F_answer_h-F_h) is\n";
     m_show_matrix(F_residual_h, N0_F, N1_F);
+
+    // Print the maximum error between matrices
+    float max_err = m_max_error(F_h, F_answer_h, N0_F, N1_F);
 
     // Write out the result to file
     h_write_binary(D_h, "array_D.dat", nbytes_D);

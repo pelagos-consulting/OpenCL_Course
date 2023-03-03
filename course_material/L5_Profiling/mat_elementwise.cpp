@@ -218,9 +218,7 @@ int main(int argc, char** argv) {
         ) 
     );
 
-    // Wait on the kernel to finish
-    H_ERRCHK(clWaitForEvents(1, &kernel_event));
-
+    // Copy F_d back to F_h
     H_ERRCHK(
         clEnqueueReadBuffer(
             command_queue,
@@ -234,7 +232,6 @@ int main(int argc, char** argv) {
             NULL
         ) 
     );
-
 
     // Check the answer against a known solution
     float* F_answer_h = (float*)calloc(nbytes_F, 1);

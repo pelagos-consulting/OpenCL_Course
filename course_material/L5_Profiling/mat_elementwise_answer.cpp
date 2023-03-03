@@ -233,15 +233,14 @@ int main(int argc, char** argv) {
         ) 
     );
 
-        // Get profiling information on the kernel event
+    // Get profiling information on the kernel event
     h_get_event_time_ms(
         &kernel_event,
         "Kernel execution",
         NULL
     );
 
-    
-
+    // Copy F_d back to F_h
     H_ERRCHK(
         clEnqueueReadBuffer(
             command_queue,
