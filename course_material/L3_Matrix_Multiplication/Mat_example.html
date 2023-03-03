@@ -15176,9 +15176,12 @@ Maximum error (infinity norm) is: 2.28882e-05
 <span class="p">};</span><span class="w"></span>
 </pre></div>
 <p>Instead of supplying a custom error message to <strong>h_errchk</strong> you can also use the macro <strong>H_ERRCHK</strong> which uses the filename and line number as the message.</p>
-<div class="highlight"><pre><span></span><span class="cp">#define H_ERRCHK(cmd) \</span>
+<div class="highlight"><pre><span></span><span class="c1">// Macro to check error codes</span>
+<span class="cp">#define H_ERRCHK(cmd) \</span>
 <span class="cp">{\</span>
-<span class="cp">    h_errchk(cmd, &quot;__FILE__:__LINE__&quot;);\</span>
+<span class="cp">    std::string msg = __FILE__;\</span>
+<span class="cp">    msg += &quot;:&quot; + std::to_string(__LINE__);\</span>
+<span class="cp">    h_errchk(cmd, msg.c_str());\</span>
 <span class="cp">}</span>
 </pre></div>
 <p>We declare the variable <strong>errcode</strong> to handle the output from programs.</p>
