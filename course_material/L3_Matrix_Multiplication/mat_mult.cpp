@@ -18,7 +18,7 @@ Written by Dr Toby M. Potter
 #include "cl_helper.hpp"
 
 int main(int argc, char** argv) {
-   
+
     // Parse arguments and set the target device
     cl_device_type target_device;
     cl_uint dev_index = h_parse_args(argc, argv, &target_device);
@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
     
     // Do we enable profiling?
     cl_bool profiling = CL_FALSE;
-    
+
     //// Step 3. Allocate command queues and choose a compute device ////
     
     // Create the command queues
@@ -152,7 +152,7 @@ int main(int argc, char** argv) {
 
     // Turn this source code into a program
     cl_program program = h_build_program(kernel_source, context, device, NULL);
-        
+    
     //// Step 7. Create a kernel from the compiled program and set arguments ////
     
     // Create a kernel from the built program
@@ -186,7 +186,7 @@ int main(int argc, char** argv) {
             0,
             NULL,
             NULL
-        ) 
+        )
     );
 
     H_ERRCHK(
@@ -258,7 +258,7 @@ int main(int argc, char** argv) {
             NULL
         )
     );
-    
+
     //// Step 11. Test the answer against a known solution
     //// And write the contents of the matrices out to disk
    

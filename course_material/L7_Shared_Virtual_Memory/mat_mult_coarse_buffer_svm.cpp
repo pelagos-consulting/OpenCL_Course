@@ -2,20 +2,23 @@
 Written by Dr Toby M. Potter
 */
 
+//// Step 1. Setup headers and parse command line arguments ////
+
 #include <cassert>
 #include <cmath>
 #include <iostream>
 
-// Define the size of the arrays to be computed
-#define NCOLS_A 256
-#define NROWS_C 520
-#define NCOLS_C 1032
+// Bring in the size of the matrices
+#include "mat_size.hpp"
+
+// Bring in the library to work with matrices
+#include "mat_helper.hpp"
 
 // Bring in helper header to manage boilerplate code
 #include "cl_helper.hpp"
 
 int main(int argc, char** argv) {
-    
+
     // Parse arguments and set the target device
     cl_device_type target_device;
     cl_uint dev_index = h_parse_args(argc, argv, &target_device);
@@ -41,6 +44,8 @@ int main(int argc, char** argv) {
     // Pointer to an array of contexts
     cl_context *contexts = NULL;
     
+    //// Step 2. Discover resources ////
+    
     // Helper function to acquire devices
     h_acquire_devices(target_device,
                      &platforms,
@@ -57,6 +62,8 @@ int main(int argc, char** argv) {
     
     // Do we enable profiling?
     cl_bool profiling = CL_FALSE;
+
+    //// Step 3. Allocate command queues and choose a compute device ////
     
     // Create the command queues
     cl_command_queue* command_queues = h_create_command_queues(
@@ -68,7 +75,9 @@ int main(int argc, char** argv) {
         profiling
     );
 
-    // Make sure command line arguments are sane
+    // Choose the first available context 
+    // and compute device to use
+    // Also make sure command line arguments are sane
     assert(dev_index < num_devices);
     cl_context context = contexts[dev_index];
     cl_command_queue command_queue = command_queues[dev_index];
@@ -92,7 +101,7 @@ int main(int argc, char** argv) {
     } else {
         printf("Sorry, this device can not support coarse-grained buffer SVM\n");
         printf("No solution performed\n");
-        exit(OCL_EXIT);
+        exit(EXIT_FAILURE);
     } 
     
     // We are going to do a simple array multiplication for this example, 
@@ -102,53 +111,66 @@ int main(int argc, char** argv) {
     // B is of size (N1_A, N1_C)    
     // C is of size (N0_C, N1_C)
     
+    //// Step 4. Prepare matrices A, B, and C on the Host ////
     cl_uint N1_A = NCOLS_A, N0_C = NROWS_C, N1_C = NCOLS_C;
-    size_t nbytes_A, nbytes_B, nbytes_C;
 
-    // Read the input data into arrays and sanity check
-    cl_float* array_A = (cl_float*)h_read_binary("array_A.dat", &nbytes_A);
-    cl_float* array_B = (cl_float*)h_read_binary("array_B.dat", &nbytes_B);
+    // Number of bytes in each array
+    size_t nbytes_A = N0_C*N1_A*sizeof(cl_float);
+    size_t nbytes_B = N1_A*N1_C*sizeof(cl_float);
+    size_t nbytes_C = N0_C*N1_C*sizeof(cl_float);
 
-    // Sanity check on incoming data
-    assert(nbytes_A==N0_C*N1_A*sizeof(cl_float));   
-    assert(nbytes_B==N1_A*N1_C*sizeof(cl_float));
-    nbytes_C=N0_C*N1_C*sizeof(cl_float); 
-    
-    // Make Buffers on the compute device for matrices A, B, and C
+    // Allocate memory for matrices A, and B on the host
+    cl_float* A_h = (cl_float*)h_alloc(nbytes_A);
+    cl_float* B_h = (cl_float*)h_alloc(nbytes_B);
+
+    // Fill A_h and B_h with random numbers 
+    // using the matrix helper library
+    m_random(A_h, N0_C, N1_A);
+    m_random(B_h, N1_A, N1_C);
+        
+    //// Step 5. Allocate OpenCL Buffers for matrices A, B, and C ////
     
     // Allocate backing storage for buffer A
     // Using coarse-grained SVM memory
-    cl_float *backing_A = (cl_float*)clSVMAlloc(
-        context,
-        CL_MEM_READ_WRITE,
-        nbytes_A,
-        0
+    cl_float *A_svm = (cl_float*)clSVMAlloc(
+            context,
+            CL_MEM_READ_WRITE,
+            nbytes_A,
+            0
     );
+
+    // The memory allocation will return A_svm == NULL if it failed
+    assert(A_svm!=NULL);
     
-    // Now create a buffer around the SVM allocation
-    cl_mem buffer_A = clCreateBuffer(context, 
+    // It is possible to create a buffer around the SVM allocation
+    cl_mem A_d = clCreateBuffer(context, 
                                      CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 
                                      nbytes_A, 
-                                     backing_A, 
+                                     A_svm, 
                                      &errcode);
-    h_errchk(errcode, "Creating buffer_A from SVM pointer");
+    H_ERRCHK(errcode);
     
-    // Create an OpenCL buffer for buffer_B
-    cl_mem buffer_B = clCreateBuffer(context, 
-                                     CL_MEM_READ_WRITE, 
-                                     nbytes_B, 
-                                     NULL, 
-                                     &errcode);
-    h_errchk(errcode, "Creating buffer_B");
+    // Create a normal OpenCL buffer for B_d
+    cl_mem B_d = clCreateBuffer(
+            context, 
+            CL_MEM_READ_WRITE, 
+            nbytes_B, 
+            NULL, 
+            &errcode
+    );
+    H_ERRCHK(errcode);
     
-    // Allocate coarse-grained SVM memory for array C
-    cl_float *array_C = (cl_float*)clSVMAlloc(
+    // Allocate coarse-grained SVM memory for C_svm
+    cl_float *C_svm = (cl_float*)clSVMAlloc(
         context,
         CL_MEM_WRITE_ONLY,
         nbytes_C,
         0
     );
+    H_ERRCHK(errcode);
 
+    //// Step 6. Build the program from source for the chosen compute device ////
+    
     // Now specify the kernel source and read it in
     size_t nbytes_src = 0;
     const char* kernel_source = (const char*)h_read_binary(
@@ -158,70 +180,58 @@ int main(int argc, char** argv) {
 
     // Turn this source code into a program
     cl_program program = h_build_program(kernel_source, context, device, NULL);
-        
+    
+    //// Step 7. Create a kernel from the compiled program and set arguments ////
+    
     // Create a kernel from the built program
     cl_kernel kernel=clCreateKernel(program, "mat_mult", &errcode);
-    h_errchk(errcode, "Creating Kernel");
+    H_ERRCHK(errcode);
     
     // Set arguments to the kernel (not thread safe)
-    h_errchk(
-        clSetKernelArg(kernel, 0, sizeof(cl_mem), &buffer_A ),
-        "setting kernel argument 0"
-    );
-    h_errchk(
-        clSetKernelArg(kernel, 1, sizeof(cl_mem), &buffer_B ),
-        "setting kernel argument 1"
-    );
-    h_errchk(
-        clSetKernelArgSVMPointer(
-            kernel, 2, array_C
-        ),
-        "setting kernel argument 2"
-    );
-    h_errchk(
-        clSetKernelArg(kernel, 3, sizeof(cl_uint), &N1_A ),
-        "setting kernel argument 3"
-    );
-    h_errchk(
-        clSetKernelArg(kernel, 4, sizeof(cl_uint), &N0_C ),
-        "setting kernel argument 4"
-    );
-    h_errchk(
-        clSetKernelArg(kernel, 5, sizeof(cl_uint), &N1_C ),
-        "setting kernel argument 5"
-    );
+    H_ERRCHK(clSetKernelArg(kernel, 0, sizeof(cl_mem), &A_d));
+    H_ERRCHK(clSetKernelArg(kernel, 1, sizeof(cl_mem), &B_d));
+    H_ERRCHK(clSetKernelArgSVMPointer(kernel, 2, C_svm));
+    H_ERRCHK(clSetKernelArg(kernel, 3, sizeof(cl_uint), &N1_A));
+    H_ERRCHK(clSetKernelArg(kernel, 4, sizeof(cl_uint), &N0_C));
+    H_ERRCHK(clSetKernelArg(kernel, 5, sizeof(cl_uint), &N1_C));
 
+    //// Step 8. Upload matrices A and B from the host to the OpenCL device Buffers ////
+    
     // Write memory from the host
-    // to buffer_A and buffer_B on the compute device
+    // to A_d and B_d on the compute device
     
     // Do we enable a blocking write?
     cl_bool blocking=CL_TRUE;
     
-    h_errchk(
-        clEnqueueWriteBuffer(command_queue,
-                            buffer_A,
-                            blocking,
-                            0,
-                            nbytes_A,
-                            array_A,
-                            0,
-                            NULL,
-                            NULL), 
-        "Writing to buffer_A from host"
+    H_ERRCHK(
+        clEnqueueWriteBuffer(
+            command_queue,
+            A_d,
+            blocking,
+            0,
+            nbytes_A,
+            A_h,
+            0,
+            NULL,
+            NULL
+        )
     );
 
-    h_errchk(
-        clEnqueueWriteBuffer(command_queue,
-                            buffer_B,
-                            blocking,
-                            0,
-                            nbytes_B,
-                            array_B,
-                            0,
-                            NULL,
-                            NULL), 
-        "Writing to buffer_B from host"
+    H_ERRCHK(
+        clEnqueueWriteBuffer(
+            command_queue,
+            B_d,
+            blocking,
+            0,
+            nbytes_B,
+            B_h,
+            0,
+            NULL,
+            NULL
+        )
     );
+    
+    //// Step 9. Run the kernel to compute C from A and B ////
     
     // Number of dimensions in the kernel
     size_t work_dim=2;
@@ -230,7 +240,7 @@ int main(int argc, char** argv) {
     const size_t local_size[]={ 8, 8 };
     
     // Desired global_size
-    const size_t global_size[]={ N0_C, N1_C };
+    const size_t global_size[]={ N1_C, N0_C };
     
     // Enlarge the global size so that 
     // an integer number of local sizes fits within it
@@ -243,86 +253,92 @@ int main(int argc, char** argv) {
     cl_event kernel_event;
     
     // Now enqueue the kernel
-    h_errchk(
-        clEnqueueNDRangeKernel(command_queue,
-                                kernel,
-                                work_dim,
-                                NULL,
-                                global_size,
-                                local_size,
-                                0,
-                                NULL,
-                                &kernel_event), 
-        "Running the kernel"
+    H_ERRCHK(
+        clEnqueueNDRangeKernel(
+            command_queue,
+            kernel,
+            work_dim,
+            NULL,
+            global_size,
+            local_size,
+            0,
+            NULL,
+            &kernel_event
+        )
     );
-    
+
     // Wait on the kernel to finish
-    h_errchk(
-        clWaitForEvents(1, &kernel_event),
-        "Waiting on the kernel"
-    );
+    H_ERRCHK(clWaitForEvents(1, &kernel_event));
     
-    // Map the SVM array
-    h_errchk(
+    //// Step 10. Copy the Buffer for matrix C back to the host ////
+    
+    // Map the SVM array to the host, 
+    // this synchronises C_svm to the host
+    H_ERRCHK(
         clEnqueueSVMMap(
             command_queue,
             CL_TRUE,
             CL_MAP_READ,
-            array_C,
+            C_svm,
             nbytes_C,
-            0,
-            NULL,
+            1,
+            &kernel_event,
             NULL
-        ),
-        "Map the SVM array."
+        )
     );
-    
-    // Write out the result to file
-    h_write_binary(array_C, "array_C.dat", nbytes_C);
 
-    // Unmap the SVM array
-    h_errchk(
+    //// Step 11. Test the answer against a known solution
+    //// And write the contents of the matrices out to disk
+   
+    // Compute the serial solution using the matrix helper library
+    float* C_answer_h = (float*)calloc(nbytes_C, 1);
+    m_mat_mult(A_h, B_h, C_answer_h, N1_A, N0_C, N1_C);
+
+    // Print the maximum error between matrices
+    float max_err = m_max_error(C_svm, C_answer_h, N0_C, N1_C);
+
+    // Write out the host arrays to file
+    h_write_binary(A_h, "array_A.dat", nbytes_A);
+    h_write_binary(B_h, "array_B.dat", nbytes_B);
+    h_write_binary(C_svm, "array_C.dat", nbytes_C);
+
+    //// Step 12. Clean up arrays and release resources
+    
+    // Unmap the SVM array from the host
+    H_ERRCHK(
         clEnqueueSVMUnmap(
             command_queue,
-            array_C,
+            C_svm,
             0,
             NULL,
             NULL
-        ),
-        "Unmap the SVM array."
+        )
     );
     
     // Free the OpenCL buffers
-    h_errchk(
-        clReleaseMemObject(buffer_A),
-        "releasing buffer A"
-    );
-    h_errchk(
-        clReleaseMemObject(buffer_B),
-        "releasing buffer B"
-    );
+    H_ERRCHK(clReleaseMemObject(A_d));
+    H_ERRCHK(clReleaseMemObject(B_d));
     
-    // Enqueue a free of the SVM buffer
-    h_errchk(
+    // Enqueue a free of the SVM buffer C_svm
+    H_ERRCHK(
         clEnqueueSVMFree(
             command_queue,
             1,
-            (void**)((void*)(&array_C)),
+            (void**)((void*)(&C_svm)),
             NULL,
             NULL,
             0,
             NULL,
             NULL
-        ),
-        "Free SVM memory"
+        )
     );
     
     // Clean up memory that was allocated on the read   
-    free(array_A);
-    free(array_B);
+    free(A_h);
+    free(B_h);
     
-    // Free backing storage for buffer_A
-    clSVMFree(context, backing_A);
+    // Free backing storage for A_d, note that A_d has been released
+    clSVMFree(context, A_svm);
     
     // Clean up command queues
     h_release_command_queues(
