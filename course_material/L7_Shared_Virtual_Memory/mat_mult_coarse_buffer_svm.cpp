@@ -102,7 +102,7 @@ int main(int argc, char** argv) {
         printf("Sorry, this device can not support coarse-grained buffer SVM\n");
         printf("No solution performed\n");
         exit(EXIT_FAILURE);
-    } 
+    }
     
     // We are going to do a simple array multiplication for this example, 
     // using raw binary files for input and output
@@ -129,8 +129,8 @@ int main(int argc, char** argv) {
     m_random(B_h, N1_A, N1_C);
         
     //// Step 5. Allocate OpenCL Buffers for matrices A, B, and C ////
-    
-    // Allocate backing storage for buffer A
+
+    // Allocate backing storage (A_svm) for A_d
     // Using coarse-grained SVM memory
     cl_float *A_svm = (cl_float*)clSVMAlloc(
             context,
@@ -142,12 +142,14 @@ int main(int argc, char** argv) {
     // The memory allocation will return A_svm == NULL if it failed
     assert(A_svm!=NULL);
     
-    // It is possible to create a buffer around the SVM allocation
-    cl_mem A_d = clCreateBuffer(context, 
-                                     CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 
-                                     nbytes_A, 
-                                     A_svm, 
-                                     &errcode);
+    // Wrap an OpenCL buffer around the SVM allocation A_svm
+    cl_mem A_d = clCreateBuffer(
+            context, 
+            CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 
+            nbytes_A, 
+            A_svm, 
+            &errcode
+    );
     H_ERRCHK(errcode);
     
     // Create a normal OpenCL buffer for B_d
@@ -167,7 +169,9 @@ int main(int argc, char** argv) {
         nbytes_C,
         0
     );
-    H_ERRCHK(errcode);
+
+    // The memory allocation will return C_svm == NULL if allocation failed
+    assert(C_svm!=NULL);
 
     //// Step 6. Build the program from source for the chosen compute device ////
     
@@ -196,7 +200,7 @@ int main(int argc, char** argv) {
     H_ERRCHK(clSetKernelArg(kernel, 5, sizeof(cl_uint), &N1_C));
 
     //// Step 8. Upload matrices A and B from the host to the OpenCL device Buffers ////
-    
+
     // Write memory from the host
     // to A_d and B_d on the compute device
     

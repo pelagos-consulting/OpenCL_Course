@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
     
     if (errcode == CL_INVALID_VALUE) { 
         printf("Sorry, this device does not support Shared Virtual Memory.");
-        exit(OCL_EXIT);
+        exit(EXIT_FAILURE);
     }    
     
     if (errcode == CL_SUCCESS && 

@@ -94,7 +94,7 @@ int main(int argc, char** argv) {
     } else {
         printf("Sorry, this device can not support fine-grained buffer SVM\n");
         printf("No solution performed\n");
-        exit(OCL_EXIT);
+        exit(EXIT_FAILURE);
     }
     
     // We are going to do a simple array multiplication for this example, 
