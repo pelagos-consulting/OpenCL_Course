@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
 
     // Pointer to an array of contexts
     cl_context *contexts = NULL;
-    
+
     //// Step 2. Discover resources ////
     
     // Helper function to acquire devices
@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
     cl_bool ordering = CL_FALSE;
     
     // Do we enable profiling?
-    cl_bool profiling = CL_FALSE;
+    cl_bool profiling = CL_TRUE;
 
     //// Step 3. Allocate command queues and choose a compute device ////
     
@@ -128,20 +128,9 @@ int main(int argc, char** argv) {
     // using the matrix helper library
     m_random(A_h, N0_C, N1_A);
     m_random(B_h, N1_A, N1_C);
-        
+    
     //// Step 5. Allocate OpenCL Buffers for matrices A, B, and C ////
 
-    // Allocate backing storage (A_svm) for A_d
-    // Using coarse-grained SVM memory
-    cl_float *A_svm = (cl_float*)clSVMAlloc(
-            context,
-            CL_MEM_READ_WRITE,
-            nbytes_A,
-            0
-    );
-
-    // The memory allocation will return A_svm == NULL if it failed
-    assert(A_svm!=NULL);
     
     // Make ordinary OpenCL buffers for matrices A, and B
     cl_mem A_d = clCreateBuffer(
@@ -161,8 +150,8 @@ int main(int argc, char** argv) {
             &errcode
     );
     H_ERRCHK(errcode);
-    
-    // Allocate SVM memory for array C using a fine-grained buffer
+
+    // Allocate SVM memory for matrix C using a fine-grained buffer
     cl_float *C_svm = (cl_float*)clSVMAlloc(
         context,
         CL_MEM_WRITE_ONLY | CL_MEM_SVM_FINE_GRAIN_BUFFER,
@@ -171,6 +160,7 @@ int main(int argc, char** argv) {
     );
 
     // The memory allocation will return C_svm == NULL if allocation failed
+    // enforce a check
     assert(C_svm!=NULL);
 
     //// Step 6. Build the program from source for the chosen compute device ////
@@ -184,7 +174,7 @@ int main(int argc, char** argv) {
 
     // Turn this source code into a program
     cl_program program = h_build_program(kernel_source, context, device, NULL);
-    
+
     //// Step 7. Create a kernel from the compiled program and set arguments ////
     
     // Create a kernel from the built program
@@ -273,15 +263,15 @@ int main(int argc, char** argv) {
 
     // Wait on the kernel to finish
     H_ERRCHK(clWaitForEvents(1, &kernel_event));
-    
+   
     //// Step 10. Copy the Buffer for matrix C back to the host ////
-    
+
     // We know the kernel is now finished because we waited for it. 
     // At this point C_svm is available for access by the host
-    
+
     //// Step 11. Test the answer against a known solution
     //// And write the contents of the matrices out to disk
-   
+
     // Compute the serial solution using the matrix helper library
     float* C_answer_h = (float*)calloc(nbytes_C, 1);
     m_mat_mult(A_h, B_h, C_answer_h, N1_A, N0_C, N1_C);
@@ -289,7 +279,7 @@ int main(int argc, char** argv) {
     // Print the maximum error between matrices
     float max_err = m_max_error(C_svm, C_answer_h, N0_C, N1_C);
 
-    // Write out the host arrays to file
+    // Write out the arrays to file
     h_write_binary(A_h, "array_A.dat", nbytes_A);
     h_write_binary(B_h, "array_B.dat", nbytes_B);
     h_write_binary(C_svm, "array_C.dat", nbytes_C);
@@ -300,23 +290,14 @@ int main(int argc, char** argv) {
     H_ERRCHK(clReleaseMemObject(A_d));
     H_ERRCHK(clReleaseMemObject(B_d));
     
-    // Enqueue a free of the SVM buffer C_svm
-    H_ERRCHK(
-        clEnqueueSVMFree(
-            command_queue,
-            1,
-            (void**)((void*)(&C_svm)),
-            NULL,
-            NULL,
-            0,
-            NULL,
-            NULL
-        )
-    );
     
-    // Clean up memory that was allocated on the read   
+    // Clean up memory that was allocated on the host   
     free(A_h);
     free(B_h);
+    free(C_answer_h)
+
+    // Free the SVM buffer C_svm
+    clSVMFree(context, C_svm);
     
     // Clean up command queues
     h_release_command_queues(
