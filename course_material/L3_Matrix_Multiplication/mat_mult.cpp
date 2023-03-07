@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
         profiling
     );
 
-    // Choose the first available context 
+    // Choose the first available context
     // and compute device to use
     // Also make sure command line arguments are sane
     assert(dev_index < num_devices);
@@ -90,7 +90,7 @@ int main(int argc, char** argv) {
     // using raw binary files for input and output
     
     // A is of size (N0_C, N1_A)
-    // B is of size (N1_A, N1_C)    
+    // B is of size (N1_A, N1_C)
     // C is of size (N0_C, N1_C)
     
     //// Step 4. Prepare matrices A, B, and C on the Host ////
@@ -131,7 +131,7 @@ int main(int argc, char** argv) {
             &errcode
     );
     H_ERRCHK(errcode);
-    
+   
     cl_mem C_d = clCreateBuffer(
             context, 
             CL_MEM_READ_WRITE, 
