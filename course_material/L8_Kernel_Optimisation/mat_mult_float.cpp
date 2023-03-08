@@ -128,7 +128,7 @@ int main(int argc, char** argv) {
     );
     H_ERRCHK(errcode);
     
-    // Make B_d by copying from B_h as a backing store
+    // Make B_d using a copy from B_h
     cl_mem B_d = clCreateBuffer(
             context, 
             CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, 
@@ -138,6 +138,7 @@ int main(int argc, char** argv) {
     );
     H_ERRCHK(errcode);
    
+    // Allocate C on the device
     cl_mem C_d = clCreateBuffer(
             context, 
             CL_MEM_READ_WRITE, 
