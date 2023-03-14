@@ -14,7 +14,7 @@ Written by Dr Toby M. Potter
 #include "cl_helper.hpp"
 
 typedef cl_float float_type;
-typedef cl_float8 floatv_type;
+typedef cl_float4 floatv_type;
 
 int main(int argc, char** argv) {
     
@@ -453,8 +453,7 @@ int main(int argc, char** argv) {
     
     // Desired global_size
     size_t work_dim_mat_mult = 3;
-    //size_t global_size_mat_mult[]={ N1_C, N0_C, (size_t)N1_A_c };
-    size_t global_size_mat_mult[]={ (size_t)N1_A_c, N0_C, N1_C };
+    size_t global_size_mat_mult[]={ N1_C, N0_C, (size_t)N1_A_c };
     size_t local_size_mat_mult[] = { 1, 8, 8 };
     
     // Set arguments to the kernel (not thread safe)
