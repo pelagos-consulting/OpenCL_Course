@@ -11,26 +11,20 @@ endif
 
 # Compiler locations
 CXX=g++
-CC=gcc
+CXXFLAGS=-g -std=c++11 -fopenmp -O2
 
-# Library flags for OpenCL
-OPENCL_LIB_FLAGS="-lOpenCL"
-CXXFLAGS=-g -O2 -fopenmp -std=c++11
+# Debugging instructions
+ifeq ($(DEBUG), true)
+    CXXFLAGS:=-g -std=c++11 -fopenmp -O0
+endif
+
+# Library and include flags
+BASE_INC_FLAGS=-I../include
+BASE_LIB_FLAGS=-lOpenCL
 
 # Flags for MacOS
 ifeq ($(detected_OS), Darwin)
     CXX=clang++
-    CXXFLAGS=-framework OpenCL -std=c++11 -g -O2 -Xclang -fopenmp
-    OPENCL_INC_DIR="./"
-    OPENCL_LIB_DIR="./"
-    OPENCL_LIB_FLAGS=""
+    CXXFLAGS=:$(CXXFLAGS) -framework OpenCL -Xclang
 endif
 
-# Flags for Linux
-ifeq ($(detected_OS), Linux)
-    CXX=g++
-    CXXFLAGS=-std=c++11 -g -O2 -fopenmp
-    OPENCL_INC_DIR=/usr/include
-    OPENCL_LIB_DIR=/usr/lib/x86_64-linux-gnu
-    OPENCL_LIB_FLAGS=-lOpenCL
-endif

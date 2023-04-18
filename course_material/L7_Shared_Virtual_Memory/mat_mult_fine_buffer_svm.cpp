@@ -294,7 +294,7 @@ int main(int argc, char** argv) {
     // Clean up memory that was allocated on the host   
     free(A_h);
     free(B_h);
-    free(C_answer_h)
+    free(C_answer_h);
 
     // Free the SVM buffer C_svm
     clSVMFree(context, C_svm);

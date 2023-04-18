@@ -14835,7 +14835,7 @@ $$C(i,j)=(I\star K)(i,j)=\sum_{u}\sum_v I(i+u,j+v)K(u,v)$$
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[8]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[3]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">time</span>
@@ -14904,7 +14904,7 @@ $$C(i,j)=(I\star K)(i,j)=\sum_{u}\sum_v I(i+u,j+v)K(u,v)$$
 
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>Python image processing rate is 106.85 images/s
+<pre>Python image processing rate is 143.95 images/s
 </pre>
 </div>
 </div>
@@ -14995,7 +14995,7 @@ $$C(i,j)=(I\star K)(i,j)=\sum_{u}\sum_v I(i+u,j+v)K(u,v)$$
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[9]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[4]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>clinfo -l
@@ -15020,14 +15020,14 @@ $$C(i,j)=(I\star K)(i,j)=\sum_{u}\sum_v I(i+u,j+v)K(u,v)$$
 
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>Platform #0: Intel(R) FPGA Emulation Platform for OpenCL(TM)
- `-- Device #0: Intel(R) FPGA Emulation Device
-Platform #1: Intel(R) OpenCL
- `-- Device #0: AMD Ryzen 7 6800H with Radeon Graphics         
-Platform #2: AMD Accelerated Parallel Processing
+<pre>Platform #0: AMD Accelerated Parallel Processing
  `-- Device #0: gfx1035
-Platform #3: NVIDIA CUDA
+Platform #1: NVIDIA CUDA
  `-- Device #0: NVIDIA GeForce RTX 3060 Laptop GPU
+Platform #2: Intel(R) OpenCL
+ `-- Device #0: AMD Ryzen 7 6800H with Radeon Graphics         
+Platform #3: Intel(R) FPGA Emulation Platform for OpenCL(TM)
+ `-- Device #0: Intel(R) FPGA Emulation Device
 </pre>
 </div>
 </div>
@@ -15053,7 +15053,7 @@ Platform #3: NVIDIA CUDA
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[10]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[5]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>make<span class="p">;</span> ./xcorr.exe
@@ -15079,32 +15079,33 @@ Platform #3: NVIDIA CUDA
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
 <pre>make: Nothing to be done for &#39;all&#39;.
-	               name: Intel(R) FPGA Emulation Device 
-	 global memory size: 32878 MB
-	    max buffer size: 16439 MB
-	     max local size: (67108864,67108864,67108864)
-	     max work-items: 67108864
-	               name: AMD Ryzen 7 6800H with Radeon Graphics          
-	 global memory size: 32878 MB
-	    max buffer size: 16439 MB
-	     max local size: (8192,8192,8192)
-	     max work-items: 8192
 	               name: gfx1035 
 	 global memory size: 536 MB
 	    max buffer size: 456 MB
 	     max local size: (1024,1024,1024)
 	     max work-items: 256
 	               name: NVIDIA GeForce RTX 3060 Laptop GPU 
-	 global memory size: 6235 MB
-	    max buffer size: 1558 MB
+	 global memory size: 6226 MB
+	    max buffer size: 1556 MB
 	     max local size: (1024,1024,64)
 	     max work-items: 1024
+	               name: AMD Ryzen 7 6800H with Radeon Graphics          
+	 global memory size: 32877 MB
+	    max buffer size: 16438 MB
+	     max local size: (8192,8192,8192)
+	     max work-items: 8192
+	               name: Intel(R) FPGA Emulation Device 
+	 global memory size: 32877 MB
+	    max buffer size: 16438 MB
+	     max local size: (67108864,67108864,67108864)
+	     max work-items: 67108864
 Processing iteration 1 of 1
-Device 0 processed 9 of 100 images (9.00%)
-Device 1 processed 39 of 100 images (39.00%)
-Device 2 processed 34 of 100 images (34.00%)
-Device 3 processed 18 of 100 images (18.00%)
-Overall processing rate 415.68 images/s
+Device 0 processed 30 of 100 images (30.00%)
+Device 1 processed 25 of 100 images (25.00%)
+Device 2 processed 25 of 100 images (25.00%)
+Device 3 processed 20 of 100 images (20.00%)
+Overall processing rate 205351.88 images/s
+Error, Opencl call failed at &#34;Releasing sources buffer&#34; with error code CL_INVALID_MEM_OBJECT (-38)
 </pre>
 </div>
 </div>
@@ -15145,7 +15146,7 @@ Overall processing rate 415.68 images/s
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[11]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[6]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">check_solution</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="n">proof_images</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;Greys_r&quot;</span><span class="p">):</span>
@@ -15265,7 +15266,7 @@ Overall processing rate 415.68 images/s
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[12]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[17]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>./xcorr_answers.exe -cpu
@@ -15291,13 +15292,13 @@ Overall processing rate 415.68 images/s
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
 <pre>	               name: AMD Ryzen 7 6800H with Radeon Graphics          
-	 global memory size: 32878 MB
-	    max buffer size: 16439 MB
+	 global memory size: 32877 MB
+	    max buffer size: 16438 MB
 	     max local size: (8192,8192,8192)
 	     max work-items: 8192
 Processing iteration 1 of 1
 Device 0 processed 100 of 100 images (100.00%)
-Overall processing rate 712.88 images/s
+Overall processing rate 1517.67 images/s
 </pre>
 </div>
 </div>
@@ -15322,10 +15323,10 @@ Overall processing rate 712.88 images/s
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[13]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[18]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>./xcorr_answers.exe -gpu
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>./xcorr_answers.exe -gpu <span class="m">1</span>
 </pre></div>
 
      </div>
@@ -15353,14 +15354,14 @@ Overall processing rate 712.88 images/s
 	     max local size: (1024,1024,1024)
 	     max work-items: 256
 	               name: NVIDIA GeForce RTX 3060 Laptop GPU 
-	 global memory size: 6235 MB
-	    max buffer size: 1558 MB
+	 global memory size: 6226 MB
+	    max buffer size: 1556 MB
 	     max local size: (1024,1024,64)
 	     max work-items: 1024
 Processing iteration 1 of 1
-Device 0 processed 57 of 100 images (57.00%)
-Device 1 processed 43 of 100 images (43.00%)
-Overall processing rate 427.60 images/s
+Device 0 processed 50 of 100 images (50.00%)
+Device 1 processed 50 of 100 images (50.00%)
+Overall processing rate 991.01 images/s
 </pre>
 </div>
 </div>
@@ -15385,7 +15386,7 @@ Overall processing rate 427.60 images/s
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[16]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[19]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>./xcorr_answers.exe
@@ -15410,32 +15411,32 @@ Overall processing rate 427.60 images/s
 
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>	               name: Intel(R) FPGA Emulation Device 
-	 global memory size: 32878 MB
-	    max buffer size: 16439 MB
-	     max local size: (67108864,67108864,67108864)
-	     max work-items: 67108864
-	               name: AMD Ryzen 7 6800H with Radeon Graphics          
-	 global memory size: 32878 MB
-	    max buffer size: 16439 MB
-	     max local size: (8192,8192,8192)
-	     max work-items: 8192
-	               name: gfx1035 
+<pre>	               name: gfx1035 
 	 global memory size: 536 MB
 	    max buffer size: 456 MB
 	     max local size: (1024,1024,1024)
 	     max work-items: 256
 	               name: NVIDIA GeForce RTX 3060 Laptop GPU 
-	 global memory size: 6235 MB
-	    max buffer size: 1558 MB
+	 global memory size: 6226 MB
+	    max buffer size: 1556 MB
 	     max local size: (1024,1024,64)
 	     max work-items: 1024
+	               name: AMD Ryzen 7 6800H with Radeon Graphics          
+	 global memory size: 32877 MB
+	    max buffer size: 16438 MB
+	     max local size: (8192,8192,8192)
+	     max work-items: 8192
+	               name: Intel(R) FPGA Emulation Device 
+	 global memory size: 32877 MB
+	    max buffer size: 16438 MB
+	     max local size: (67108864,67108864,67108864)
+	     max work-items: 67108864
 Processing iteration 1 of 1
-Device 0 processed 7 of 100 images (7.00%)
-Device 1 processed 52 of 100 images (52.00%)
-Device 2 processed 27 of 100 images (27.00%)
-Device 3 processed 14 of 100 images (14.00%)
-Overall processing rate 555.56 images/s
+Device 0 processed 29 of 100 images (29.00%)
+Device 1 processed 30 of 100 images (30.00%)
+Device 2 processed 28 of 100 images (28.00%)
+Device 3 processed 13 of 100 images (13.00%)
+Overall processing rate 1098.09 images/s
 </pre>
 </div>
 </div>
@@ -15449,7 +15450,7 @@ Overall processing rate 555.56 images/s
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[17]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[10]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Read images from file</span>
