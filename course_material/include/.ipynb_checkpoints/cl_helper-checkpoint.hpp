@@ -168,8 +168,6 @@ cl_uint h_parse_args(int argc,
     return(dev_index);
 }
 
-
-
 // Function to create lists of contexts and devices that map to available hardware
 void h_acquire_devices(
         // Input parameter
