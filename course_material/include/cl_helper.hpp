@@ -1,3 +1,11 @@
+///
+/// @file  cl_helper.hpp
+/// 
+/// @brief Helper functions for OpenCL.
+///
+/// Written by Dr. Toby Potter 
+/// for the Commonwealth Scientific and Industrial Research Organisation of Australia (CSIRO).
+///
 
 // Windows specific header instructions
 #if defined(_WIN32) || defined(_WIN64)
@@ -15,17 +23,16 @@
 #include <cmath>
 #include <chrono>
 
-// Define target OpenCL version
+/// Define target OpenCL version
 #define CL_TARGET_OPENCL_VERSION 300
 
-// Apple-specific header instructions
 #ifdef __APPLE__
     #include "OpenCL/opencl.h"
 #else
     #include "CL/opencl.h"
 #endif
 
-// Make a lookup table for error codes
+/// Lookup table for error codes
 std::map<cl_int, const char*> error_codes {
     {CL_SUCCESS, "CL_SUCCESS"},
     {CL_BUILD_PROGRAM_FAILURE, "CL_BUILD_PROGRAM_FAILURE"},
@@ -86,7 +93,7 @@ std::map<cl_int, const char*> error_codes {
     {CL_PROFILING_INFO_NOT_AVAILABLE, "CL_PROFILING_INFO_NOT_AVAILABLE"},
 };
 
-// Function to check error codes
+/// Check error codes
 void h_errchk(cl_int errcode, const char *message) {
     if (errcode!=CL_SUCCESS) {
         // Is the error code in the map
@@ -103,7 +110,7 @@ void h_errchk(cl_int errcode, const char *message) {
     }
 };
 
-// Macro to check error codes
+/// Macro to check error codes, but with file and line information
 #define H_ERRCHK(cmd) \
 {\
     std::string msg = __FILE__;\
@@ -111,8 +118,8 @@ void h_errchk(cl_int errcode, const char *message) {
     h_errchk(cmd, msg.c_str());\
 }
 
+/// Find the least common multiple of two numbers
 size_t h_lcm(size_t n1, size_t n2) {
-    // Get the least common multiple of two numbers
     size_t number = std::max(n1, n2);
     
     while ((number % n1) && (number % n2)) {
@@ -122,6 +129,7 @@ size_t h_lcm(size_t n1, size_t n2) {
     return number;
 }
 
+/// Show command line options
 void h_show_options(const char* name) {
     // Display a helpful error message
     std::printf("Usage: %s <options> <DEVICE_INDEX>\n", name);
@@ -131,11 +139,11 @@ void h_show_options(const char* name) {
     std::printf("\tDEVICE_INDEX is a number >= 0\n"); 
 }
 
+/// Parse command line arguments to extract the target device "-cpu" or "-gpu", and get device index to use.
 cl_uint h_parse_args(int argc, 
                      char** argv, 
                      cl_device_type *device_type) {
     
-    // Parse command line arguments to extract -cpu, -gpu, and device indices
     
     // Default device index
     cl_uint dev_index = 0;
@@ -168,7 +176,7 @@ cl_uint h_parse_args(int argc,
     return(dev_index);
 }
 
-// Function to create lists of contexts and devices that map to available hardware
+/// Explore available compute devices and create lists of contexts and devices for resources found.
 void h_acquire_devices(
         // Input parameter
         cl_device_type device_type,
@@ -297,7 +305,7 @@ void h_acquire_devices(
     *contexts_out = contexts;
 }
 
-// Function to create command queues
+/// Create an array of command queues
 cl_command_queue* h_create_command_queues(
         // Create a list of command queues
         // with selectable properties
@@ -347,7 +355,7 @@ cl_command_queue* h_create_command_queues(
 }
 
 
-// Function to build a program from a single device and context
+/// Build a program for a single device and context
 cl_program h_build_program(const char* source, 
                            cl_context context, 
                            cl_device_id device,
@@ -411,11 +419,13 @@ cl_program h_build_program(const char* source,
     return program;
 }
 
+/// Get the IO rate in MB/s for bytes read or written
 cl_double h_get_io_rate_MBs(cl_double time_ms, size_t nbytes) {
-    // Get the IO rate in MB/s for bytes read or written
     return (cl_double)nbytes * 1.0e-3 / time_ms;
 }
 
+/// Get the time elapsed in milliseconds for an event
+/// Optionally print IO rate if nbytes is given.
 cl_double h_get_event_time_ms(
         cl_event *event, 
         const char* message, 
@@ -471,8 +481,8 @@ cl_double h_get_event_time_ms(
     return elapsed;
 }
 
+/// Enlarge global_size so that an integer number of local sizes fits within it in any dimension.
 void h_fit_global_size(const size_t* global_size, const size_t* local_size, size_t work_dim) {
-    // Fit global size so that an integer number of local sizes fits within it in any dimension
     
     // Make a readable pointer out of the constant one
     size_t* new_global = (size_t*)global_size;
@@ -487,8 +497,10 @@ void h_fit_global_size(const size_t* global_size, const size_t* local_size, size
     }
 }
 
+/// Write binary data to a file.
 void h_write_binary(void* data, const char* filename, size_t nbytes) {
-    // Write binary data to file
+    
+    // Open the file
     std::FILE *fp = std::fopen(filename, "wb");
     if (fp == NULL) {
         std::printf("Error in writing file %s", filename);
@@ -502,9 +514,11 @@ void h_write_binary(void* data, const char* filename, size_t nbytes) {
     std::fclose(fp);
 }
 
+/// Allocate memory for potential use in OpenCL buffers
 void* h_alloc(size_t nbytes) {
-    // Allocate aligned memory for potential 
-    // use in OpenCL buffers
+
+    // Allocate the memory
+
 #if defined(_WIN32) || defined(_WIN64)
     void* buffer = _aligned_malloc(nbytes, sizeof(cl_long16));
 #else
@@ -515,8 +529,8 @@ void* h_alloc(size_t nbytes) {
     return buffer;
 }
 
+/// Open the file for reading and use std::fread to read in the file
 void* h_read_binary(const char* filename, size_t *nbytes) {
-    // Open the file for reading and use std::fread to read in the file
     std::FILE *fp = std::fopen(filename, "rb");
     if (fp == NULL) {
         std::printf("Error in reading file %s", filename);
@@ -548,8 +562,9 @@ void* h_read_binary(const char* filename, size_t *nbytes) {
     return buffer;
 }
 
-// Function to report information on a compute device
+/// Report information on a compute device
 void h_report_on_device(cl_device_id device) {
+
     // Report some information on the device
     
     // Fetch the name of the compute device
@@ -651,7 +666,7 @@ void h_report_on_device(cl_device_id device) {
     delete [] name;
 }
 
-// Function to release command queues
+/// Release command queues
 void h_release_command_queues(cl_command_queue *command_queues, cl_uint num_command_queues) {
     // Finish and Release all command queues
     for (cl_uint n = 0; n<num_command_queues; n++) {
@@ -673,7 +688,7 @@ void h_release_command_queues(cl_command_queue *command_queues, cl_uint num_comm
     free(command_queues);
 }
 
-// Function to release devices and contexts
+/// Release devices and contexts
 void h_release_devices(
         cl_device_id *devices,
         cl_uint num_devices,
@@ -699,7 +714,7 @@ void h_release_devices(
     free(platforms);
 }
 
-// Function to run a kernel
+/// Run a kernel
 cl_double h_run_kernel(
     cl_command_queue command_queue,
     cl_kernel kernel,
@@ -756,14 +771,14 @@ cl_double h_run_kernel(
     return(elapsed_msec);
 }
 
-// Function to optimise the local size
-// if command line arguments are --local_file or -local_file
-// read an input file called input_local.dat
-// type == cl_uint and size == (nexperiments, ndim)
-//
-// writes to a file called output_local.dat
-// type == cl_double and size == (nexperiments, 2)
-// where each line is (avd, stdev) in milli-seconds
+/// Optimise the local size,
+/// if command line arguments contain --local_file or -local_file
+/// read an input file called input_local.dat of
+/// type == cl_uint and size == (nexperiments, ndim) with row major ordering.
+///
+/// Writes output to a file called output_local.dat, of
+/// type == cl_double and size == (nexperiments, 2) with row major ordering,
+/// and where each line is (avd, stdev) in milliseconds.
 void h_optimise_local(
         int argc,
         char** argv,
