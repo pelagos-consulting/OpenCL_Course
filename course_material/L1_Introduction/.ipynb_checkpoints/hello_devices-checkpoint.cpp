@@ -106,7 +106,7 @@ void h_errchk(cl_int errcode, const char *message) {
 // Main program
 int main(int argc, char** argv) {
     
-    // Return code for running things
+    // Error code for checking the status of 
     cl_int errcode = CL_SUCCESS;    
     
     // Choose which kind of device we want to use
@@ -119,19 +119,18 @@ int main(int argc, char** argv) {
     //// Get all valid platforms ////
     cl_uint num_platforms; 
     cl_platform_id *platform_ids = NULL;
-    
     // First call to clGetPlatformIDs - get the number of platforms
     H_ERRCHK(clGetPlatformIDs(0, NULL, &num_platforms));
-    
-    // Allocate memory for platform id's
+    // Allocate memory for platform ID's
     platform_ids = (cl_platform_id*)calloc(num_platforms, sizeof(cl_platform_id));
-    
     // Second call to clGetPlatformIDs - fill the platforms
     H_ERRCHK(clGetPlatformIDs(num_platforms, platform_ids, NULL));
     
+    // Device index
     cl_uint dev_index=0;
     
     // Loop over the number of platforms
+    // and query devices in each platform
     for (cl_uint n=0; n < num_platforms; n++) {
         
         std::printf("Platform %d\n", n);
@@ -199,10 +198,8 @@ int main(int argc, char** argv) {
             free(device_ids);
             
         }
-        
     }
     
-    // Release platform ID's memory
+    // Release the array for platform ID's
     free(platform_ids);
-    
 }
