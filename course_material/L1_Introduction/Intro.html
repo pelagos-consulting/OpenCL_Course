@@ -15041,7 +15041,7 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 <p>When a program launches, the ICD loader looks up a directory to find OpenCL implementations. This directory is usually</p>
 <div class="highlight"><pre><span></span>/etc/OpenCL/vendors
 </pre></div>
-<p>However you can change the place to look for implementations by setting the environment variable <strong>OCL_ICD_VENDORS</strong> to another directory. Inside the vendors directory are a number of <code>*.icd</code> files, one for each vendor implementation of OpenCL. The contents of those files are just the libary path for the vendor's OpenCL. The ICD loader takes care of intercepting all OpenCL library calls and routing them to that of the appropriate vendor implementation depending on the compute device being used. The routing process happens transparently to the user.</p>
+<p>However you can change the place to look for implementations by setting the environment variable <strong>OCL_ICD_VENDORS</strong> to another directory. Inside the vendors directory are a number of <code>*.icd</code> files, one for each vendor implementation of OpenCL. The contents of those files are just the libary path for the vendor's OpenCL implementation. The ICD loader takes care of intercepting all OpenCL library calls and routing them to that of the appropriate vendor implementation depending on the compute device being used. The routing process happens transparently to the user.</p>
 
 </div>
 </div>
