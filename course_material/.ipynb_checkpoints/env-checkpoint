@@ -11,11 +11,11 @@ endif
 
 # Compiler locations
 CXX=g++
-CXXFLAGS=-g -std=c++11 -fopenmp -O2
+CXXFLAGS=-g -fopenmp -O2
 
 # Debugging instructions
 ifeq ($(DEBUG), true)
-    CXXFLAGS:=-g -std=c++11 -fopenmp -O0
+    CXXFLAGS:=-g -fopenmp -O0
 endif
 
 # Library and include flags
