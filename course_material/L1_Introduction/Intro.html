@@ -15034,7 +15034,7 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 <li>Compiling the application itself before execution</li>
 <li>Compiling kernels from within an application during execution</li>
 </ol>
-<p>During program execution, kernels are combined into programs and the programs are compiled for each compute device using the vendor's kernel compiler. Thankfully, when compiling an OpenCL application prior to execution (Step 1), we don't need to link against <strong>every available implementation</strong>. We just need to link against a single library file called the <strong>Installable Client Driver (ICD) Loader</strong> that may be provided by any vendor. The ICD loader has the name (<strong>opencl.dll</strong>) on Windows and (<strong>libOpenCL.so</strong>) on Linux. Accompanying the ICD loader are header files (<strong>opencl.h</strong> for C and <strong>cl.hpp</strong> for C++) that live in a directory called <strong>CL</strong>. This directory must be in the include path of an application at compilation. It is good practice to get the ICD loader (i.e libOpenCL.so) and OpenCL headers directly from the <a href="https://github.com/KhronosGroup/OpenCL-ICD-Loader">Khronos Github site</a>, because then you will always have the latest up-to-date OpenCL API. Alternatively, you can use a ICD loader provided by the vendor, but it may not be up with the latest OpenCL standard.</p>
+<p>During program execution, kernels are combined into programs and the programs are compiled for each compute device using the vendor's kernel compiler. Thankfully, when compiling an OpenCL application prior to execution (Step 1), we don't need to link against <strong>every available implementation</strong>. We just need to link against a single library file called the <strong>Installable Client Driver (ICD) Loader</strong> that may be provided by any vendor. The ICD loader has the name (<strong>opencl.dll</strong>) on Windows and (<strong>libOpenCL.so</strong>) on Linux. Accompanying the ICD loader are header files (<strong>opencl.h</strong> for C and <strong>cl.hpp</strong> for C++) that live in a directory called <strong>CL</strong>. This directory must be in the include path of an application at compilation. It is good practice to source an ICD loader (i.e libOpenCL.so) and OpenCL headers directly from the <a href="https://github.com/KhronosGroup/OpenCL-ICD-Loader">Khronos Github site</a>, because then you will always have the latest up-to-date OpenCL API. Alternatively, you can use a ICD loader provided by the vendor, but it may not be up with the latest OpenCL standard.</p>
 <p>Compilation of an OpenCL source file on Linux usually takes this form:</p>
 <div class="highlight"><pre><span></span>&lt;compiler&gt; -I&lt;path to CL directory&gt; -L&lt;path to ICD loader&gt; &lt;<span class="nb">source</span> file&gt; -o &lt;destination program&gt; -lOpenCL
 </pre></div>
@@ -15060,7 +15060,7 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 <div class="highlight"><pre><span></span><span class="nb">cd</span> src/L1_Introduction
 </pre></div>
 <ul>
-<li><strong>Step 2.</strong> You need to know where the OpenCL ICD loader and OpenCL header files are located. For this particular example the locations are as follows:</li>
+<li><strong>Step 2.</strong> You need to know where the OpenCL ICD loader and OpenCL header files are located. On a Linux distribution the files could be packaged in the following location.</li>
 </ul>
 <table>
 <thead><tr>
@@ -15079,15 +15079,8 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 </tr>
 </tbody>
 </table>
-<p>In the Terminal use <strong>ls</strong> to list the contents of these directories and locate the <strong>CL</strong> directory in which the OpenCL header files are located.</p>
-<ul>
-<li><strong>Step 3.</strong> Compile the application source file <strong>hello_devices.cpp</strong> using the <strong>g++</strong> compiler. The compilation command should look like this:</li>
-</ul>
-<div class="highlight"><pre><span></span>g++ -g -O2 -I/usr/include -I../include -L/usr/lib/x86_64-linux-gnu hello_devices.cpp<span class="se">\</span>
-    -o hello_devices.exe -lOpenCL
-</pre></div>
-<p>On Linux you can add the location of the <strong>CL</strong> directory to your <strong>CPATH</strong> environment variable, and the location of <strong>libOpenCL.so</strong> to both your <strong>LIBRARY</strong> and <strong>LD_LIBRARY_PATH</strong> environment variables. Then you won't need to explicity tell the compiler where the OpenCL resources are.</p>
-<div class="highlight"><pre><span></span>g++ -g -O2 -I../include hello_devices.cpp -o hello_devices.exe -lOpenCL
+<p>In the Terminal use <strong>ls</strong> to list the contents of these directories and locate the <strong>CL</strong> directory in which the OpenCL header files are located. On Linux you can add the location of the <strong>CL</strong> directory to your <strong>CPATH</strong> environment variable, and the location of <strong>libOpenCL.so</strong> to both your <strong>LIBRARY</strong> and <strong>LD_LIBRARY_PATH</strong> environment variables. Then you won't need to explicity tell the compiler where the OpenCL resources are. Compile the application source file <strong>hello_devices.cpp</strong> using the <strong>g++</strong> compiler. The compilation command should look like this:</p>
+<div class="highlight"><pre><span></span>g++ -g -O2 hello_devices.cpp -o hello_devices.exe -lOpenCL
 </pre></div>
 <ul>
 <li><strong>Step 4.</strong> Now run the application</li>
@@ -15193,10 +15186,10 @@ In file included from <span class="ansi-bold">/usr/include/CL/opencl.h:24:0</spa
 
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>Platform #0: NVIDIA CUDA
- `-- Device #0: NVIDIA GeForce RTX 3060 Laptop GPU
-Platform #1: AMD Accelerated Parallel Processing
+<pre>Platform #0: AMD Accelerated Parallel Processing
  `-- Device #0: gfx1035
+Platform #1: NVIDIA CUDA
+ `-- Device #0: NVIDIA GeForce RTX 3060 Laptop GPU
 Platform #2: Intel(R) OpenCL
  `-- Device #0: AMD Ryzen 7 6800H with Radeon Graphics         
 Platform #3: Intel(R) FPGA Emulation Platform for OpenCL(TM)
