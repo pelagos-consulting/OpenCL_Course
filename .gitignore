@@ -7,3 +7,4 @@
 *.trc
 *.edf
 image_deploy/
+.ipynb_checkpoints
