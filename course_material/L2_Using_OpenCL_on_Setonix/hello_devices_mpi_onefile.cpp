@@ -93,7 +93,7 @@ int main(int argc, char** argv) {
     }
     
     // Choose the device index to use
-    cl_uint dev_index = nranks%num_devices;
+    cl_uint dev_index = rank%num_devices;
     
     // Choose the context and compute device
     cl_context context = contexts[dev_index];

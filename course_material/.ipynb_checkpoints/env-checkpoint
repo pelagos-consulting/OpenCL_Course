@@ -10,7 +10,7 @@ endif
 # Default flags
 
 # Compiler locations
-CXX=g++
+CXX=CC
 CXXFLAGS=-g -fopenmp -O2
 
 # Debugging instructions
