@@ -13,6 +13,7 @@ Written by Tom Papatheodore, modified for OpenCL by Toby Potter
 #include <mpi.h>
 #include <sched.h>
 #include <omp.h>
+#include <map>
 #include <sstream>
 
 // Define target OpenCL version
@@ -262,8 +263,16 @@ void h_release_devices(
     free(platforms);
 }
 
+// Structure to hold AMD topology information
+typedef union
+ {
+     struct { cl_uint type; cl_uint data[5]; } raw;
+     struct { cl_uint type; cl_char unused[17]; cl_char bus; cl_char device; cl_char function; } pcie;
+ } cl_device_topology_amd;
+
 int main(int argc, char *argv[]){
 
+    // Initialise MPI
 	MPI_Init(&argc, &argv);
 
 	int size;
@@ -290,7 +299,7 @@ int main(int argc, char *argv[]){
     cl_int errcode = CL_SUCCESS;
     
     // Set the device type
-    cl_device_type device_type = CL_DEVICE_TYPE_GPU;
+    cl_device_type target_device = CL_DEVICE_TYPE_GPU;
     
     // Number of platforms discovered
     cl_uint num_platforms;
@@ -314,8 +323,10 @@ int main(int argc, char *argv[]){
                      &devices,
                      &num_devices,
                      &contexts);
-    
+
+    // Hardware thread
 	unsigned int hwthread;
+    // OpenMP thread
 	int thread_id = 0;
 	unsigned int numa_id = 0;
 
@@ -329,8 +340,7 @@ int main(int argc, char *argv[]){
                     rank, thread_id, hwthread, numa_id, name);
 
 		}
-	}
-	else{
+	} else {
 
 		char busid[64];
 
@@ -340,8 +350,9 @@ int main(int argc, char *argv[]){
 		// Loop over the GPUs available to each MPI rank
 		for(int i=0; i<num_devices; i++){
 
-            
-            // For AMD devices
+            std::stringstream temp;
+
+            // Bus ID query for AMD devices
             cl_device_topology_amd top;
             errcode = clGetDeviceInfo(devices[i], 
                 CL_DEVICE_TOPOLOGY_AMD,
@@ -349,29 +360,30 @@ int main(int argc, char *argv[]){
                 &top,
                 NULL
             );
-            
-            std::stringstream temp;
-            // Convert the bus id to hex
-            temp << std::hex << (int)top.pci.device;
-            std::string temp_busid = temp.str();
-            
-            // Need to implement something for NVIDIA devices
-            
-            //top is of typedef union { struct { cl_uint type; cl_uint data[5]; } raw; struct { cl_uint type; cl_char unused[17]; cl_char bus; cl_char device; cl_char function; } pcie; } cl_device_topology_amd;
-            
-			hipErrorCheck( hipSetDevice(i) );
+            if (errcode==CL_SUCCESS) {
+                // Convert the bus ID to hex
+                temp << std::hex << (int)top.pcie.device;
+            }
 
-			// Get the PCIBusId for each GPU and use it to query for UUID
-			hipErrorCheck( hipDeviceGetPCIBusId(busid, 64, i) );
+            // Bus ID query for NVIDIA devices
+            cl_int nv_id;
+            errcode = clGetDeviceInfo(devices[i], 
+                CL_DEVICE_PCI_BUS_ID_NV,
+                sizeof(cl_int),
+                &nv_id,
+                NULL
+            );
+            if (errcode==CL_SUCCESS) {
+                // Convert the bus ID to hex
+                temp << std::hex << nv_id;
+            }
 
 			// Concatenate per-MPIrank GPU info into strings for print
             if(i > 0) rt_gpu_id_list.append(",");
             rt_gpu_id_list.append(std::to_string(i));
 
             if(i > 0) busid_list.append(",");
-            //std::string temp_busid(busid);
-            //busid_list.append(temp_busid.substr(5,2));
-            busid_list.append(temp_busid);
+            busid_list.append(temp.str());
 
 		}
 
@@ -396,7 +408,7 @@ int main(int argc, char *argv[]){
         platforms
     );
     
-    
+    // Clean up MPI
 	MPI_Finalize();
 
 	return 0;

@@ -13,8 +13,6 @@
 // Length of the vector
 #define N0_A 512
 
-
-
 // The kernel source. We use C++ raw literals to contain the kernel.
 const char* kernel_source = R"(
 __kernel void fill (__global float* A,  
