@@ -8,3 +8,4 @@
 *.edf
 image_deploy/
 .ipynb_checkpoints
+*/.ipynb_checkpoints/*
