@@ -363,7 +363,7 @@ int main(int argc, char *argv[]){
             );
             if (errcode==CL_SUCCESS) {
                 // Convert the bus ID to hex
-                temp << std::hex << (int)top.pcie.device;
+                temp << std::hex << (int)top.pcie.bus;
             }
 #endif
 
@@ -386,7 +386,7 @@ int main(int argc, char *argv[]){
             rt_gpu_id_list.append(std::to_string(i));
 
             if(i > 0) busid_list.append(",");
-            busid_list.append(temp.str());
+            busid_list.append(temp.str().substr(6,2));
 
 		}
 
