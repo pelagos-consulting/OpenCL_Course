@@ -352,6 +352,7 @@ int main(int argc, char *argv[]){
 
             std::stringstream temp;
 
+#ifdef CL_DEVICE_TOPOLOGY_AMD	    
             // Bus ID query for AMD devices
             cl_device_topology_amd top;
             errcode = clGetDeviceInfo(devices[i], 
@@ -364,11 +365,13 @@ int main(int argc, char *argv[]){
                 // Convert the bus ID to hex
                 temp << std::hex << (int)top.pcie.device;
             }
+#endif
 
+#ifdef CL_DEVICE_PCI_BUS_ID_NV
             // Bus ID query for NVIDIA devices
             cl_int nv_id;
             errcode = clGetDeviceInfo(devices[i], 
-                CL_DEVICE_PCI_BUS_ID_NV,
+                CL_DEVICE_PCI_SLOT_ID_NV,
                 sizeof(cl_int),
                 &nv_id,
                 NULL
@@ -377,8 +380,8 @@ int main(int argc, char *argv[]){
                 // Convert the bus ID to hex
                 temp << std::hex << nv_id;
             }
-
-			// Concatenate per-MPIrank GPU info into strings for print
+#endif
+	    // Concatenate per-MPIrank GPU info into strings for print
             if(i > 0) rt_gpu_id_list.append(",");
             rt_gpu_id_list.append(std::to_string(i));
 
