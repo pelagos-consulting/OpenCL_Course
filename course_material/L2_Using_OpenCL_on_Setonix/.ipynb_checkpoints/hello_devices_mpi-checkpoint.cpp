@@ -1,13 +1,21 @@
-#include <mpi.h>
-#include <cassert>
+///
+/// @file  hello_devices_mpi.cpp
+/// 
+/// @brief OpenCL function for demonstrating the use of MPI with OpenCL.
+///
+/// Written by Dr. Toby Potter 
+/// for the Commonwealth Scientific and Industrial Research Organisation of Australia (CSIRO).
+///
 
-// Include the HIP helper headers
 #include "cl_helper.hpp"
+#include "mpi.h"
 
 // Length of the vector
 #define N0_A 512
 
-// Use raw string literals to contain the kernel code
+
+
+// The kernel source. We use C++ raw literals to contain the kernel.
 const char* kernel_source = R"(
 __kernel void fill (__global float* A,  
                     float fill_value, 
@@ -41,42 +49,39 @@ int main(int argc, char** argv) {
     
     // Print which rank we are using
     std::cout << "MPI rank " << rank << " of " << nranks << "\n";
+ 
+    // Create an errorcode to store result from application runs
+    cl_int errcode=CL_SUCCESS;
     
-    // Number of platforms discovered
-    cl_uint num_platforms;
-
-    // Number of devices discovered
-    cl_uint num_devices;
-
-    // Pointer to an array of platforms
-    cl_platform_id *platforms = NULL;
-
-    // Pointer to an array of devices
-    cl_device_id *devices = NULL;
-
-    // Pointer to an array of contexts
-    cl_context *contexts = NULL;
+    // Set the target device
+    cl_device_type target_device=CL_DEVICE_TYPE_GPU;
     
     //// Step 2. Discover resources ////
+    cl_uint num_platforms=0, num_devices=0;
+    cl_platform_id *platforms=NULL;
+    cl_device_id *devices=NULL;
+    cl_context *contexts=NULL;
     
     // Helper function to acquire devices
+    // Create one context for every device
+    // return flat arrays of all platforms, all devices,
+    // and all contexts (contexts are same length as devices)
     h_acquire_devices(target_device,
                      &platforms,
                      &num_platforms,
                      &devices,
                      &num_devices,
                      &contexts);
-    
-    // Number of command queues to generate
-    cl_uint num_command_queues = num_devices;
-    
-    // Do we enable out-of-order execution 
+
+    // Do we enable out-of-order execution in the command queues
     cl_bool ordering = CL_FALSE;
     
-    // Do we enable profiling?
+    // Do we enable profiling in the command queues
     cl_bool profiling = CL_TRUE;
     
-    // Create the command queues
+    // Create the command queues, one command queue
+    // for every compute device
+    cl_uint num_command_queues = num_devices;
     cl_command_queue* command_queues = h_create_command_queues(
         devices,
         contexts,
@@ -86,19 +91,20 @@ int main(int argc, char** argv) {
         profiling
     );
     
-    // Report on available devices
+    // Choose the device index to use
+    // based on rank and number of compute devices
+    cl_uint dev_index = rank%num_devices;
+    
+    // Choose the context, device and command queue
+    cl_context context = contexts[dev_index];
+    cl_command_queue command_queue = command_queues[dev_index];
+    cl_device_id device = devices[dev_index];
+    
+    // Report on available devices found
     for (cl_uint n=0; n<num_devices; n++) {
         std::cout << "device " << n << " of " << num_devices << std::endl;
         h_report_on_device(devices[n]);
     }
-    
-    // Choose the device index to use
-    cl_uint dev_index = rank%num_devices;
-    
-    // Choose the context and compute device
-    cl_context context = contexts[dev_index];
-    cl_command_queue command_queue = command_queues[dev_index];
-    cl_device_id device = devices[dev_index];
     
     // Allocate memory on the compute device for vector A
     size_t nbytes_A = N0_A*sizeof(float);
@@ -144,7 +150,7 @@ int main(int argc, char** argv) {
     // Event for the kernel
     cl_event kernel_event;
     
-    // Now enqueue the kernel
+    // Now enqueue the kernel to the command queue
     H_ERRCHK(
         clEnqueueNDRangeKernel(
             command_queue,
@@ -160,6 +166,10 @@ int main(int argc, char** argv) {
     );
     
     // Read memory from the buffer to the host
+    
+    // Is our command blocking?
+    cl_bool blocking=CL_TRUE;
+    
     H_ERRCHK(
         clEnqueueReadBuffer(
             command_queue,
