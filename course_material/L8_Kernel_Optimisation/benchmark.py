@@ -3,7 +3,7 @@ import numpy as np
 import sys
 import json
 sys.path.insert(0, os.path.abspath("../include"))
-from py_helper import LocalOpt
+from local_opt import LocalOpt
                 
 # Helper class to specify an experiment
 class Exp:
