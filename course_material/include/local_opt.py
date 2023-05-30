@@ -19,7 +19,7 @@ class LocalOpt():
         
         if timings is not None:
             assert(cmds is None)
-            self.import_result(timing_data)
+            self.import_result(timings)
             
         if cmds is not None:
             assert(timings is None)
@@ -38,8 +38,8 @@ class LocalOpt():
         self.L0, self.L1, self.L2 = self.make_mesh(local0, local1, local2)
             
         # Data to plot
-        self.times_ms = np.array(times_ms)
-        self.times_stdev = np.array(times_stdev)
+        self.times_ms = np.array(times_ms).reshape(self.L0.shape)
+        self.times_stdev = np.array(times_stdev).reshape(self.L0.shape)
 
         # Signal that we have data
         self.has_data=True 
@@ -52,8 +52,11 @@ class LocalOpt():
             timing_data["times_ms"],
             timing_data["times_stdev"])
         
-    def report_timings(self, timing_data):
+    def report_timings(self):
+        
         """Find the minimum and maximum of timing data obtained from an experiement"""
+        
+        timing_data=self.export_result()
         
         print(f"Min time is {timing_data['min_ms']:.3f} ms, at the local size of" 
             f" ({timing_data['L0_min']},{timing_data['L1_min']},{timing_data['L2_min']}).")

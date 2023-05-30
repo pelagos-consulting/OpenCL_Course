@@ -9,6 +9,7 @@ import numpy as np
 import ast
 import math
 from matplotlib import pyplot as plt
+import matplotlib.patches as patches
 from ipywidgets import widgets
 
 # Import axes machinery
@@ -219,7 +220,11 @@ class TimingResults:
     
     def plot_result(self, key):
         """Plot a single timing result"""
-        result = LocalOpt(timings=self.results[key])
+        
+        timings=self.results[key]
+        result = LocalOpt(timings=timings)
+        
+        result.report_timings()
             
         # Make plots
         fig, axes = plt.subplots(1, 1, figsize=(6,6), sharex=True, sharey=True)
@@ -251,8 +256,14 @@ class TimingResults:
         ax.set_yticklabels([str(x) for x in result.local0])
         ax.set_xlabel("Local size (dimension 1)")
         ax.set_ylabel("Local size (dimension 0)")
-        ax.set_title("Time (ms)")
+        ax.set_title(f"{key} - (time ms)")
 
+        # Put patches on minima and maxima
+        min_patch = patches.Rectangle(
+            np.array([timings["L0_min"],timings["L1_min"]])-0.5,
+            1, 1, edgecolor="r", facecolor='none', linewidth=4)
+        ax.add_patch(min_patch)
+        
         # Put a color bar on the plot
         plt.colorbar(mappable=im, cax=cax)
 
