@@ -13,8 +13,11 @@ Written by Dr Toby M. Potter
 // Bring in helper header to manage boilerplate code
 #include "cl_helper.hpp"
 
+// Bring in the matrix helper library
+#include "mat_helper.hpp"
+
 // Include the CLBLAST library
-#include <clblast_c.h>
+#include "clblast_c.h"
 
 typedef cl_float float_type;
 
@@ -82,25 +85,28 @@ int main(int argc, char** argv) {
     // B is of size (N1_A, N1_C)
     // C is of size (N0_C, N1_C)
     
+    //// Prepare matrices A, B, and C on the Host ////
     cl_uint N1_A = NCOLS_A, N0_C = NROWS_C, N1_C = NCOLS_C;
-    size_t nbytes_A, nbytes_B, nbytes_C;
 
-    // Read the input data into arrays and sanity check
-    float_type* array_A = (float_type*)h_read_binary("array_A.dat", &nbytes_A);
-    float_type* array_B = (float_type*)h_read_binary("array_B.dat", &nbytes_B);
+    // Number of bytes in each array
+    size_t nbytes_A = N0_C*N1_A*sizeof(float_type);
+    size_t nbytes_B = N1_A*N1_C*sizeof(float_type);
+    size_t nbytes_C = N0_C*N1_C*sizeof(float_type);
 
-    // Sanity check on incoming data
-    assert(nbytes_A==N0_C*N1_A*sizeof(float_type));   
-    assert(nbytes_B==N1_A*N1_C*sizeof(float_type));
-    nbytes_C=N0_C*N1_C*sizeof(float_type);
-    
-    // Make Buffers on the compute device for matrices A, B, and C
-    float_type* array_C = (float_type*)h_alloc(nbytes_C);
+    // Allocate memory for matrices A, B, and C on the host
+    float_type* A_h = (float_type*)h_alloc(nbytes_A);
+    float_type* B_h = (float_type*)h_alloc(nbytes_B);
+    float_type* C_h = (float_type*)h_alloc(nbytes_C);
+
+    // Fill A_h and B_h with random numbers 
+    // using the matrix helper library
+    m_random(A_h, N0_C, N1_A);
+    m_random(B_h, N1_A, N1_C);
 
     // Allocate memory for buffers
-    cl_mem* buffers_A = (cl_mem*)malloc(num_devices*sizeof(cl_mem));
-    cl_mem* buffers_B = (cl_mem*)malloc(num_devices*sizeof(cl_mem));    
-    cl_mem* buffers_C = (cl_mem*)malloc(num_devices*sizeof(cl_mem));      
+    cl_mem* As_d = (cl_mem*)malloc(num_devices*sizeof(cl_mem));
+    cl_mem* Bs_d = (cl_mem*)malloc(num_devices*sizeof(cl_mem));    
+    cl_mem* Cs_d = (cl_mem*)malloc(num_devices*sizeof(cl_mem));      
     
     for (cl_uint n=0; n<num_devices; n++) {
         
@@ -108,34 +114,34 @@ int main(int argc, char** argv) {
         h_report_on_device(devices[n]);
         
         // Create buffers for A
-        buffers_A[n] = clCreateBuffer(
+        As_d[n] = clCreateBuffer(
             contexts[n], 
             CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, 
             nbytes_A, 
-            (void*)array_A, 
+            (void*)A_h, 
             &errcode
         );
-        h_errchk(errcode, "Creating buffer_A");
+        H_ERRCHK(errcode);
 
         // Create buffers for B        
-        buffers_B[n] = clCreateBuffer(
+        Bs_d[n] = clCreateBuffer(
             contexts[n], 
             CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, 
             nbytes_B, 
-            (void*)array_B, 
+            (void*)B_h, 
             &errcode
         );
-        h_errchk(errcode, "Creating buffer_B");
+        H_ERRCHK(errcode);
 
         // Create buffers for C
-        buffers_C[n] = clCreateBuffer(
+        Cs_d[n] = clCreateBuffer(
             contexts[n], 
             CL_MEM_READ_WRITE, 
             nbytes_C, 
             NULL, 
             &errcode
         );
-        h_errchk(errcode, "Creating buffer_C");        
+        H_ERRCHK(errcode);        
     }
 
     // Constants for multiplication
@@ -167,14 +173,17 @@ int main(int argc, char** argv) {
     // Set the number of OpenMP threads
     omp_set_num_threads((int)num_devices);
     //omp_set_num_threads(1);
-    
+   
+    // Times for each
+    cl_double* kernel_times=(cl_double*)calloc(num_devices, sizeof(cl_double));
+
     // Loop over experiments
     for (int n=0; n<nstats; n++) {
-        // Time t1
+        // Start the clock
         auto t1 = std::chrono::high_resolution_clock::now();
         
         // Loop over domains using dynamic scheduling
-        #pragma omp parallel for shared(command_queues, buffers_A, buffers_B, buffers_C, array_C, D0, D1, N0_C, N1_C, L0, L1, nbytes_C) default(none) schedule(dynamic,1)  
+        #pragma omp parallel for shared(command_queues, As_d, Bs_d, Cs_d, C_h, D0, D1, N0_C, N1_C, L0, L1, nbytes_C, t1, kernel_times) default(none) schedule(dynamic,1)  
         for (int d=0; d<D0*D1; d++) {
         
             // A is of size (m, k)
@@ -218,10 +227,10 @@ int main(int argc, char** argv) {
                 // Size of region in dim 1 of A
                 (const size_t)NCOLS_A,
                 alpha,
-                buffers_A[tid], (const size_t)offset_A, (const size_t)NCOLS_A,
-                buffers_B[tid], (const size_t)offset_B, (const size_t)NCOLS_C,
+                As_d[tid], (const size_t)offset_A, (const size_t)NCOLS_A,
+                Bs_d[tid], (const size_t)offset_B, (const size_t)NCOLS_C,
                 beta,
-                buffers_C[tid], (const size_t)offset_C, (const size_t)NCOLS_C,
+                Cs_d[tid], (const size_t)offset_C, (const size_t)NCOLS_C,
                 &command_queues[tid],
                 &kernel_event
             );
@@ -230,13 +239,17 @@ int main(int argc, char** argv) {
             assert(status==CLBlastSuccess);
             
             // Wait for events to finish
-            h_errchk(
+            H_ERRCHK(
                 clWaitForEvents(
                     1,
                     &kernel_event
-                ),
-                "Waiting for Sgemm kernels to finish."
-            );            
+                )
+            );
+
+            auto t2 = std::chrono::high_resolution_clock::now();
+        
+            // Record the cumulative kernel time in milliseconds
+            kernel_times[tid] += (cl_double)std::chrono::duration_cast<std::chrono::microseconds>(t2-t1).count()/1000.0;
             
            // Copy the domain back to C
             
@@ -263,32 +276,33 @@ int main(int argc, char** argv) {
             cl_float zero=1.0;
             
             // Enqueue the rectangular copy
-            //h_errchk(
-            //    clEnqueueReadBufferRect(
-            //        command_queues[tid],
-            //        buffers_C[tid],
-            //        CL_TRUE,
-            //        buffer_origin,
-            //        host_origin,
-            //        region,
-            //        buffer_row_pitch,
-            //        buffer_slice_pitch,
-            //        host_row_pitch,
-            //        host_slice_pitch,
-            //        array_C,
-            //        0,
-            //        NULL,
-            //        NULL
-            //    ),
-            //    "Rectangular copy to buffer_B from the host"
-            //);
+            H_ERRCHK(
+                clEnqueueReadBufferRect(
+                    command_queues[tid],
+                    Cs_d[tid],
+                    CL_TRUE,
+                    buffer_origin,
+                    host_origin,
+                    region,
+                    buffer_row_pitch,
+                    buffer_slice_pitch,
+                    host_row_pitch,
+                    host_slice_pitch,
+                    C_h,
+                    0,
+                    NULL,
+                    NULL
+                )
+            );
         } // End of parallel region
         
-        auto t2 = std::chrono::high_resolution_clock::now();
-        
-        // Time in milliseconds
-        cl_double time_ms = (cl_double)std::chrono::duration_cast<std::chrono::microseconds>(t2-t1).count()/1000.0;
-        
+        // Use the maximum cumulative time on a thread as the kernel time
+        cl_double time_ms=0.0;
+        for (cl_uint n=0; n<num_devices; n++) {
+            time_ms = fmax(time_ms, kernel_times[n]);
+            kernel_times[n]=0.0;
+        } 
+
         // Keep track of maximum time
         if (time_ms > max_time_ms) {
             max_time_ms = time_ms;
@@ -299,7 +313,23 @@ int main(int argc, char** argv) {
         times_ms[n]=time_ms;
         avg_time_ms+=time_ms;
     }
-    
+
+    // Kernel times is no longer required
+    free(kernel_times);
+
+    // Compute the serial solution using the matrix helper library
+    float* C_answer_h = (float*)calloc(nbytes_C, 1);
+    m_mat_mult(A_h, B_h, C_answer_h, N1_A, N0_C, N1_C);
+
+    // Print the maximum error between matrices
+    float max_err = m_max_error(C_h, C_answer_h, N0_C, N1_C);
+
+    // Write out the host arrays to file
+    h_write_binary(A_h, "array_A.dat", nbytes_A);
+    h_write_binary(B_h, "array_B.dat", nbytes_B);
+    h_write_binary(C_h, "array_C.dat", nbytes_C);
+
+    // Calculate the mean and average times
     // Leave the longest time out of the calculation
     avg_time_ms = avg_time_ms - max_time_ms;
     avg_time_ms/=(cl_double)(nstats-1);
@@ -319,34 +349,23 @@ int main(int argc, char** argv) {
     h_write_binary(output_local, "output_local.dat", nbytes_output);
     free(output_local);
 
-    // Write out the result to file
-    h_write_binary(array_C, "array_C.dat", nbytes_C);
-
     for (cl_uint n=0; n<num_devices; n++) {
         // Free the OpenCL buffers
-        h_errchk(
-            clReleaseMemObject(buffers_A[n]),
-            "releasing buffer A"
-        );
-        h_errchk(
-            clReleaseMemObject(buffers_B[n]),
-            "releasing buffer B"
-        );
-        h_errchk(
-            clReleaseMemObject(buffers_C[n]),
-            "releasing buffer C"
-        );
+        H_ERRCHK(clReleaseMemObject(As_d[n]));
+        H_ERRCHK(clReleaseMemObject(Bs_d[n]));
+        H_ERRCHK(clReleaseMemObject(Cs_d[n]));
     }
  
     // Free the buffers arrays
-    free(buffers_A);
-    free(buffers_B);
-    free(buffers_C);
+    free(As_d);
+    free(Bs_d);
+    free(Cs_d);
     
     // Clean up memory that was allocated on the read   
-    free(array_A);
-    free(array_B);
-    free(array_C);
+    free(A_h);
+    free(B_h);
+    free(C_h);
+    free(C_answer_h);
     
     // Clean up command queues
     h_release_command_queues(

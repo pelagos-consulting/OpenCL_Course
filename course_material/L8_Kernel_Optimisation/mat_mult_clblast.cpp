@@ -12,8 +12,11 @@ Written by Dr Toby M. Potter
 // Bring in helper header to manage boilerplate code
 #include "cl_helper.hpp"
 
+// Bring in the matrix helper library
+#include "mat_helper.hpp"
+
 // Include the CLBLAST library
-#include <clblast_c.h>
+#include "clblast_c.h"
 
 typedef cl_float float_type;
 
@@ -91,50 +94,56 @@ int main(int argc, char** argv) {
     // B is of size (N1_A, N1_C)
     // C is of size (N0_C, N1_C)
     
+    //// Prepare matrices A, B, and C on the Host ////
     cl_uint N1_A = NCOLS_A, N0_C = NROWS_C, N1_C = NCOLS_C;
-    size_t nbytes_A, nbytes_B, nbytes_C;
 
-    // Read the input data into arrays and sanity check
-    float_type* array_A = (float_type*)h_read_binary("array_A.dat", &nbytes_A);
-    float_type* array_B = (float_type*)h_read_binary("array_B.dat", &nbytes_B);
+    // Number of bytes in each array
+    size_t nbytes_A = N0_C*N1_A*sizeof(float_type);
+    size_t nbytes_B = N1_A*N1_C*sizeof(float_type);
+    size_t nbytes_C = N0_C*N1_C*sizeof(float_type);
 
-    // Sanity check on incoming data
-    assert(nbytes_A==N0_C*N1_A*sizeof(float_type));   
-    assert(nbytes_B==N1_A*N1_C*sizeof(float_type));
-    nbytes_C=N0_C*N1_C*sizeof(float_type);
-    
-    // Make Buffers on the compute device for matrices A, B, BT, and C
-    float_type* array_C = (float_type*)h_alloc(nbytes_C);
+    // Allocate memory for matrices A, B, and C on the host
+    float_type* A_h = (float_type*)h_alloc(nbytes_A);
+    float_type* B_h = (float_type*)h_alloc(nbytes_B);
+    float_type* C_h = (float_type*)h_alloc(nbytes_C);
 
-    // Make buffer_A by copying from array_A
-    cl_mem buffer_A = clCreateBuffer(
+    // Fill A_h and B_h with random numbers 
+    // using the matrix helper library
+    m_random(A_h, N0_C, N1_A);
+    m_random(B_h, N1_A, N1_C);
+
+    // Make A_d by copying from A_h
+    cl_mem A_d = clCreateBuffer(
         context, 
         CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, 
         nbytes_A, 
-        (void*)array_A, 
+        (void*)A_h, 
         &errcode
     );
-    h_errchk(errcode, "Creating buffer_A");
+    H_ERRCHK(errcode);
     
-    // Make buffer_B using array_B as a backing store
-    cl_mem buffer_B = clCreateBuffer(
+    // Make B_d using B_h as a backing store
+    cl_mem B_d = clCreateBuffer(
         context, 
         CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, 
         nbytes_B, 
-        (void*)array_B, 
+        (void*)B_h, 
         &errcode
     );
-    h_errchk(errcode, "Creating buffer_B");
+    H_ERRCHK(errcode);
    
-    cl_mem buffer_C = clCreateBuffer(context, 
-                                     CL_MEM_READ_WRITE, 
-                                     nbytes_C, 
-                                     NULL, 
-                                     &errcode);
-    h_errchk(errcode, "Creating buffer_C");
+    cl_mem C_d = clCreateBuffer(
+            context, 
+            CL_MEM_READ_WRITE, 
+            nbytes_C, 
+            NULL, 
+            &errcode
+    );
+    H_ERRCHK(errcode);
 
-	const float alpha=1.0;
-	const float beta=0.0;
+    // Constants for multiplication
+    const float alpha=1.0;
+    const float beta=0.0;
 	
 	cl_event kernel_event;
     
@@ -144,8 +153,8 @@ int main(int argc, char** argv) {
     size_t nbytes_output = nexperiments*npoints*sizeof(cl_double);
     cl_double* output_local = (cl_double*)malloc(nbytes_output);    
     
-	// Run the experiment nstats times
-	const size_t nstats=10;
+    // Run the experiment nstats times
+    const size_t nstats=10;
     cl_double times_ms[nstats] = {0};
     cl_double time_ms=0.0;
     cl_double avg_time_ms=0.0;
@@ -173,10 +182,10 @@ int main(int argc, char** argv) {
             (const size_t)NCOLS_A,
             alpha,
             // Buffer, starting offset in elements, length of contiguous dimension
-            buffer_A, 0, (const size_t)NCOLS_A,
-            buffer_B, 0, (const size_t)NCOLS_C,
+            A_d, 0, (const size_t)NCOLS_A,
+            B_d, 0, (const size_t)NCOLS_C,
             beta,
-            buffer_C, 0, (const size_t)NCOLS_C,
+            C_d, 0, (const size_t)NCOLS_C,
             &command_queue,
             &kernel_event
         );
@@ -185,13 +194,7 @@ int main(int argc, char** argv) {
         assert(status==CLBlastSuccess);
         
         // Wait for events to finish
-        h_errchk(
-            clWaitForEvents(
-                1,
-                &kernel_event
-            ),
-            "Waiting for Sgemm kernels to finish."
-        );
+        H_ERRCHK(clWaitForEvents(1, &kernel_event));
         
         // Stop the clock
         auto t2 = std::chrono::high_resolution_clock::now();
@@ -207,23 +210,34 @@ int main(int argc, char** argv) {
         
         avg_time_ms+=time_ms;
     }
-    
+
     // Read memory from the buffer to the host
-    h_errchk(
+    H_ERRCHK(
         clEnqueueReadBuffer(command_queue,
-                            buffer_C,
+                            C_d,
                             blocking,
                             0,
                             nbytes_C,
-                            array_C,
+                            C_h,
                             0,
                             NULL,
-                            NULL), 
-        "Copying matrix C from device to host"
+                            NULL
+        ) 
     );
     
+    // Compute the serial solution using the matrix helper library
+    float* C_answer_h = (float*)calloc(nbytes_C, 1);
+    m_mat_mult(A_h, B_h, C_answer_h, N1_A, N0_C, N1_C);
+
+    // Print the maximum error between matrices
+    float max_err = m_max_error(C_h, C_answer_h, N0_C, N1_C);
+
+    // Write out the host arrays to file
+    h_write_binary(A_h, "array_A.dat", nbytes_A);
+    h_write_binary(B_h, "array_B.dat", nbytes_B);
+    h_write_binary(C_h, "array_C.dat", nbytes_C);
+
     // Calculate the mean and average times
-    
     // Leave the longest time out of the calculation
     avg_time_ms = avg_time_ms - max_time_ms;
     avg_time_ms/=(cl_double)(nstats-1);
@@ -243,27 +257,16 @@ int main(int argc, char** argv) {
     h_write_binary(output_local, "output_local.dat", nbytes_output);
     free(output_local);
 
-    // Write out the result to file
-    h_write_binary(array_C, "array_C.dat", nbytes_C);
-
     // Free the OpenCL buffers
-    h_errchk(
-        clReleaseMemObject(buffer_A),
-        "releasing buffer A"
-    );
-    h_errchk(
-        clReleaseMemObject(buffer_B),
-        "releasing buffer B"
-    );
-    h_errchk(
-        clReleaseMemObject(buffer_C),
-        "releasing buffer C"
-    );
+    H_ERRCHK(clReleaseMemObject(A_d));
+    H_ERRCHK(clReleaseMemObject(B_d));
+    H_ERRCHK(clReleaseMemObject(C_d));
     
     // Clean up memory that was allocated on the read   
-    free(array_A);
-    free(array_B);
-    free(array_C);
+    free(A_h);
+    free(B_h);
+    free(C_h);
+    free(C_answer_h);
     
     // Clean up command queues
     h_release_command_queues(

@@ -60,51 +60,6 @@ __kernel void c_star_stack (
     C[i0*N1_C+i1]=temp;
 }
 
-//// Matrix multiply kernel that uses chunks
-//__kernel void mat_mult_chunk_vector (
-//                        __global float4* A_star, 
-//                        __global float4* BT_star, 
-//                        __global float* C_star,
-//                        // number of float vectors along dim 1 of A
-//                        unsigned int N1_A_v, 
-//                        unsigned int N0_C,
-//                        unsigned int N1_C,
-//                        // Number of float vectors in a chunk
-//                        unsigned int nvec) { 
-//    
-//    // A_star is of size (N0_C, N1_A_v), (i1,i2)
-//    // BT_star is of size (N1_C, N1_A_v), (i1, i2)
-//    // C_star is of size (N1_A_c, N0_C, N1_C), (i0, i1, i2)
-//    
-//    // i0 and i1 represent the coordinates in Matrix C 
-//    // We assume row-major ordering for the matrices 
-//    size_t i2=min(get_global_id(0),(size_t)(N1_C-1)); // Fastest dimension
-//    size_t i1=min(get_global_id(1),(size_t)(N0_C-1)); 
-//    size_t i0=get_global_id(2); // Slowest dimension
-//    
-//    // start and end along N1_A_v
-//    size_t start, end;
-//    
-//    // Get the start and end lengths to fill a block
-//    get_start_end((size_t)nvec, (size_t)N1_A_v, i0, &start, &end);
-//    
-//    // Scratch variable
-//    float4 temp=(float4)0.0f;
-//    
-//    // Loop over columns of A and rows of B
-//    for (int n=start; n<end; n++) {
-//            
-//        // Loop across row i0 of A
-//        // and down column i1 of B
-//        temp+=A_star[i1*N1_A_v+n]*BT_star[i2*N1_A_v+n]; 
-//    } 
-//    
-//    // Number of rows in C is same as number of rows in A
-//    //C_star[i0*N0_C*N1_C+i1*N1_C+i2]=temp.s0+temp.s1+temp.s2+temp.s3;
-//    C_star[i0*N0_C*N1_C+i1*N1_C+i2]=temp.s0+temp.s1+temp.s2+temp.s3;
-//}
-
-
 // standard matrix multiply kernel 
 __kernel void mat_mult_double (
                         __global double* A, 
@@ -411,7 +366,7 @@ __kernel void mat_mult_tile_BT (
     size_t i0=min(get_global_id(1), (size_t)N0_C-1); 
 
     // Scratch variable to accumulate the sum
-    float temp1, temp2=0.0;
+    float temp1=0.0f, temp2=0.0f;
 
     // Loop over the chunks
     for (int chunk_id=start_chunk_id; chunk_id<end_chunk_id; chunk_id++) {
@@ -420,7 +375,7 @@ __kernel void mat_mult_tile_BT (
         __global float* A_star_i0 = &A_star[i0*N1_A_star+chunk_id*chunk_len];
         __global float* BT_star_i1 = &BT_star[i1*N1_A_star+chunk_id*chunk_len];
         
-        temp1=0.0;
+        temp1=0.0f;
         
         // Loop over columns of A and rows of B 
         for (size_t n=0; n<chunk_len; n++) {
@@ -896,85 +851,6 @@ __kernel void mat_mult_tile_local_vector_BT (
     C[i0*N1_C+i1]=temp2.s0 + temp2.s1 + temp2.s2 + temp2.s3
         + temp2.s4 + temp2.s5 + temp2.s6 + temp2.s7;
 }
-
-
-// Local memory matrix multiply kernel
-// where B has been transposed
-//__kernel void mat_mult_local_transp (
-//                        __global float* A, 
-//                        __global float* BT, 
-//                        __global float* C,
-//                        __local  float* shared_A,
-//                        __local  float* shared_BT,
-//                        unsigned int N1_A, 
-//                        unsigned int N0_C,
-//                        unsigned int N1_C) { 
-//    
-//    // A is of size (N0_C, N1_A)
-//    // BT is of size (N1_C, N1_A)
-//    // C is of size (N0_C, N1_C)
-//    
-//    // i0 and i1 represent the coordinates in Matrix C 
-//    // We assume row-major ordering for the matrices 
-//    size_t i0=get_global_id(0); 
-//    size_t i1=get_global_id(1); 
-//    
-//    // Location within the workgroup
-//    size_t s0=get_local_id(0);
-//    size_t s1=get_local_id(1);
-//    
-//    // Local size
-//    size_t L0=get_local_size(0);
-//    size_t L1=get_local_size(1);
-//    
-//    // start and end
-//    size_t start0, end0, start1, end1;
-//    
-//    // Fill shared memory
-//    
-//    // Get the start1 and end1 lengths to fill a block
-//    get_start_end(L1, N1_A, s1, &start1, &end1);
-//    // Fill shared_A with the rows of A
-//    if (i0<N0_C) {
-//        for (size_t n=start1; n<end1; n++) {
-//            shared_A[s0*N1_A+n]=A[i0*N1_A+n]; 
-//        }
-//    }   
-//    
-//    // Get the start0 and end0 lengths
-//    get_start_end(L0, N1_A, s0, &start0, &end0);
-//    // Fill the columns of shared with B
-//    if (i1<N1_C) {
-//        for (size_t n=start0; n<end0; n++) {
-//            shared_BT[s1*N1_A+n]=BT[i1*N1_A+n]; 
-//        }
-//    }
-//    
-//    // Enqueue a local barrier to make sure shared memory is filled
-//    barrier(CLK_LOCAL_MEM_FENCE);
-//    
-//    // Scratch variable
-//    float temp=0.0; 
-//    
-//    // Guard mechanism to make sure we do not go
-//    // outside the boundaries of matrix C
-//    if ((i0<N0_C) && (i1<N1_C)) {
-//        
-//        // Loop over columns of A and rows of B 
-//        for (size_t n=0; n<N1_A; n++) {
-//            
-//            // A is of size (N0_C, N1_A)
-//            // BT is of size (N1_C, N1_A)
-//            // C is of size (N0_C, N1_C)
-//            
-//            // Loop across row i0 of A
-//            // and down column i1 of B
-//            temp+=shared_A[s0*N1_A+n]*shared_BT[s1*N1_A+n]; 
-//        } 
-//        // Number of rows in C is same as number of rows in A
-//        C[i0*N1_C+i1]=temp;
-//    }
-//}
 
 // Local memory matrix multiply kernel 
 __kernel void transpose (__global float* src, 
