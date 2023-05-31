@@ -53,12 +53,12 @@ for exp, executable in experiments.items():
             label=f"{exp} ({d.upper()})[{i}]"
             cmds=f"{executable} -{d} {i}"
             if exp=="CLBlast":
-                inputSpec[label]=Exp(cmds, local0=np.arange(0,1,1), local1=np.arange(0,1,1))
+                inputSpec[label]=Exp(cmds, local0=2**(np.arange(0,1,1)), local1=2**(np.arange(0,1,1)))
             else:
                 inputSpec[label]=Exp(cmds)
                 
 # Special cases here
-inputSpec["CLBlast MD (GPU)"]=Exp("mat_mult_clblast_md.exe -gpu", local0=np.arange(0,1,1), local1=np.arange(0,1,1))
+inputSpec["CLBlast MD (GPU)"]=Exp("mat_mult_clblast_md.exe -gpu", local0=2**(np.arange(0,1,1)), local1=2**(np.arange(0,1,1)))
         
 ### Don't modify any more commands
        
@@ -67,6 +67,7 @@ results = {}
 # Now process all commands
 for label, spec in inputSpec.items():
     print(f"{label}, {spec.cmds}")
+    # Make and run an optimisation experiment
     temp=LocalOpt(
         cmds=spec.cmds, 
         local0=spec.local0,
@@ -74,8 +75,10 @@ for label, spec in inputSpec.items():
         local2=spec.local2)
     
     if temp.has_data:
+        # Results contains dictionary of timing results
         results[label]=temp.export_result()
 
+# Put all results here
 result_json=json.dumps(results)
 
 with open(output_file, "w") as fd:

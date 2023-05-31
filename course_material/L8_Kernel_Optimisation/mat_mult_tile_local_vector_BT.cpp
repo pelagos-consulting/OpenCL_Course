@@ -19,20 +19,23 @@ Written by Dr Toby M. Potter
 
 typedef cl_float float_type;
 
-void prep_mat_kernel(cl_kernel kernel, 
+cl_int prep_mat_kernel(cl_kernel kernel, 
                  size_t* local_size,
                  size_t* global_size,
                  size_t ndim,
                  void* data) {
                  
     size_t* nbytes_line=(size_t*)data;
+    
+    cl_int errcode=CL_SUCCESS;
 
     // Set shared memory in argument 3
     // Local size of shared_A is going to be (local_size[1], chunk_len)
-    H_ERRCHK(clSetKernelArg(kernel, 3, local_size[1]*(*nbytes_line), NULL));
+    errcode = errcode | clSetKernelArg(kernel, 3, local_size[1]*(*nbytes_line), NULL);
 
     // Local size of shared_B is going to be (local_size[0], chunk_len)
-    H_ERRCHK(clSetKernelArg(kernel, 4, local_size[0]*(*nbytes_line), NULL));                               
+    errcode = errcode | clSetKernelArg(kernel, 4, local_size[0]*(*nbytes_line), NULL);                               
+    return errcode;
 }
 
 int main(int argc, char** argv) {

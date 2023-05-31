@@ -724,7 +724,7 @@ cl_double h_run_kernel(
     size_t ndim,
     cl_bool profiling,
     // Function for prepping the kernel
-    void (*prep_kernel)(cl_kernel, size_t*, size_t*, size_t, void*),
+    cl_int (*prep_kernel)(cl_kernel, size_t*, size_t*, size_t, void*),
     void* prep_data
     ) {
     
@@ -739,13 +739,16 @@ cl_double h_run_kernel(
     // How much time did the kernel take?
     cl_double elapsed_msec=0.0;
     
+    // Errorcode for prep kernel
+    cl_int errcode_prep=CL_SUCCESS;
+    
     // Prepare the kernel for execution, setting arguments etc
     if (prep_kernel!=NULL) {
-        prep_kernel(kernel, local_size, new_global, ndim, prep_data);
+        errcode_prep = prep_kernel(kernel, local_size, new_global, ndim, prep_data);
     }
     
     // Enqueue the kernel
-    cl_int errcode = clEnqueueNDRangeKernel(
+    cl_int errcode_kernel = clEnqueueNDRangeKernel(
         command_queue,
         kernel,
         ndim,
@@ -757,7 +760,7 @@ cl_double h_run_kernel(
         &kernel_event);
     
     // Profiling information
-    if ((profiling==CL_TRUE) && (errcode==CL_SUCCESS)) {
+    if ((profiling==CL_TRUE) && (errcode_kernel==CL_SUCCESS) && (errcode_prep==CL_SUCCESS)) {
         elapsed_msec = h_get_event_time_ms(
             &kernel_event, 
             NULL, 
@@ -795,7 +798,7 @@ void h_optimise_local(
         // Number of times to run the kernel per experiment
         size_t nstats,
         double prior_times,
-        void (*prep_kernel)(cl_kernel, size_t*, size_t*, size_t, void*),
+        cl_int (*prep_kernel)(cl_kernel, size_t*, size_t*, size_t, void*),
         void* prep_data) {
     
     // Maximum number of dimensions permitted

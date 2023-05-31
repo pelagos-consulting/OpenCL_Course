@@ -19,7 +19,7 @@ Written by Dr Toby M. Potter
 
 typedef cl_float float_type;
 
-void prep_mat_kernel(cl_kernel kernel, 
+cl_int prep_mat_kernel(cl_kernel kernel, 
                  size_t* local_size,
                  size_t* global_size,
                  size_t ndim,
@@ -29,7 +29,7 @@ void prep_mat_kernel(cl_kernel kernel,
           
     // Set shared memory in argument 3
     // Local size is going to be (local_size[0], N1_A)
-    H_ERRCHK(clSetKernelArg(kernel, 3, local_size[0]*(*nbytes_line), NULL ));
+    return clSetKernelArg(kernel, 3, local_size[0]*(*nbytes_line), NULL);
 }
 
 int main(int argc, char** argv) {
