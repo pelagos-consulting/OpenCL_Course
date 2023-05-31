@@ -1,3 +1,5 @@
+# Set DEBUG=true to enable debugging
+# DEBUG=true
 
 # Include general environment variables
 include ../env

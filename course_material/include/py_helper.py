@@ -258,11 +258,24 @@ class TimingResults:
         ax.set_ylabel("Local size (dimension 0)")
         ax.set_title(f"{key} - (time ms)")
 
+        index0_min = np.where(result.local0==timings["L0_min"])[0]
+        index1_min = np.where(result.local1==timings["L1_min"])[0]
+        index2_min = np.where(result.local2==timings["L2_min"])[0]
+        
+        index0_max = np.where(result.local0==timings["L0_max"])[0]
+        index1_max = np.where(result.local1==timings["L1_max"])[0]
+        index2_max = np.where(result.local2==timings["L2_max"])[0]
+        
         # Put patches on minima and maxima
         min_patch = patches.Rectangle(
-            np.array([timings["L0_min"],timings["L1_min"]])-0.5,
-            1, 1, edgecolor="r", facecolor='none', linewidth=4)
+            np.array([index1_min,index0_min])-0.5,
+            1, 1, edgecolor="black", facecolor='none', linewidth=4)
         ax.add_patch(min_patch)
+        
+        max_patch = patches.Rectangle(
+            np.array([index1_max,index0_max])-0.5,
+            1, 1, edgecolor="white", facecolor='none', linewidth=4)
+        ax.add_patch(max_patch)
         
         # Put a color bar on the plot
         plt.colorbar(mappable=im, cax=cax)

@@ -490,6 +490,7 @@ void h_fit_global_size(const size_t* global_size, const size_t* local_size, size
     // Make sure global size is large enough
     for (int n=0; n<work_dim; n++) {
         assert(global_size[n]>0);
+        assert(local_size[n]>0);
         assert(global_size[n]>=local_size[n]);
         if ((global_size[n] % local_size[n]) > 0) {
             new_global[n] = ((global_size[n]/local_size[n])+1)*local_size[n];
@@ -897,8 +898,7 @@ void h_optimise_local(
                 // Run the experiment nstats times and get statistical information
                 // Command queue must have profiling enabled 
                 
-                // Run function pointer here
-                
+                // Run function pointer here 
                 for (int s=0; s<nstats; s++) {
                     experiment_msec[s] = h_run_kernel(
                         command_queue,
