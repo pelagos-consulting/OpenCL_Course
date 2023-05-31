@@ -240,7 +240,7 @@ int main(int argc, char** argv) {
     H_ERRCHK(clSetKernelArg(kernel_mat_mult, 5, sizeof(cl_uint), &N1_C));
     
     // Number of statistical runs to do per experiment 
-    size_t nstats = 3;
+    size_t nstats = NSTATS;
     
     // Desired local size
     local_size[0] = 16;

@@ -185,7 +185,7 @@ int main(int argc, char** argv) {
     size_t work_dim = 2;
     
     // Number of statistical runs to do per experiment 
-    size_t nstats = 3;
+    size_t nstats = NSTATS;
     
     // Desired local size
     size_t local_size[]={ 8, 8 };

@@ -389,7 +389,7 @@ int main(int argc, char** argv) {
     H_ERRCHK(clSetKernelArg(kernel_mat_mult, 8, sizeof(cl_uint), &end_chunk_id ));
 
     // Number of statistical runs per experiment
-    size_t nstats=3;
+    size_t nstats=NSTATS;
     
     // Find the optimal local size
     h_optimise_local(

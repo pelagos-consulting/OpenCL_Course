@@ -154,7 +154,7 @@ int main(int argc, char** argv) {
     cl_double* output_local = (cl_double*)malloc(nbytes_output);    
     
     // Run the experiment nstats times
-    const size_t nstats=10;
+    const size_t nstats=NSTATS;
     cl_double times_ms[nstats] = {0};
     cl_double time_ms=0.0;
     cl_double avg_time_ms=0.0;
