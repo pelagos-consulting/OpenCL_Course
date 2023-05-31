@@ -1,12 +1,12 @@
 // Example of a global variable
 #ifdef __opencl_c_program_scope_global_variables
 __global int a_g = 2; 
-__global float b_g[2] = {2.0,1.0}; 
+__global float b_g[2] = {2.0f,1.0f}; 
 #endif
 
 // Example of constant memory
-__constant float pi = 3.1415;
-__constant float coeffs[] = {1.0, -2.0, 1.0};
+__constant float pi = 3.1415f;
+__constant float coeffs[] = {1.0f, -2.0f, 1.0f};
 
 // Kernel function to get the start and end values
 // for filling a shared memory array
