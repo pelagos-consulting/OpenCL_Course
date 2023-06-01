@@ -183,7 +183,7 @@ __kernel void mat_mult_prefetch (__global float* A,
 }
 
 // Matrix multiply kernel that uses local memory for B
-__kernel void mat_mult_local (
+__kernel void mat_mult_local_B (
                         __global float* A, 
                         __global float* B, 
                         __global float* C,
@@ -252,7 +252,7 @@ __kernel void mat_mult_local (
     }
 }
 
-// Matrix multiply kernel that uses local memory for B
+// Matrix multiply kernel that uses local memory for A
 __kernel void mat_mult_local_A (
                         __global float* A, 
                         __global float* B, 

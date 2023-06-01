@@ -187,7 +187,7 @@ int main(int argc, char** argv) {
     size_t global_size[]={ N1_C, N0_C };
 
     // Create a kernel from the built program
-    cl_kernel kernel=clCreateKernel(program, "mat_mult_local", &errcode);
+    cl_kernel kernel=clCreateKernel(program, "mat_mult_local_B", &errcode);
     H_ERRCHK(errcode);
     
     // Set arguments to the kernel (not thread safe)
