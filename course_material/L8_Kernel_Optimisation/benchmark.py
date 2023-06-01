@@ -35,6 +35,7 @@ experiments = {
     "Single precision" : "mat_mult_float.exe",
     "Prefetch on A" : "mat_mult_prefetch.exe",
     "Local memory" : "mat_mult_local.exe",
+    "Local memory A" : "mat_mult_local_A.exe",
     "Transpose B" : "mat_mult_BT.exe",
     "Transpose A" : "mat_mult_AT.exe",
     "Tile BT" : "mat_mult_tile_BT.exe",

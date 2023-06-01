@@ -17,7 +17,8 @@ TARGETS=mat_mult_float.exe \
 		mat_mult_tile_local_BT.exe \
 		mat_mult_tile_local_vector_BT.exe \
 		mat_mult_clblast.exe \
-		mat_mult_clblast_md.exe
+		mat_mult_clblast_md.exe \
+		mat_mult_local_A.exe         
 
 all: $(TARGETS)
 

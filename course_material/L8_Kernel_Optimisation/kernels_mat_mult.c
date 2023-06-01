@@ -252,6 +252,75 @@ __kernel void mat_mult_local (
     }
 }
 
+// Matrix multiply kernel that uses local memory for B
+__kernel void mat_mult_local_A (
+                        __global float* A, 
+                        __global float* B, 
+                        __global float* C,
+                        __local  float* shared_A,
+                        unsigned int N1_A, 
+                        unsigned int N0_C,
+                        unsigned int N1_C) { 
+    
+    // A is of size (N0_C, N1_A)
+    // B is of size (N1_A, N1_C)
+    // shared_B is of size (L1, N1_A)
+    // C is of size (N0_C, N1_C)
+    
+    // i0 and i1 represent the coordinates in Matrix C 
+    // We assume row-major ordering for the matrices 
+    size_t i0=get_global_id(1); 
+    size_t i1=get_global_id(0); 
+    
+    // Location within the workgroup
+    size_t s0=get_local_id(1);
+    size_t s1=get_local_id(0);
+    
+    // Local size
+    size_t L0=get_local_size(1);
+    size_t L1=get_local_size(0);
+    
+    // start and end positions for the copy
+    size_t start, end;
+    
+    // Get the start and end lengths to fill array
+    get_start_end(L1, N1_A, s1, &start, &end);
+    
+    // Fill shared_A
+    if (i0<N0_C) {
+        for (size_t n=start; n<end; n++) {
+            shared_A[s0*N1_A+n]=A[i0*N1_A+n]; 
+        }   
+    }
+    
+    // Enqueue a local barrier to make sure all work items reach here
+    barrier(CLK_LOCAL_MEM_FENCE);
+    
+    // Scratch variable
+    float temp=0.0f; 
+    
+    // Guard mechanism to make sure we do not go
+    // outside the boundaries of matrix C
+    if ((i0<N0_C) && (i1<N1_C)) {
+        
+        // Loop over columns of A and rows of B 
+        for (size_t n=0; n<N1_A; n++) {
+            
+            // A is of size (N0_C, N1_A)
+            // B is of size (N1_A, N1_C)
+            // shared_B is of size (L1, N1_A)
+            // C is of size (N0_C, N1_C)
+            
+            // Loop across row s0 of shared_A
+            // and down column i1 of B
+            temp+=shared_A[s0*N1_A+n]*B[n*N1_C+i1];
+            
+        } 
+        // Number of rows in C is same as number of rows in A
+        C[i0*N1_C+i1]=temp;
+    }
+}
+
 // matrix multiply kernel with pre-fetching
 __kernel void mat_mult_BT (__global float* A, 
                         __global float* BT, 

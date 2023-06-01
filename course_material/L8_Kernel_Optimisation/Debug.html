@@ -14640,7 +14640,7 @@ CC -g -fopenmp -O2 -I../include mat_mult_clblast_md.cpp -o mat_mult_clblast_md.e
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[14]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[3]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
@@ -14681,10 +14681,10 @@ CC -g -fopenmp -O2 -I../include mat_mult_clblast_md.cpp -o mat_mult_clblast_md.e
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[18]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[4]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">"./mat_mult_clblast_md.exe"</span><span class="p">,</span> <span class="s2">"-gpu"</span><span class="p">])</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">"./mat_mult_local_A.exe"</span><span class="p">,</span> <span class="s2">"-gpu"</span><span class="p">])</span>
 <span class="n">mat_mul_float</span><span class="o">.</span><span class="n">load_data</span><span class="p">()</span>
 <span class="n">mat_mul_float</span><span class="o">.</span><span class="n">check_data</span><span class="p">()</span>
 </pre></div>
@@ -14713,11 +14713,7 @@ CC -g -fopenmp -O2 -I../include mat_mult_clblast_md.cpp -o mat_mult_clblast_md.e
 	    max buffer size: 456 MB
 	     max local size: (1024,1024,1024)
 	     max work-items: 256
-	               name: NVIDIA GeForce RTX 3060 Laptop GPU 
-	 global memory size: 6226 MB
-	    max buffer size: 1556 MB
-	     max local size: (1024,1024,64)
-	     max work-items: 1024
+Time for kernel was 19.619 ms
 Maximum error (infinity norm) is: 6.10352e-05
 </pre>
 </div>
