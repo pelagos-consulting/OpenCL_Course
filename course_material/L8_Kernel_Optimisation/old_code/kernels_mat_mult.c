@@ -25,6 +25,522 @@ void get_start_end(
     *end=min(*end,array_length);
 }    
 
+// Matrix multiply kernel that uses local memory
+__kernel void mat_mult_tile_BT (
+                        __global float* A_star, 
+                        __global float* BT_star, 
+                        __global float* C,
+                        unsigned int N1_A_star, 
+                        unsigned int N0_C,
+                        unsigned int N1_C,
+                        unsigned int chunk_len,
+                        unsigned int start_chunk_id,
+                        unsigned int end_chunk_id) { 
+    
+    // A_star is of size (N0_C, N1_A_star), (i0, n)
+    // BT_star is of size (N1_C, N1_A_star), (i1, n)
+    // C is of size (N0_C, N1_C), (i0, i1)
+    
+    // i1 and i2 represent the coordinates in Matrix C 
+    // We assume row-major ordering for the matrices 
+    size_t i1=min(get_global_id(0), (size_t)N1_C-1); // Fastest dimension
+    size_t i0=min(get_global_id(1), (size_t)N0_C-1); 
+
+    // Scratch variable to accumulate the sum
+    float temp1=0.0f, temp2=0.0f;
+
+    // Loop over the chunks
+    for (int chunk_id=start_chunk_id; chunk_id<end_chunk_id; chunk_id++) {
+
+        // Starting positions for the copy
+        __global float* A_star_i0 = &A_star[i0*N1_A_star+chunk_id*chunk_len];
+        __global float* BT_star_i1 = &BT_star[i1*N1_A_star+chunk_id*chunk_len];
+        
+        temp1=0.0f;
+        
+        // Loop over columns of A and rows of B 
+        for (size_t n=0; n<chunk_len; n++) {
+                
+            // Loop across row i0 of A
+            // and down column i1 of B
+            temp1+=A_star_i0[n]*BT_star_i1[n];
+        }
+        
+        temp2+=temp1;
+    }
+
+    // Put the accumulated value into position
+    C[i0*N1_C+i1]=temp2;
+}
+
+// Matrix multiply kernel that uses local memory
+__kernel void mat_mult_tile_vector_BT (
+                        __global float8* A_star, 
+                        __global float8* BT_star, 
+                        __global float* C,
+                        unsigned int N1_A_star, 
+                        unsigned int N0_C,
+                        unsigned int N1_C,
+                        unsigned int chunk_len,
+                        unsigned int start_chunk_id,
+                        unsigned int end_chunk_id) { 
+    
+    // A_star is of size (N0_C, N1_A_star), (i1, n)
+    // BT_star is of size (N1_C, N1_A_star), (i2, n)
+    // C is of size (N0_C, N1_C), (i0, i1)
+    
+    // i1 and i2 represent the coordinates in Matrix C 
+    // We assume row-major ordering for the matrices 
+    size_t i1=min(get_global_id(0), (size_t)N1_C-1); // Fastest dimension
+    size_t i0=min(get_global_id(1), (size_t)N0_C-1); 
+    
+    // Scratch variable to accumulate the sum
+    float8 temp1=(float8)0.0f, temp2=(float8)0.0f;
+
+    // Loop over the chunks
+    for (int chunk_id=start_chunk_id; chunk_id<end_chunk_id; chunk_id++) {
+
+        // Fetch local memory into shared_A_star and shared_B_star
+        
+        // Starting positions for the copy
+        __global float8* A_star_i0 = &A_star[i0*N1_A_star+chunk_id*chunk_len];
+        __global float8* BT_star_i1 = &BT_star[i1*N1_A_star+chunk_id*chunk_len];
+          
+        temp1=(float8)0.0f;
+
+        // Loop over the elements of a chunk 
+        for (size_t n=0; n<chunk_len; n++) {
+            temp1+=A_star_i0[n]*BT_star_i1[n];
+        }
+
+        // Accumulate the answer
+        temp2+=temp1;   
+    }
+
+    // Put the accumulated value into position
+    C[i0*N1_C+i1]=temp2.s0 + temp2.s1 + temp2.s2 + temp2.s3
+        + temp2.s4 + temp2.s5 + temp2.s6 + temp2.s7;
+}
+
+
+// Matrix multiply kernel that uses local memory
+__kernel void mat_mult_tile_AT (
+                        __global float* AT_star, 
+                        __global float* B_star, 
+                        __global float* C,
+                        unsigned int N1_A_star, 
+                        unsigned int N0_C,
+                        unsigned int N1_C,
+                        unsigned int chunk_len,
+                        unsigned int start_chunk_id,
+                        unsigned int end_chunk_id) { 
+    
+    // AT_star is of size (N1_A_star, N0_C), (n, i0)
+    // B_star is of size (N1_A_star, N1_C), (n, i1)
+    // C is of size (N0_C, N1_C), (i0, i1)
+    
+    // i1 and i2 represent the coordinates in Matrix C 
+    // We assume row-major ordering for the matrices 
+    size_t i1=min(get_global_id(0), (size_t)N1_C-1); // Fastest dimension
+    size_t i0=min(get_global_id(1), (size_t)N0_C-1); 
+
+    // Scratch variable to accumulate the sum
+    float temp1, temp2=0.0f;
+
+    // Loop over the chunks
+    for (int chunk_id=start_chunk_id; chunk_id<end_chunk_id; chunk_id++) {
+
+        // Starting positions for the copy
+        __global float* AT_star_i0 = &AT_star[chunk_id*chunk_len*N1_A_star+i0];
+        __global float* B_star_i1 = &B_star[chunk_id*chunk_len*N1_A_star+i1];
+        
+        temp1=0.0f;
+        
+        // Loop over columns of A and rows of B 
+        for (size_t n=0; n<chunk_len; n++) {
+                
+            // Loop across row i0 of A
+            // and down column i1 of B
+            temp1+=AT_star_i0[n*N1_A_star]*B_star_i1[n*N1_A_star];
+        }
+        
+        temp2+=temp1;
+    }
+
+    // Put the accumulated value into position
+    C[i0*N1_C+i1]=temp2;
+}
+
+// Matrix multiply kernel that uses local memory
+__kernel void mat_mult_tile_local_AT (
+                        __global float* AT, 
+                        __global float* B, 
+                        __global float* C,
+                        __local float* shared_AT,
+                        __local float* shared_B,
+                        unsigned int N1_A, 
+                        unsigned int N0_C,
+                        unsigned int N1_C,
+                        unsigned int nchunks,
+                        unsigned int chunk_len) { 
+    
+    // AT is of size (N0_C, N1_A)
+    // B is of size (N1_C, N1_A)
+    // C is of size (N0_C, N1_C) 
+
+    // i1 and i2 represent the coordinates in Matrix C 
+    // We assume row-major ordering for the matrices 
+    size_t i1=min(get_global_id(0), (size_t)N1_C-1); // Fastest dimension
+    size_t i0=min(get_global_id(1), (size_t)N0_C-1);
+
+    // Fetch local memory into shared_AT and shared_B
+    
+    // Index within local memory
+    size_t i0_AT = get_local_id(1); // Slowest dimension
+    size_t i0_B = get_local_id(0); // fastest dimension
+    
+    // Start and stop chunks    
+    size_t start_A, stop_A;
+    size_t start_B, stop_B;
+
+    // shared_AT is of size (L0, chunk_len) (s0, n)
+    // shared_B is of size (L1, chunk_len) (s1, n)
+    size_t L0 = get_local_size(1); // Slowest dimension
+    size_t L1 = get_local_size(0); // Fastest dimension
+
+    get_start_end(L1, chunk_len, i0_B, &start_A, &stop_A);
+    get_start_end(L0, chunk_len, i0_AT, &start_B, &stop_B);
+
+    // Scratch variable to accumulate the sum
+    float temp=0.0f;
+
+    for (size_t chunkId=0; chunkId<nchunks; chunkId++) {
+    
+        // Starting positions for the copy
+        __global float* AT_i0 = &AT[(chunkId*chunk_len)*N1_A+i0];
+        __global float* B_i1 = &B[(chunkId*chunk_len)*N1_A+i1];
+  
+        // Fill local memory
+        for (int n=start_A; n<stop_A; n++) {
+            shared_AT[i0_AT*chunk_len+n]=AT_i0[n*N1_A];
+        }
+
+        for (int n=start_B; n<stop_B; n++) {
+            shared_B[i0_B*chunk_len+n]=B_i1[n*N1_A];
+        }
+
+        // Enqueue a local barrier to ensure shared memory is filled
+        barrier(CLK_LOCAL_MEM_FENCE);
+
+        // Scratch variable to accumulate the chunk
+        float scratch=0.0f;
+
+        // Now perform the dot product 
+        for (int n=0; n<chunk_len; n++) {
+            scratch+=shared_AT[i0_AT*chunk_len+n]*shared_B[i0_B*chunk_len+n];
+        }
+
+        temp+=scratch;
+        
+        // Enqueue a local barrier to ensure shared memory is filled
+        barrier(CLK_LOCAL_MEM_FENCE);
+
+    }
+        
+    // Put the accumulated value into position
+    C[i0*N1_C+i1]=temp;
+}
+
+__kernel void mat_mult_tile_local_async_copy_AT (
+                        __global float* AT, 
+                        __global float* B, 
+                        __global float* C,
+                        __local float* shared_AT,
+                        __local float* shared_B,
+                        unsigned int N1_A, 
+                        unsigned int N0_C,
+                        unsigned int N1_C,
+                        unsigned int nchunks,
+                        unsigned int chunk_len) { 
+    
+    // AT is of size (N0_C, N1_A)
+    // B is of size (N1_C, N1_A)
+    // C is of size (N0_C, N1_C) 
+
+    // i1 and i0 represent the coordinates in Matrix C 
+    // We assume row-major ordering for the matrices 
+    size_t i1=min(get_global_id(0), (size_t)N1_C-1); // Fastest dimension
+    size_t i0=min(get_global_id(1), (size_t)N0_C-1);
+
+    // Fetch local memory into shared_AT and shared_B
+    
+    // Index within local memory
+    size_t s1 = get_local_id(0); // fastest dimension
+    size_t s0 = get_local_id(1); // Slowest dimension
+
+    // shared_AT is of size (L0, chunk_len) (s0, n)
+    // shared_B is of size (L1, chunk_len) (s1, n)
+    size_t L1 = get_local_size(0); // Fastest dimension
+    size_t L0 = get_local_size(1); // Slowest dimension
+
+    // Scratch variable to accumulate the sum
+    float temp=0.0f;
+
+    for (size_t chunkId=0; chunkId<nchunks; chunkId++) {
+    
+        event_t event=0;
+
+        // Copy from AT
+        for (int n=0; n<L0; n++) {
+            event = async_work_group_strided_copy(
+                &shared_AT[n*chunk_len],
+                &AT[(chunkId*chunk_len)*N1_A+i0-s0+n],
+                (size_t)chunk_len,
+                (size_t)N1_A,
+                event
+           );
+        }
+
+        // Copy from B
+        for (int n=0; n<L1; n++) {
+            event = async_work_group_strided_copy(
+                &shared_B[n*chunk_len],
+                &B[(chunkId*chunk_len)*N1_A+i1-s1+n],
+                (size_t)chunk_len,
+                (size_t)N1_A,
+                event
+            );
+        }
+
+        // Wait for the group event to finish
+        wait_group_events(1, &event);
+
+        // Scratch variable to accumulate the chunk
+        float scratch=0.0f;
+
+        // Now perform the dot product 
+        for (int n=0; n<chunk_len; n++) {
+            scratch+=shared_AT[s0*chunk_len+n]*shared_B[s1*chunk_len+n];
+        }
+
+        temp+=scratch;
+        
+        // Enqueue a local barrier to ensure shared memory is filled
+        barrier(CLK_LOCAL_MEM_FENCE);
+
+    }
+        
+    // Put the accumulated value into position
+    C[i0*N1_C+i1]=temp;
+}
+
+
+// Matrix multiply kernel that uses local memory
+__kernel void mat_mult_tile_local_BT (
+                        __global float* A_star, 
+                        __global float* BT_star, 
+                        __global float* C,
+                        __local float* shared_A_star,
+                        __local float* shared_BT_star,
+                        unsigned int N1_A_star, 
+                        unsigned int N0_C,
+                        unsigned int N1_C,
+                        unsigned int chunk_len,
+                        unsigned int start_chunk_id,
+                        unsigned int end_chunk_id) { 
+    
+    // A_star is of size (N0_C, N1_A_star), (i1, n)
+    // BT_star is of size (N1_C, N1_A_star), (i2, n)
+    // C is of size (N0_C, N1_C), (i0, i1)
+    
+    // i1 and i2 represent the coordinates in Matrix C 
+    // We assume row-major ordering for the matrices 
+    size_t i1=min(get_global_id(0), (size_t)N1_C-1); // Fastest dimension
+    size_t i0=min(get_global_id(1), (size_t)N0_C-1); 
+    
+    // shared_A_star is of size (L0, chunk_len) (s0, n)
+    // shared_B_star is of size (L1, chunk_len) (s1, n)
+    size_t L0 = get_local_size(1); // Slowest dimension
+    size_t L1 = get_local_size(0); // Fastest dimension
+    
+    // index within local memory
+    size_t s0 = get_local_id(1); // Slowest dimension
+    size_t s1 = get_local_id(0); // fastest dimension
+    
+    __local float* shared_A_star_s0 = &shared_A_star[s0*chunk_len];
+    __local float* shared_BT_star_s1 = &shared_BT_star[s1*chunk_len];
+
+    // Scratch variable to accumulate the sum
+    float temp1=0.0f, temp2=0.0f;
+
+    // Start and end positions
+    size_t start0, end0, start1, end1;
+    get_start_end(L1, chunk_len, s1, &start1, &end1);
+    get_start_end(L0, chunk_len, s0, &start0, &end0);
+
+    // Loop over the chunks
+    for (int chunk_id=start_chunk_id; chunk_id<end_chunk_id; chunk_id++) {
+
+        // Fetch local memory into shared_A_star and shared_B_star
+        
+        // Starting positions for the copy
+        __global float* A_star_i0 = &A_star[i0*N1_A_star+chunk_id*chunk_len];
+        __global float* BT_star_i1 = &BT_star[i1*N1_A_star+chunk_id*chunk_len];
+          
+        // Fill the rows of shared_A_star and shared_B_star
+        // From row i1 of A_star
+        for (int n = start1; n<end1; n++) {
+            shared_A_star_s0[n] = A_star_i0[n];
+        }
+        
+        // From row i2 of B_star
+        for (int n = start0; n<end0; n++) {
+            shared_BT_star_s1[n] = BT_star_i1[n];
+        }
+              
+        // Enqueue a local barrier to ensure shared memory is filled
+        barrier(CLK_LOCAL_MEM_FENCE);
+        
+        temp1=0.0f;
+
+        // Loop over columns of A and rows of B 
+        for (size_t n=0; n<chunk_len; n++) {
+                
+            // Loop across row i0 of A
+            // and down column i1 of B
+            temp1+=shared_A_star_s0[n]*shared_BT_star_s1[n];
+        }
+
+        temp2+=temp1;
+        
+        // Enqueue a local barrier to ensure all work items 
+        // are ready for the next tile
+        barrier(CLK_LOCAL_MEM_FENCE);
+    }
+
+    // Put the accumulated value into position
+    C[i0*N1_C+i1]=temp2;
+}
+
+
+
+
+// Matrix multiply kernel that uses local memory
+__kernel void mat_mult_tile_local_vector_BT (
+                        __global float8* A_star, 
+                        __global float8* BT_star, 
+                        __global float* C,
+                        __local float8* shared_A_star,
+                        __local float8* shared_BT_star,
+                        unsigned int N1_A_star, 
+                        unsigned int N0_C,
+                        unsigned int N1_C,
+                        unsigned int chunk_len,
+                        unsigned int start_chunk_id,
+                        unsigned int end_chunk_id) { 
+    
+    // A_star is of size (N0_C, N1_A_star), (i1, n)
+    // BT_star is of size (N1_C, N1_A_star), (i2, n)
+    // C is of size (N0_C, N1_C), (i0, i1)
+    
+    // i1 and i2 represent the coordinates in Matrix C 
+    // We assume row-major ordering for the matrices 
+    size_t i1=min(get_global_id(0), (size_t)N1_C-1); // Fastest dimension
+    size_t i0=min(get_global_id(1), (size_t)N0_C-1); 
+    
+    // shared_A_star is of size (L0, chunk_len) (s0, n)
+    // shared_B_star is of size (L1, chunk_len) (s1, n)
+    size_t L0 = get_local_size(1); // Slowest dimension
+    size_t L1 = get_local_size(0); // Fastest dimension
+    
+    // index within local memory
+    size_t s0 = get_local_id(1); // Slowest dimension
+    size_t s1 = get_local_id(0); // fastest dimension
+    
+    __local float8* shared_A_star_s0 = &shared_A_star[s0*chunk_len];
+    __local float8* shared_BT_star_s1 = &shared_BT_star[s1*chunk_len];
+
+    // Scratch variable to accumulate the sum
+    float8 temp1=(float8)0.0f, temp2=(float8)0.0f;
+
+    // Start and end positions to copy within a chunk
+    size_t start0, end0, start1, end1;
+    get_start_end(L1, chunk_len, s1, &start1, &end1);
+    get_start_end(L0, chunk_len, s0, &start0, &end0);
+
+    // Loop over the chunks
+    for (int chunk_id=start_chunk_id; chunk_id<end_chunk_id; chunk_id++) {
+
+        // Fetch local memory into shared_A_star and shared_B_star
+        
+        // Starting positions for the copy
+        __global float8* A_star_i0 = &A_star[i0*N1_A_star+chunk_id*chunk_len];
+        __global float8* BT_star_i1 = &BT_star[i1*N1_A_star+chunk_id*chunk_len];
+          
+        // Fill the rows of shared_A_star and shared_B_star
+        // From row i1 of A_star
+        for (int n = start1; n<end1; n++) {
+            shared_A_star_s0[n] = A_star_i0[n];
+        }
+        
+        // From row i2 of B_star
+        for (int n = start0; n<end0; n++) {
+            shared_BT_star_s1[n] = BT_star_i1[n];
+        }
+              
+        // Enqueue a local barrier to ensure shared memory is filled
+        barrier(CLK_LOCAL_MEM_FENCE);
+        
+        temp1=(float8)0.0f;
+
+        // Loop over columns of A and rows of B 
+        for (size_t n=0; n<chunk_len; n++) {
+                
+            // Loop across row i0 of A
+            // and down column i1 of B
+            temp1+=shared_A_star_s0[n]*shared_BT_star_s1[n];
+        }
+
+        temp2+=temp1;
+        
+        // Enqueue a local barrier to ensure all work items 
+        // are ready for the next tile
+        barrier(CLK_LOCAL_MEM_FENCE);
+    }
+
+    // Put the accumulated value into position
+    C[i0*N1_C+i1]=temp2.s0 + temp2.s1 + temp2.s2 + temp2.s3
+        + temp2.s4 + temp2.s5 + temp2.s6 + temp2.s7;
+}
+
+
+__kernel void c_star_stack (
+                        __global float* C_star,
+                        __global float* C,
+                        unsigned int nchunks, 
+                        unsigned int N0_C,
+                        unsigned int N1_C) {    
+
+    // C_star is of size (nchunks, N0_C, N1_C) (n, i0, i1)
+    // C is of size (N0_C, N1_C) (i0, i1)
+    size_t i0=min(get_global_id(1), (size_t)N0_C-1); // Slowest dimension
+    size_t i1=min(get_global_id(0), (size_t)N1_C-1); // Fastest dimension
+    
+    // Temporary storage
+    float temp=0.0f;
+    
+    __global float* C_i0 = &C_star[i0*N1_C+i1];
+
+    // It's weird but it's fast
+    for (int n=0; n<nchunks; n++) {
+        temp+=C_i0[n*N0_C*N1_C];
+    }
+    
+    // Place the accumulated sum into position
+    C[i0*N1_C+i1]=temp;
+}
+
+
 // standard matrix multiply kernel 
 __kernel void mat_mult_double (
                         __global double* A, 

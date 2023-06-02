@@ -14627,7 +14627,7 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[42]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[55]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
@@ -14667,11 +14667,11 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[52]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[64]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#local_opt=py_helper.LocalOpt(cmds=["./mat_mult_local_A.exe", "-cpu", "0"])</span>
-<span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">"./mat_mult_tile_local_A_vector.exe"</span><span class="p">,</span> <span class="s2">"-cpu"</span><span class="p">,</span> <span class="s2">"0"</span><span class="p">])</span>
+<span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">"./mat_mult_tile_local_AB_vector.exe"</span><span class="p">,</span> <span class="s2">"-cpu"</span><span class="p">,</span> <span class="s2">"0"</span><span class="p">])</span>
 
 <span class="n">mat_mul_float</span><span class="o">.</span><span class="n">load_data</span><span class="p">()</span>
 <span class="n">mat_mul_float</span><span class="o">.</span><span class="n">check_data</span><span class="p">()</span>
@@ -14702,7 +14702,7 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 	     max local size: (8192,8192,8192)
 	     max work-items: 8192
 Cache line size is 64 bytes
-Time for kernel was 45.360 ms
+Time for kernel was 9.132 ms
 Maximum error (infinity norm) is: 0.000427246
 </pre>
 </div>

@@ -19,6 +19,128 @@ Written by Dr Toby M. Potter
 
 typedef cl_float float_type;
 
+const char* kernel_source = R"(
+
+// Kernel function to get the start and end values
+// for filling a shared memory array
+void get_start_end(
+    // Number of work-items along a dimension of workgroup
+    size_t local_length,
+    // Number of items in the array
+    size_t array_length,
+    // Index of work item along dimension of workgroup
+    size_t local_index,
+    // Starting position of the copy
+    size_t *start,
+    // End position of the copy
+    size_t *end) {
+  
+    // Work out the jump size
+    size_t jump_size=array_length/local_length;
+    if (array_length%local_length) jump_size++;
+    
+    // Starting position for the copy
+    *start=local_index*jump_size;
+    // End position for the copy
+    *end=(local_index+1)*jump_size;
+    // Limit end so we don't go off the end
+    *end=min(*end,array_length);
+} 
+
+// Matrix multiply kernel that uses local memory
+__kernel void mat_mult_tile_local_B_vector (
+                        __global float* A_star, 
+                        __global float* B_star, 
+                        __global float* C,
+                        __local float8* shared_B_star,
+                        unsigned int N1_A_star, 
+                        unsigned int N0_C,
+                        unsigned int N1_C,
+                        unsigned int chunk_len,
+                        unsigned int start_chunk_id,
+                        unsigned int end_chunk_id) { 
+
+    // Remember that stride for shared arrays is chunk_len_v
+    size_t vector_len = 8;
+    size_t chunk_len_v = chunk_len / vector_len;
+    
+    // A_star is of size (N0_C, N1_A_star), (i0, n)
+    // B_star is of size (N1_A_star, N1_C), (n, i1)
+    // C is of size (N0_C, N1_C), (i0, i1)
+    
+    // i1 and i2 represent the coordinates in Matrix C 
+    // We assume row-major ordering for the matrices 
+    size_t i1=min(get_global_id(0), (size_t)N1_C-1); // Fastest dimension
+    size_t i0=min(get_global_id(1), (size_t)N0_C-1); 
+    
+    // shared_A_star is of size (L0, chunk_len) (s0, n)
+    // shared_B_star is of size (L1, chunk_len) (s1, n)
+    size_t L0 = get_local_size(1); // Slowest dimension
+    size_t L1 = get_local_size(0); // Fastest dimension
+    
+    // index within local memory
+    size_t s0 = get_local_id(1); // Slowest dimension
+    size_t s1 = get_local_id(0); // fastest dimension
+    
+    // Positions within shared memory
+    __local float8* shared_B_star_s1 = &shared_B_star[s1*chunk_len_v];
+
+    // Scratch variable to accumulate the sum
+    float8 temp=(float8)0.0f, scratch=(float8)0.0f;
+    size_t offset=0;
+
+    // Start and end positions to copy within a chunk
+    size_t start0, end0;
+    get_start_end(L0, chunk_len_v, s0, &start0, &end0);
+
+    // Loop over the chunks
+    for (int chunk_id=start_chunk_id; chunk_id<end_chunk_id; chunk_id++) {
+
+        // Fetch local memory into shared_A_star and shared_B_star
+        
+        // Starting positions for the copy
+        __global float* A_star_i0 = &A_star[i0*N1_A_star+chunk_id*chunk_len];
+        __global float* B_star_i1 = &B_star[chunk_id*chunk_len*N1_C+i1];
+          
+        // Fill shared_B_star
+        
+        // Copy from column i1 of B_star into shared memory 
+        for (size_t n = start0; n<end0; n++) {
+            offset=n*vector_len*N1_C;
+            scratch.s0 = B_star_i1[offset+0*N1_C];
+            scratch.s1 = B_star_i1[offset+1*N1_C];
+            scratch.s2 = B_star_i1[offset+2*N1_C];
+            scratch.s3 = B_star_i1[offset+3*N1_C];            
+            scratch.s4 = B_star_i1[offset+4*N1_C];
+            scratch.s5 = B_star_i1[offset+5*N1_C];
+            scratch.s6 = B_star_i1[offset+6*N1_C];
+            scratch.s7 = B_star_i1[offset+7*N1_C];             
+            shared_B_star_s1[n] = scratch;
+        }
+              
+        // Enqueue a local barrier to ensure shared memory is filled
+        barrier(CLK_LOCAL_MEM_FENCE);
+        
+        // Perform the dot product 
+        for (size_t n=0; n<chunk_len_v; n++) {
+                
+            // Loop across row i0 of A
+            // and down column i1 of B
+            scratch = vload8(n, A_star_i0);
+            temp+=scratch*shared_B_star_s1[n];
+        }
+        
+        // Enqueue a local barrier to ensure all work items 
+        // are ready to tackle the next tile
+        barrier(CLK_LOCAL_MEM_FENCE);
+    }
+
+    // Put the accumulated value into position
+    C[i0*N1_C+i1]=temp.s0 + temp.s1 + temp.s2 + temp.s3
+        + temp.s4 + temp.s5 + temp.s6 + temp.s7;
+}
+)";
+
 cl_int prep_mat_kernel(cl_kernel kernel, 
                  size_t* local_size,
                  size_t* global_size,
@@ -316,13 +438,6 @@ int main(int argc, char** argv) {
     );
 
     //// Step 6. Build the program from source for the chosen compute device ////
-    
-    // Now specify the kernel source and read it in
-    size_t nbytes_src = 0;
-    const char* kernel_source = (const char*)h_read_binary(
-        "kernels_mat_mult.c", 
-        &nbytes_src
-    );
 
     // Turn this source code into a program
     cl_program program = h_build_program(kernel_source, context, device, NULL);
