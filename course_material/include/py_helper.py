@@ -245,7 +245,7 @@ class TimingResults:
                 
         im = ax.imshow(value[...,0], vmin=min_data, vmax=max_data, origin="lower")
         #ax.contour(value, 20, origin="lower")
-                
+        
         divider = make_axes_locatable(ax)
         cax = divider.append_axes("right", size="5%", pad=0.1)
 
@@ -283,7 +283,7 @@ class TimingResults:
         fig.tight_layout()
         plt.show()
         
-    def plot_results(self, highlight_key=None):
+    def plot_results(self, highlight_key=None, sort=False):
         """Plot the collection of results, separate out the CPU and GPU results"""
         if len(self.results)>0:
             
@@ -330,8 +330,11 @@ class TimingResults:
             for n, data in enumerate([cpu_data, gpu_data]):
                 if data.num_items()>0:
                     
-                    # Sort in descending order
-                    sort_indices = (np.argsort(data.speedups))[::-1]
+                    if (sort):
+                        # Sort in descending order
+                        sort_indices = (np.argsort(data.speedups))[::-1]
+                    else:
+                        sort_indices = np.int32(np.arange(0,len(data.labels)))
                     
                     ax[n].barh(np.array(data.labels)[sort_indices], 
                                np.array(data.speedups)[sort_indices], 
