@@ -32,9 +32,7 @@ cl_int prep_mat_kernel(cl_kernel kernel,
     // Set shared memory in argument 3
     // Local size of shared_A is going to be (local_size[1], chunk_len)
     errcode = errcode | clSetKernelArg(kernel, 3, local_size[1]*(*nbytes_line), NULL);
-
-    // Local size of shared_B is going to be (local_size[0], chunk_len)
-    errcode = errcode | clSetKernelArg(kernel, 4, local_size[0]*(*nbytes_line), NULL);                               
+                             
     return errcode;
 }
 
@@ -154,8 +152,14 @@ int main(int argc, char** argv) {
         
     //// Step 5. Allocate OpenCL Buffers for matrices A, B, and C ////
     
+    // Number of elements in the vector
+    cl_uint vector_len = 8;
+    
     // Number of elements we are going to use in a vector
-    cl_uint chunk_len = 4*cache_line_bytes/sizeof(float_type);
+    cl_uint chunk_len = vector_len*cache_line_bytes/sizeof(float_type);
+    
+    // Revised chunk length as the least common multiple of the two
+    chunk_len = h_lcm(chunk_len, vector_len);
 
     // Integer (floored) number of vectors along axis of length N1_A
     cl_uint nchunks = N1_A/chunk_len;
@@ -339,7 +343,7 @@ int main(int argc, char** argv) {
     // Create the matrix multiplication kernel
     cl_kernel kernel_mat_mult=clCreateKernel(
         program, 
-        "mat_mult_tile_local", 
+        "mat_mult_tile_local_A_vector", 
         &errcode
     );
     H_ERRCHK(errcode);
@@ -363,13 +367,12 @@ int main(int argc, char** argv) {
         &prep_data
     );
     
-    // Set kernel arguments
-    H_ERRCHK(clSetKernelArg(kernel_mat_mult, 5, sizeof(cl_uint), &N1_A_star ));
-    H_ERRCHK(clSetKernelArg(kernel_mat_mult, 6, sizeof(cl_uint), &N0_C ));
-    H_ERRCHK(clSetKernelArg(kernel_mat_mult, 7, sizeof(cl_uint), &N1_C ));
-    H_ERRCHK(clSetKernelArg(kernel_mat_mult, 8, sizeof(cl_uint), &chunk_len ));
-    H_ERRCHK(clSetKernelArg(kernel_mat_mult, 9, sizeof(cl_uint), &start_chunk_id ));
-    H_ERRCHK(clSetKernelArg(kernel_mat_mult, 10, sizeof(cl_uint), &end_chunk_id ));
+    H_ERRCHK(clSetKernelArg(kernel_mat_mult, 4, sizeof(cl_uint), &N1_A_star ));
+    H_ERRCHK(clSetKernelArg(kernel_mat_mult, 5, sizeof(cl_uint), &N0_C ));
+    H_ERRCHK(clSetKernelArg(kernel_mat_mult, 6, sizeof(cl_uint), &N1_C ));
+    H_ERRCHK(clSetKernelArg(kernel_mat_mult, 7, sizeof(cl_uint), &chunk_len ));
+    H_ERRCHK(clSetKernelArg(kernel_mat_mult, 8, sizeof(cl_uint), &start_chunk_id ));
+    H_ERRCHK(clSetKernelArg(kernel_mat_mult, 9, sizeof(cl_uint), &end_chunk_id ));
 
     // Number of statistical runs per experiment
     size_t nstats=NSTATS;
