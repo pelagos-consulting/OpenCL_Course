@@ -12,6 +12,8 @@ TARGETS=mat_mult_float.exe \
 		mat_mult_local_B.exe \
 		mat_mult_AT.exe \
 		mat_mult_BT.exe \
+		mat_mult_tile_local.exe \
+		mat_mult_tile_local_vector.exe \
 		mat_mult_tile_AT.exe \
 	   	mat_mult_tile_BT.exe \
 		mat_mult_tile_vector_BT.exe \

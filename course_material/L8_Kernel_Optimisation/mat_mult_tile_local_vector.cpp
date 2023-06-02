@@ -154,8 +154,14 @@ int main(int argc, char** argv) {
         
     //// Step 5. Allocate OpenCL Buffers for matrices A, B, and C ////
     
+    // Number of elements in the vector
+    cl_uint vector_len = 8;
+    
     // Number of elements we are going to use in a vector
-    cl_uint chunk_len = 4*cache_line_bytes/sizeof(float_type);
+    cl_uint chunk_len = vector_len*cache_line_bytes/sizeof(float_type);
+    
+    // Revised chunk length as the least common multiple of the two
+    chunk_len = h_lcm(chunk_len, vector_len);
 
     // Integer (floored) number of vectors along axis of length N1_A
     cl_uint nchunks = N1_A/chunk_len;
@@ -339,7 +345,7 @@ int main(int argc, char** argv) {
     // Create the matrix multiplication kernel
     cl_kernel kernel_mat_mult=clCreateKernel(
         program, 
-        "mat_mult_tile_local", 
+        "mat_mult_tile_local_vector", 
         &errcode
     );
     H_ERRCHK(errcode);
@@ -363,7 +369,6 @@ int main(int argc, char** argv) {
         &prep_data
     );
     
-    // Set kernel arguments
     H_ERRCHK(clSetKernelArg(kernel_mat_mult, 5, sizeof(cl_uint), &N1_A_star ));
     H_ERRCHK(clSetKernelArg(kernel_mat_mult, 6, sizeof(cl_uint), &N0_C ));
     H_ERRCHK(clSetKernelArg(kernel_mat_mult, 7, sizeof(cl_uint), &N1_C ));

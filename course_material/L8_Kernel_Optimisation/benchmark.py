@@ -38,12 +38,15 @@ experiments = {
     "Local shared B" : "mat_mult_local_B.exe",
     "Transpose B" : "mat_mult_BT.exe",
     "Transpose A" : "mat_mult_AT.exe",
-    "Tile BT" : "mat_mult_tile_BT.exe",
-    "Tile AT" : "mat_mult_tile_AT.exe",
-    "Tile local BT" : "mat_mult_tile_local_BT.exe",
-    "Tile vector BT" : "mat_mult_tile_vector_BT.exe",
-    "Tile local vector BT" : "mat_mult_tile_local_vector_BT.exe",
+    "Tile shared AB" : "mat_mult_tile_local.exe",
+    "Tile shared AB vector" : "mat_mult_tile_local_vector.exe",
     "CLBlast" : "mat_mult_clblast.exe"
+    #"Tile BT" : "mat_mult_tile_BT.exe",
+    #"Tile AT" : "mat_mult_tile_AT.exe",
+    #"Tile local BT" : "mat_mult_tile_local_BT.exe",
+    #"Tile vector BT" : "mat_mult_tile_vector_BT.exe",
+    #"Tile local vector BT" : "mat_mult_tile_local_vector_BT.exe",
+
 }
 
 # Make up the input specification
