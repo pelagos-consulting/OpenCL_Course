@@ -179,11 +179,9 @@ int main(int argc, char** argv) {
 
     // Loop over experiments
     for (int n=0; n<nstats; n++) {
-        // Start the clock
-        auto t1 = std::chrono::high_resolution_clock::now();
         
         // Loop over domains using dynamic scheduling
-        #pragma omp parallel for shared(command_queues, As_d, Bs_d, Cs_d, C_h, D0, D1, N0_C, N1_C, L0, L1, nbytes_C, t1, kernel_times) default(none) schedule(dynamic,1)  
+        #pragma omp parallel for shared(command_queues, As_d, Bs_d, Cs_d, C_h, D0, D1, N0_C, N1_C, L0, L1, nbytes_C, kernel_times) default(none) schedule(dynamic,1)  
         for (int d=0; d<D0*D1; d++) {
         
             // A is of size (m, k)
@@ -212,6 +210,9 @@ int main(int argc, char** argv) {
             size_t offset_B = start1;
             size_t offset_C = start0*NCOLS_C+start1;
         
+            // Start the clock
+            auto t1 = std::chrono::high_resolution_clock::now();
+            
             // Event for the kernel
             cl_event kernel_event;
         
