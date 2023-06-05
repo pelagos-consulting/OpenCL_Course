@@ -86,16 +86,14 @@ int main(int argc, char** argv) {
     // Report on the device in use
     h_report_on_device(device);
     
-    // We are going to do a simple array multiplication for this example, 
-    // using raw binary files for input and output
-    size_t nbytes_U;
+    // Construct the velocity array
+    size_t nbytes_U=N0*N1*sizeof(float_type);
+    float_type* array_V = (float_type*)h_alloc(nbytes_U);
     
-    // Read in the velocity from disk and find the maximum
-    float_type* array_V = (float_type*)h_read_binary("array_V.dat", &nbytes_U);
-    assert(nbytes_U==N0*N1*sizeof(float_type));
-    float_type Vmax = 0.0;
+    // Fill velocity grid
+    float_type Vmax = VEL;
     for (size_t i=0; i<N0*N1; i++) {
-        Vmax = (array_V[i]>Vmax) ? array_V[i] : Vmax;
+        array_V[i] = Vmax;
     }
 
     // Make up the timestep using maximum velocity
@@ -120,7 +118,7 @@ int main(int argc, char** argv) {
         (void*)array_V, 
         &errcode
     );
-    h_errchk(errcode, "Creating buffer_V");
+    H_ERRCHK(errcode);
     
     // Create scratch buffers for the computation
     cl_mem buffers_U[nscratch];
@@ -132,11 +130,11 @@ int main(int argc, char** argv) {
             NULL, 
             &errcode
         );
-        h_errchk(errcode, "Creating scratch buffer.");
+        H_ERRCHK(errcode);
         
         // Zero out buffers
         float_type zero=0.0f;
-        h_errchk(
+        H_ERRCHK(
             clEnqueueFillBuffer(
                 compute_queue,
                 buffers_U[n],
@@ -147,8 +145,7 @@ int main(int argc, char** argv) {
                 0,
                 NULL,
                 NULL
-            ),
-            "Filling buffer with zeroes."
+            )
         );
     }
     
@@ -164,7 +161,7 @@ int main(int argc, char** argv) {
         
     // Create a kernel from the built program
     cl_kernel kernel=clCreateKernel(program, "wave2d_4o", &errcode);
-    h_errchk(errcode, "Creating wave2d_4o Kernel");
+    H_ERRCHK(errcode);
 
     // Set up arguments for the kernel
     cl_uint N0_k=N0, N1_k=N1;
@@ -189,38 +186,14 @@ int main(int argc, char** argv) {
     cl_uint P1=N1/2;
     
     // Set arguments to the kernel (not thread safe)
-    h_errchk(
-        clSetKernelArg(kernel, 3, sizeof(cl_mem), &buffer_V ),
-        "setting kernel argument 3"
-    );
-    h_errchk(
-        clSetKernelArg(kernel, 4, sizeof(cl_uint), &N0_k ),
-        "setting kernel argument 4"
-    );
-    h_errchk(
-        clSetKernelArg(kernel, 5, sizeof(cl_uint), &N1_k ),
-        "setting kernel argument 5"
-    );
-    h_errchk(
-        clSetKernelArg(kernel, 6, sizeof(cl_float), &dt2 ),
-        "setting kernel argument 6"
-    );
-    h_errchk(
-        clSetKernelArg(kernel, 7, sizeof(cl_float), &inv_dx02 ),
-        "setting kernel argument 7"
-    );
-    h_errchk(
-        clSetKernelArg(kernel, 8, sizeof(cl_float), &inv_dx12 ),
-        "setting kernel argument 8"
-    );
-    h_errchk(
-        clSetKernelArg(kernel, 9, sizeof(cl_uint), &P0 ),
-        "setting kernel argument 9"
-    );
-    h_errchk(
-        clSetKernelArg(kernel, 10, sizeof(cl_uint), &P1 ),
-        "setting kernel argument 10"
-    );
+    H_ERRCHK(clSetKernelArg(kernel, 3, sizeof(cl_mem), &buffer_V ));
+    H_ERRCHK(clSetKernelArg(kernel, 4, sizeof(cl_uint), &N0_k ));
+    H_ERRCHK(clSetKernelArg(kernel, 5, sizeof(cl_uint), &N1_k ));
+    H_ERRCHK(clSetKernelArg(kernel, 6, sizeof(cl_float), &dt2 ));
+    H_ERRCHK(clSetKernelArg(kernel, 7, sizeof(cl_float), &inv_dx02 ));
+    H_ERRCHK(clSetKernelArg(kernel, 8, sizeof(cl_float), &inv_dx12 ));
+    H_ERRCHK(clSetKernelArg(kernel, 9, sizeof(cl_uint), &P0 ));
+    H_ERRCHK(clSetKernelArg(kernel, 10, sizeof(cl_uint), &P1 ));
     
     // Number of dimensions in the kernel
     size_t work_dim=2;
@@ -249,25 +222,13 @@ int main(int argc, char** argv) {
         pi2fm2t2 = pi*pi*fm*fm*t*t;
         
         // Set kernel arguments
-        h_errchk(
-            clSetKernelArg(kernel, 0, sizeof(cl_mem), &U0 ),
-            "setting kernel argument 0"
-        );
-        h_errchk(
-            clSetKernelArg(kernel, 1, sizeof(cl_mem), &U1 ),
-            "setting kernel argument 1"
-        );
-        h_errchk(
-            clSetKernelArg(kernel, 2, sizeof(cl_mem), &U2 ),
-            "setting kernel argument 2"
-        );
-        h_errchk(
-            clSetKernelArg(kernel, 11, sizeof(cl_float), &pi2fm2t2 ),
-            "setting kernel argument 11"
-        );
+        H_ERRCHK(clSetKernelArg(kernel, 0, sizeof(cl_mem), &U0 ));
+        H_ERRCHK(clSetKernelArg(kernel, 1, sizeof(cl_mem), &U1 ));
+        H_ERRCHK(clSetKernelArg(kernel, 2, sizeof(cl_mem), &U2 ));
+        H_ERRCHK(clSetKernelArg(kernel, 11, sizeof(cl_float), &pi2fm2t2 ));
         
         // Enqueue the wave solver    
-        h_errchk(
+        H_ERRCHK(
             clEnqueueNDRangeKernel(
                 compute_queue,
                 kernel,
@@ -277,12 +238,12 @@ int main(int argc, char** argv) {
                 local_size,
                 0,
                 NULL,
-                NULL), 
-            "Running the kernel"
+                NULL
+            ) 
         );
           
         // Read memory from the buffer to the host in an asynchronous manner
-        h_errchk(
+        H_ERRCHK(
             clEnqueueReadBuffer(
                 compute_queue,
                 buffers_U[n%nscratch],
@@ -292,35 +253,26 @@ int main(int argc, char** argv) {
                 &array_out[n*N0*N1],
                 0,
                 NULL,
-                NULL), 
-            "Asynchronous copy from U2 on device to host"
+                NULL
+            ) 
         );
     }
 
     // Make sure all work is done
-    h_errchk(
-        clFinish(compute_queue),
-        "Finishing the compute queue."
-    );
+    H_ERRCHK(clFinish(compute_queue));
     
     // Stop the clock
     auto t2 = std::chrono::high_resolution_clock::now();    
     cl_double time_ms = (cl_double)std::chrono::duration_cast<std::chrono::microseconds>(t2-t1).count()/1000.0;
-    printf("The synchronous calculation took %d milliseconds.\n", time_ms);
+    printf("The synchronous calculation took %.0f milliseconds.\n", time_ms);
     
     // Write out the result to file
     h_write_binary(array_out, "array_out.dat", nbytes_out);
 
     // Free the OpenCL buffers
-    h_errchk(
-        clReleaseMemObject(buffer_V),
-        "releasing buffer V"
-    );
+    H_ERRCHK(clReleaseMemObject(buffer_V));
     for (int n=0; n<nscratch; n++) {
-        h_errchk(
-            clReleaseMemObject(buffers_U[n]),
-            "Releasing scratch buffer"
-        );
+        H_ERRCHK(clReleaseMemObject(buffers_U[n]));
     }
     
     // Clean up memory that was allocated on the read   

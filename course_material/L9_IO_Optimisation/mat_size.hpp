@@ -7,5 +7,8 @@
 #define D0 1.0
 #define D1 1.0
 
+// Velocity to fill the box with
+#define VEL 343.0
+
 // Courant number for stability
 #define CFL 0.4
