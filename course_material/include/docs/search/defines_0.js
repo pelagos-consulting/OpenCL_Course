@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['cl_5ftarget_5fopencl_5fversion_210',['CL_TARGET_OPENCL_VERSION',['../cl__helper_8hpp.html#a5990dea19d4ccb046a3d81b311457add',1,'cl_helper.hpp']]]
+  ['cl_5ftarget_5fopencl_5fversion_100',['CL_TARGET_OPENCL_VERSION',['../cl__helper_8hpp.html#a5990dea19d4ccb046a3d81b311457add',1,'cl_helper.hpp']]]
 ];

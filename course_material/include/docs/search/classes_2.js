@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['hadamard_163',['Hadamard',['../classpy__helper_1_1Hadamard.html',1,'py_helper']]]
+  ['matmul_53',['MatMul',['../classpy__helper_1_1MatMul.html',1,'py_helper']]]
 ];

@@ -95,14 +95,7 @@ Include dependency graph for cl_helper.hpp:</div>
 <area shape="rect" title=" " alt="" coords="453,80,520,107"/>
 <area shape="rect" title=" " alt="" coords="545,80,607,107"/>
 <area shape="rect" title=" " alt="" coords="632,80,699,107"/>
-<area shape="rect" href="opencl_8h_source.html" title=" " alt="" coords="723,80,821,107"/>
-<area shape="rect" href="cl_8h_source.html" title=" " alt="" coords="739,229,805,256"/>
-<area shape="rect" href="cl__gl_8h_source.html" title=" " alt="" coords="730,155,814,181"/>
-<area shape="rect" href="cl__ext_8h_source.html" title=" " alt="" coords="839,155,932,181"/>
-<area shape="rect" href="cl__version_8h_source.html" title=" " alt="" coords="652,379,772,405"/>
-<area shape="rect" href="cl__platform_8h_source.html" title=" " alt="" coords="763,304,891,331"/>
-<area shape="rect" title=" " alt="" coords="797,379,867,405"/>
-<area shape="rect" title=" " alt="" coords="892,379,967,405"/>
+<area shape="rect" title=" " alt="" coords="723,80,821,107"/>
 </map>
 </div>
 </div>
@@ -182,12 +175,12 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cl__
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cl__helper_8hpp.html#aa3f6f967929cb1f9f1fbc1f9f5b91930">h_release_devices</a> (cl_device_id *devices, cl_uint num_devices, cl_context *contexts, cl_platform_id *platforms)</td></tr>
 <tr class="memdesc:aa3f6f967929cb1f9f1fbc1f9f5b91930"><td class="mdescLeft">&#160;</td><td class="mdescRight">Release devices and contexts. <br /></td></tr>
 <tr class="separator:aa3f6f967929cb1f9f1fbc1f9f5b91930"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a303142bf8b8d5eb640bb77d77f7e8fd1"><td class="memItemLeft" align="right" valign="top"><a id="a303142bf8b8d5eb640bb77d77f7e8fd1"></a>
-cl_double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cl__helper_8hpp.html#a303142bf8b8d5eb640bb77d77f7e8fd1">h_run_kernel</a> (cl_command_queue command_queue, cl_kernel kernel, size_t *local_size, size_t *global_size, size_t ndim, cl_bool profiling, void(*prep_kernel)(cl_kernel, size_t *, size_t *, size_t, void *), void *prep_data)</td></tr>
-<tr class="memdesc:a303142bf8b8d5eb640bb77d77f7e8fd1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run a kernel. <br /></td></tr>
-<tr class="separator:a303142bf8b8d5eb640bb77d77f7e8fd1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:addecfd423563d5448a96b26a27a00d13"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cl__helper_8hpp.html#addecfd423563d5448a96b26a27a00d13">h_optimise_local</a> (int argc, char **argv, cl_command_queue command_queue, cl_kernel kernel, cl_device_id device, size_t *global_size, size_t *local_size, size_t ndim, size_t nstats, double prior_times, void(*prep_kernel)(cl_kernel, size_t *, size_t *, size_t, void *), void *prep_data)</td></tr>
-<tr class="separator:addecfd423563d5448a96b26a27a00d13"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae23a2dd067379fbb86a6d9fbf69d771d"><td class="memItemLeft" align="right" valign="top"><a id="ae23a2dd067379fbb86a6d9fbf69d771d"></a>
+cl_double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cl__helper_8hpp.html#ae23a2dd067379fbb86a6d9fbf69d771d">h_run_kernel</a> (cl_command_queue command_queue, cl_kernel kernel, size_t *local_size, size_t *global_size, size_t ndim, cl_bool profiling, cl_int(*prep_kernel)(cl_kernel, size_t *, size_t *, size_t, void *), void *prep_data)</td></tr>
+<tr class="memdesc:ae23a2dd067379fbb86a6d9fbf69d771d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run a kernel. <br /></td></tr>
+<tr class="separator:ae23a2dd067379fbb86a6d9fbf69d771d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1aa3956070cd938aa51445f6e1a73673"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cl__helper_8hpp.html#a1aa3956070cd938aa51445f6e1a73673">h_optimise_local</a> (int argc, char **argv, cl_command_queue command_queue, cl_kernel kernel, cl_device_id device, size_t *global_size, size_t *local_size, size_t ndim, size_t nstats, double prior_times, cl_int(*prep_kernel)(cl_kernel, size_t *, size_t *, size_t, void *), void *prep_data)</td></tr>
+<tr class="separator:a1aa3956070cd938aa51445f6e1a73673"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
 Variables</h2></td></tr>
@@ -261,8 +254,8 @@ std::map&lt; cl_int, const char * &gt;&#160;</td><td class="memItemRight" valign
 
 </div>
 </div>
-<a id="addecfd423563d5448a96b26a27a00d13"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#addecfd423563d5448a96b26a27a00d13">&#9670;&nbsp;</a></span>h_optimise_local()</h2>
+<a id="a1aa3956070cd938aa51445f6e1a73673"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1aa3956070cd938aa51445f6e1a73673">&#9670;&nbsp;</a></span>h_optimise_local()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -330,7 +323,7 @@ std::map&lt; cl_int, const char * &gt;&#160;</td><td class="memItemRight" valign
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">void(*)(cl_kernel, size_t *, size_t *, size_t, void *)&#160;</td>
+          <td class="paramtype">cl_int(*)(cl_kernel, size_t *, size_t *, size_t, void *)&#160;</td>
           <td class="paramname"><em>prep_kernel</em>, </td>
         </tr>
         <tr>

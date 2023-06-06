@@ -14,7 +14,7 @@ __kernel void mat_mult (__global float* A,
     size_t i1=get_global_id(0); 
     
     // Scratch variable
-    float temp=0.0; 
+    float temp=0.0f; 
 
     // Guard mechanism to make sure we do not go
     // outside the boundaries of matrix C 
