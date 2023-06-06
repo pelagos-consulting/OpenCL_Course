@@ -63,7 +63,7 @@ The debugging sections of this course use the excellent open source tool [Oclgri
 
 ### Tau
 
-Tau stands for [Tuning and Analysis Utilities]. In the profiling section we use Tau to trace OpenCL calls.
+Tau stands for [Tuning and Analysis Utilities](https://www.cs.uoregon.edu/research/tau/home.php). In the profiling section we use Tau to trace OpenCL calls.
 
 ### CLBlast
 
