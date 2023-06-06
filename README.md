@@ -1,6 +1,6 @@
 # Accelerated computing with OpenCL
 
-Open Compute Language (OpenCL) provides a programming framework for harnessing the compute capabilities of multicore processors. In this teaching series we cover a majority of the concepts for working with OpenCL in the context of supercomputing.
+Open Compute Language (OpenCL) provides a programming framework for harnessing the compute capabilities of multicore processors. In this teaching series we cover a majority of the concepts for working with OpenCL in the context of supercomputing. We use the OpenCL 3.0 standard.
 
 ## Folder structure
 
@@ -43,6 +43,10 @@ jupyter-lab
 ```
 
 from the command line to start the Jupyter Lab environment.
+
+### Compiler
+
+A C++ compiler must be installed and available through the **CC** command.
 
 ### OpenCL
 
