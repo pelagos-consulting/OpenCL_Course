@@ -14642,78 +14642,34 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
 <pre>rm -r *.exe
-g++ -std=c++11 -g -O2 -fopenmp -I/usr/include -I../include -L/usr/lib/x86_64-linux-gnu mat_elementwise.cpp\
-	-o mat_elementwise.exe -lOpenCL
-In file included from <span class="ansi-bold">mat_elementwise.cpp:15</span>:
-<span class="ansi-bold">../include/cl_helper.hpp:</span> In function ‘<span class="ansi-bold">_cl_command_queue** h_create_command_queues(_cl_device_id**, _cl_context**, cl_uint, cl_uint, cl_bool, cl_bool)</span>’:
-<span class="ansi-bold">../include/cl_helper.hpp:337:49:</span> <span class="ansi-magenta-intense-fg ansi-bold">warning: </span>‘<span class="ansi-bold">_cl_command_queue* clCreateCommandQueue(cl_context, cl_device_id, cl_command_queue_properties, cl_int*)</span>’ is deprecated [<span class="ansi-magenta-intense-fg ansi-bold">]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wdeprecated-declarations-Wdeprecated-declarations]8;;</span>]
-  337 |         command_queues[n] = <span class="ansi-magenta-intense-fg ansi-bold">clCreateCommandQueue(</span>
-      |                             <span class="ansi-magenta-intense-fg ansi-bold">~~~~~~~~~~~~~~~~~~~~^</span>
-  338 | <span class="ansi-magenta-intense-fg ansi-bold">            contexts[n % num_devices],</span>
-      |             <span class="ansi-magenta-intense-fg ansi-bold">~~~~~~~~~~~~~~~~~~~~~~~~~~</span>           
-  339 | <span class="ansi-magenta-intense-fg ansi-bold">            devices[n % num_devices],</span>
-      |             <span class="ansi-magenta-intense-fg ansi-bold">~~~~~~~~~~~~~~~~~~~~~~~~~</span>            
-  340 | <span class="ansi-magenta-intense-fg ansi-bold">            queue_properties,</span>
-      |             <span class="ansi-magenta-intense-fg ansi-bold">~~~~~~~~~~~~~~~~~</span>                    
-  341 | <span class="ansi-magenta-intense-fg ansi-bold">            &amp;errcode</span>
-      |             <span class="ansi-magenta-intense-fg ansi-bold">~~~~~~~~</span>                             
-  342 | <span class="ansi-magenta-intense-fg ansi-bold">        )</span>;
-      |         <span class="ansi-magenta-intense-fg ansi-bold">~</span>                                        
-In file included from <span class="ansi-bold">../include/CL/opencl.h:24</span>,
-                 from <span class="ansi-bold">../include/cl_helper.hpp:25</span>,
-                 from <span class="ansi-bold">mat_elementwise.cpp:15</span>:
-<span class="ansi-bold">../include/CL/cl.h:1913:1:</span> <span class="ansi-cyan-intense-fg ansi-bold">note: </span>declared here
- 1913 | <span class="ansi-cyan-intense-fg ansi-bold">clCreateCommandQueue</span>(cl_context                     context,
-      | <span class="ansi-cyan-intense-fg ansi-bold">^~~~~~~~~~~~~~~~~~~~</span>
-g++ -std=c++11 -g -O2 -fopenmp -I/usr/include -I../include -L/usr/lib/x86_64-linux-gnu mat_elementwise_answer.cpp\
-	-o mat_elementwise_answer.exe -lOpenCL
-In file included from <span class="ansi-bold">mat_elementwise_answer.cpp:15</span>:
-<span class="ansi-bold">../include/cl_helper.hpp:</span> In function ‘<span class="ansi-bold">_cl_command_queue** h_create_command_queues(_cl_device_id**, _cl_context**, cl_uint, cl_uint, cl_bool, cl_bool)</span>’:
-<span class="ansi-bold">../include/cl_helper.hpp:337:49:</span> <span class="ansi-magenta-intense-fg ansi-bold">warning: </span>‘<span class="ansi-bold">_cl_command_queue* clCreateCommandQueue(cl_context, cl_device_id, cl_command_queue_properties, cl_int*)</span>’ is deprecated [<span class="ansi-magenta-intense-fg ansi-bold">]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wdeprecated-declarations-Wdeprecated-declarations]8;;</span>]
-  337 |         command_queues[n] = <span class="ansi-magenta-intense-fg ansi-bold">clCreateCommandQueue(</span>
-      |                             <span class="ansi-magenta-intense-fg ansi-bold">~~~~~~~~~~~~~~~~~~~~^</span>
-  338 | <span class="ansi-magenta-intense-fg ansi-bold">            contexts[n % num_devices],</span>
-      |             <span class="ansi-magenta-intense-fg ansi-bold">~~~~~~~~~~~~~~~~~~~~~~~~~~</span>           
-  339 | <span class="ansi-magenta-intense-fg ansi-bold">            devices[n % num_devices],</span>
-      |             <span class="ansi-magenta-intense-fg ansi-bold">~~~~~~~~~~~~~~~~~~~~~~~~~</span>            
-  340 | <span class="ansi-magenta-intense-fg ansi-bold">            queue_properties,</span>
-      |             <span class="ansi-magenta-intense-fg ansi-bold">~~~~~~~~~~~~~~~~~</span>                    
-  341 | <span class="ansi-magenta-intense-fg ansi-bold">            &amp;errcode</span>
-      |             <span class="ansi-magenta-intense-fg ansi-bold">~~~~~~~~</span>                             
-  342 | <span class="ansi-magenta-intense-fg ansi-bold">        )</span>;
-      |         <span class="ansi-magenta-intense-fg ansi-bold">~</span>                                        
-In file included from <span class="ansi-bold">../include/CL/opencl.h:24</span>,
-                 from <span class="ansi-bold">../include/cl_helper.hpp:25</span>,
-                 from <span class="ansi-bold">mat_elementwise_answer.cpp:15</span>:
-<span class="ansi-bold">../include/CL/cl.h:1913:1:</span> <span class="ansi-cyan-intense-fg ansi-bold">note: </span>declared here
- 1913 | <span class="ansi-cyan-intense-fg ansi-bold">clCreateCommandQueue</span>(cl_context                     context,
-      | <span class="ansi-cyan-intense-fg ansi-bold">^~~~~~~~~~~~~~~~~~~~</span>
-	               name: NVIDIA GeForce RTX 3060 Laptop GPU 
-	 global memory size: 6226 MB
-	    max buffer size: 1556 MB
-	     max local size: (1024,1024,64)
-	     max work-items: 1024
+CC -g -fopenmp -O2 -I../include mat_elementwise.cpp -o mat_elementwise.exe -lOpenCL
+CC -g -fopenmp -O2 -I../include mat_elementwise_answer.cpp -o mat_elementwise_answer.exe -lOpenCL
+	               name: gfx1035 
+	 global memory size: 536 MB
+	    max buffer size: 456 MB
+	     max local size: (1024,1024,1024)
+	     max work-items: 256
 The output array F_h (as computed with OpenCL) is
 ----
-|  7.62e-02  1.59e-01  1.42e-01  7.12e-01 |
-|  1.55e-03  1.48e-01  3.84e-02  2.48e-02 |
-|  1.81e-01  4.09e-01  4.73e-01  3.13e-02 |
-|  2.45e-01  1.31e-01  2.60e-02  5.17e-01 |
-|  2.88e-01  1.73e-01  2.42e-02  5.01e-02 |
-|  1.40e-01  1.13e-01  2.02e-01  1.15e-01 |
-|  1.61e-01  7.36e-02  7.59e-02  1.36e-01 |
-|  2.41e-01  2.27e-01  5.20e-01  4.88e-01 |
+|  4.50e-01  1.70e-01  2.77e-01  2.21e-02 |
+|  2.46e-02  3.48e-02  4.41e-02  2.05e-01 |
+|  7.57e-01  4.06e-03  3.90e-01  2.74e-01 |
+|  3.16e-01  3.38e-05  9.45e-02  9.03e-01 |
+|  1.60e-02  6.24e-03  9.69e-02  4.00e-01 |
+|  4.89e-01  4.12e-01  8.46e-01  8.93e-02 |
+|  3.23e-01  3.19e-02  2.84e-01  4.18e-01 |
+|  2.02e-02  3.38e-01  2.30e-01  1.49e-01 |
 ----
 The CPU solution (F_answer_h) is 
 ----
-|  7.62e-02  1.59e-01  1.42e-01  7.12e-01 |
-|  1.55e-03  1.48e-01  3.84e-02  2.48e-02 |
-|  1.81e-01  4.09e-01  4.73e-01  3.13e-02 |
-|  2.45e-01  1.31e-01  2.60e-02  5.17e-01 |
-|  2.88e-01  1.73e-01  2.42e-02  5.01e-02 |
-|  1.40e-01  1.13e-01  2.02e-01  1.15e-01 |
-|  1.61e-01  7.36e-02  7.59e-02  1.36e-01 |
-|  2.41e-01  2.27e-01  5.20e-01  4.88e-01 |
+|  4.50e-01  1.70e-01  2.77e-01  2.21e-02 |
+|  2.46e-02  3.48e-02  4.41e-02  2.05e-01 |
+|  7.57e-01  4.06e-03  3.90e-01  2.74e-01 |
+|  3.16e-01  3.38e-05  9.45e-02  9.03e-01 |
+|  1.60e-02  6.24e-03  9.69e-02  4.00e-01 |
+|  4.89e-01  4.12e-01  8.46e-01  8.93e-02 |
+|  3.23e-01  3.19e-02  2.84e-01  4.18e-01 |
+|  2.02e-02  3.38e-01  2.30e-01  1.49e-01 |
 ----
 The residual (F_answer_h-F_h) is
 ----
@@ -14726,6 +14682,7 @@ The residual (F_answer_h-F_h) is
 |  0.00e+00  0.00e+00  0.00e+00  0.00e+00 |
 |  0.00e+00  0.00e+00  0.00e+00  0.00e+00 |
 ----
+Maximum error (infinity norm) is: 0
 </pre>
 </div>
 </div>
@@ -14789,11 +14746,11 @@ The residual (F_answer_h-F_h) is
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
 <pre>make: Nothing to be done for &#39;all&#39;.
-	               name: NVIDIA GeForce RTX 3060 Laptop GPU 
-	 global memory size: 6226 MB
-	    max buffer size: 1556 MB
-	     max local size: (1024,1024,64)
-	     max work-items: 1024
+	               name: gfx1035 
+	 global memory size: 536 MB
+	    max buffer size: 456 MB
+	     max local size: (1024,1024,1024)
+	     max work-items: 256
 The output array F_h (as computed with OpenCL) is
 ----
 |  0.00e+00  0.00e+00  0.00e+00  0.00e+00 |
@@ -14807,26 +14764,27 @@ The output array F_h (as computed with OpenCL) is
 ----
 The CPU solution (F_answer_h) is 
 ----
-|  2.07e-01  4.00e-01  8.64e-02  4.08e-01 |
-|  1.57e-01  4.68e-02  2.37e-01  1.05e-01 |
-|  6.23e-03  5.17e-02  4.71e-02  3.48e-01 |
-|  4.24e-01  1.10e-01  5.55e-01  8.15e-02 |
-|  9.51e-01  6.63e-02  6.38e-01  1.56e-01 |
-|  5.49e-01  1.00e-02  1.24e-01  4.22e-01 |
-|  1.14e-01  1.50e-01  1.30e-02  1.21e-01 |
-|  1.51e-01  1.08e-01  8.54e-01  6.20e-02 |
+|  4.50e-01  1.70e-01  2.77e-01  2.21e-02 |
+|  2.46e-02  3.48e-02  4.41e-02  2.05e-01 |
+|  7.57e-01  4.06e-03  3.90e-01  2.74e-01 |
+|  3.16e-01  3.38e-05  9.45e-02  9.03e-01 |
+|  1.60e-02  6.24e-03  9.69e-02  4.00e-01 |
+|  4.89e-01  4.12e-01  8.46e-01  8.93e-02 |
+|  3.23e-01  3.19e-02  2.84e-01  4.18e-01 |
+|  2.02e-02  3.38e-01  2.30e-01  1.49e-01 |
 ----
 The residual (F_answer_h-F_h) is
 ----
-|  2.07e-01  4.00e-01  8.64e-02  4.08e-01 |
-|  1.57e-01  4.68e-02  2.37e-01  1.05e-01 |
-|  6.23e-03  5.17e-02  4.71e-02  3.48e-01 |
-|  4.24e-01  1.10e-01  5.55e-01  8.15e-02 |
-|  9.51e-01  6.63e-02  6.38e-01  1.56e-01 |
-|  5.49e-01  1.00e-02  1.24e-01  4.22e-01 |
-|  1.14e-01  1.50e-01  1.30e-02  1.21e-01 |
-|  1.51e-01  1.08e-01  8.54e-01  6.20e-02 |
+|  4.50e-01  1.70e-01  2.77e-01  2.21e-02 |
+|  2.46e-02  3.48e-02  4.41e-02  2.05e-01 |
+|  7.57e-01  4.06e-03  3.90e-01  2.74e-01 |
+|  3.16e-01  3.38e-05  9.45e-02  9.03e-01 |
+|  1.60e-02  6.24e-03  9.69e-02  4.00e-01 |
+|  4.89e-01  4.12e-01  8.46e-01  8.93e-02 |
+|  3.23e-01  3.19e-02  2.84e-01  4.18e-01 |
+|  2.02e-02  3.38e-01  2.30e-01  1.49e-01 |
 ----
+Maximum error (infinity norm) is: 0.9
 </pre>
 </div>
 </div>

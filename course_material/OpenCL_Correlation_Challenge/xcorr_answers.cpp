@@ -88,14 +88,19 @@ int main(int argc, char** argv) {
     float_type* images_in = (float_type*)h_read_binary("images_in.dat", &nbytes);
     assert(nbytes == nbytes_input);
 
-    // Read in the image kernel
-    size_t nbytes_image_kernel = (L0+R0+1)*(L1+R1+1)*sizeof(float_type);
-    float_type* image_kernel = (float_type*)h_read_binary("image_kernel.dat", &nbytes);
-    assert(nbytes == nbytes_image_kernel);
+    // Make up the image kernel
+    const size_t K0=L0+R0+1;
+    const size_t K1=L1+R1+1;
+    size_t nbytes_image_kernel = K0*K1*sizeof(float_type);
+
+    // Make the image kernel
+    float_type image_kernel[K0*K1] = {-1,-1,-1,\
+                                -1, 8,-1,\
+                                -1,-1,-1};
 
     // Read kernel sources 
-    const char* filename = "kernels_answers.cl";
-    char* source = (char*)h_read_binary(filename, &nbytes);
+    const char* filename = "kernels_answers.c";
+    char* kernel_source = (char*)h_read_binary(filename, &nbytes);
 
     // Create Programs and kernels for all devices 
     cl_program *programs = (cl_program*)calloc(num_devices, sizeof(cl_program));
@@ -104,56 +109,59 @@ int main(int argc, char** argv) {
     const char* compiler_options = "";
     for (cl_uint n=0; n<num_devices; n++) {
         // Make the program from source
-        programs[n] = h_build_program(source, contexts[n], devices[n], compiler_options);
+        programs[n] = h_build_program(kernel_source, contexts[n], devices[n], compiler_options);
         // And make the kernel
         kernels[n] = clCreateKernel(programs[n], "xcorr", &errcode);
-        h_errchk(errcode, "Making a kernel");
+        H_ERRCHK(errcode);
     }
 
     // Create OpenCL buffer for source, destination, and image kernel
-    cl_mem *buffer_srces = (cl_mem*)calloc(num_devices, sizeof(cl_mem));
-    cl_mem *buffer_dests = (cl_mem*)calloc(num_devices, sizeof(cl_mem));
-    cl_mem *buffer_kerns = (cl_mem*)calloc(num_devices, sizeof(cl_mem));
+    cl_mem *srcs_d = (cl_mem*)calloc(num_devices, sizeof(cl_mem));
+    cl_mem *dsts_d = (cl_mem*)calloc(num_devices, sizeof(cl_mem));
+    cl_mem *kerns_d = (cl_mem*)calloc(num_devices, sizeof(cl_mem));
    
     // Create input buffers for every device
     for (cl_uint n=0; n<num_devices; n++) {
         
         //// Begin Task 1 - Code to create the OpenCL buffers for each thread ////
         
-        // Fill buffer_srces[n], buffer_dests[n], buffer_kerns[n] 
+        // Fill srcs_d[n], dsts_d[n], kerns_d[n] 
         // with buffers created by clCreateBuffer 
-        // Use the h_errchk routine to check output
+        // Use the H_ERRCHK routine to check output
         
-        // buffer_srces[n] is of size nbytes_image
-        // buffer_dests[n] is of size nbytes_image
-        // buffer_kerns[n] is of size nbytes_image_kernel
+        // srcs_d[n] is of size nbytes_image
+        // dsts_d[n] is of size nbytes_image
+        // kerns_d[n] is of size nbytes_image_kernel
         
         // the array image_kernel contains the host-allocated 
         // memory for the image kernel
         
+        // Uncomment the line below for the shortcut solution
+        // #include task1_answer.hpp
+        
         // Create buffers for sources
-        buffer_srces[n] = clCreateBuffer(
+        srcs_d[n] = clCreateBuffer(
                 contexts[n],
                 CL_MEM_READ_WRITE,
                 nbytes_image,
                 NULL,
                 &errcode);
-        h_errchk(errcode, "Creating buffers for sources");
+        H_ERRCHK(errcode);
 
         // Create buffers for destination
-        buffer_dests[n] = clCreateBuffer(
+        dsts_d[n] = clCreateBuffer(
                 contexts[n],
                 CL_MEM_READ_WRITE,
                 nbytes_image,
                 NULL,
                 &errcode);
-        h_errchk(errcode, "Creating buffers for destinations");
+        H_ERRCHK(errcode);
         
-        // Zero out the contents of buffers_dests[n]
+        // Zero out the contents of dsts_d[n]
         float_type zero=0.0;
-        h_errchk(clEnqueueFillBuffer(
+        H_ERRCHK(clEnqueueFillBuffer(
                 command_queues[n],
-                buffer_dests[n],
+                dsts_d[n],
                 &zero,
                 sizeof(float_type),
                 0,
@@ -161,38 +169,38 @@ int main(int argc, char** argv) {
                 0,
                 NULL,
                 NULL
-            ),
-            "Filling buffer with zeros."
+            )
         );
 
         // Create buffer for the image kernel, copy from host memory image_kernel to fill this
-        buffer_kerns[n] = clCreateBuffer(
+        kerns_d[n] = clCreateBuffer(
                 contexts[n],
                 CL_MEM_COPY_HOST_PTR,
                 nbytes_image_kernel,
                 (void*)image_kernel,
                 &errcode);
-        h_errchk(errcode, "Creating buffers for image kernel");
+        H_ERRCHK(errcode);
 
         //// End Task 1 //////////////////////////////////////////////////////////
         
+        // Just for kernel arguments
+        cl_uint len0_src = N0, len1_src = N1, pad0_l = L0, pad0_r = R0, pad1_l = L1, pad1_r = R1;
+
         //// Begin Task 2 - Code to set kernel arguments for each thread /////////
         
+        // Uncomment the line below for the shortcut solution
+        // #include task2_answer.hpp
+        
         // Set kernel arguments for kernels[n]
-        
-        // Just for kernel arguments
-        cl_int len0_src = N0, len1_src = N1, pad0_l = L0, pad0_r = R0, pad1_l = L1, pad1_r = R1;
-        
-        // Set kernel arguments here for convenience
-        h_errchk(clSetKernelArg(kernels[n], 0, sizeof(buffer_srces[n]), &buffer_srces[n]), "Set kernel argument 0");
-        h_errchk(clSetKernelArg(kernels[n], 1, sizeof(buffer_dests[n]), &buffer_dests[n]), "Set kernel argument 1");
-        h_errchk(clSetKernelArg(kernels[n], 2, sizeof(buffer_kerns[n]), &buffer_kerns[n]), "Set kernel argument 2");
-        h_errchk(clSetKernelArg(kernels[n], 3, sizeof(cl_int), &len0_src),  "Set kernel argument 3");
-        h_errchk(clSetKernelArg(kernels[n], 4, sizeof(cl_int), &len1_src),  "Set kernel argument 4");
-        h_errchk(clSetKernelArg(kernels[n], 5, sizeof(cl_int), &pad0_l),    "Set kernel argument 5");
-        h_errchk(clSetKernelArg(kernels[n], 6, sizeof(cl_int), &pad0_r),    "Set kernel argument 6");
-        h_errchk(clSetKernelArg(kernels[n], 7, sizeof(cl_int), &pad1_l),    "Set kernel argument 7");
-        h_errchk(clSetKernelArg(kernels[n], 8, sizeof(cl_int), &pad1_r),    "Set kernel argument 8");
+        H_ERRCHK(clSetKernelArg(kernels[n], 0, sizeof(cl_mem), &srcs_d[n]));
+        H_ERRCHK(clSetKernelArg(kernels[n], 1, sizeof(cl_mem), &dsts_d[n]));
+        H_ERRCHK(clSetKernelArg(kernels[n], 2, sizeof(cl_mem), &kerns_d[n]));
+        H_ERRCHK(clSetKernelArg(kernels[n], 3, sizeof(cl_uint), &len0_src));
+        H_ERRCHK(clSetKernelArg(kernels[n], 4, sizeof(cl_uint), &len1_src));
+        H_ERRCHK(clSetKernelArg(kernels[n], 5, sizeof(cl_uint), &pad0_l));
+        H_ERRCHK(clSetKernelArg(kernels[n], 6, sizeof(cl_uint), &pad0_r));
+        H_ERRCHK(clSetKernelArg(kernels[n], 7, sizeof(cl_uint), &pad1_l));
+        H_ERRCHK(clSetKernelArg(kernels[n], 8, sizeof(cl_uint), &pad1_r));
     
         //// End Task 2 //////////////////////////////////////////////////////////
     }
@@ -208,7 +216,7 @@ int main(int argc, char** argv) {
     // Desired local size
     const size_t local_size[]={ 16, 16 };
     // Fit the desired global_size
-    const size_t global_size[]={ N0, N1 };
+    const size_t global_size[]={ N1, N0 };
     h_fit_global_size(global_size, local_size, work_dim);
 
     for (cl_uint i = 0; i<NITERS; i++) {
@@ -216,7 +224,7 @@ int main(int argc, char** argv) {
         
         #pragma omp parallel for default(none) schedule(dynamic, 1) num_threads(num_devices) \
             shared(local_size, global_size, work_dim, images_in, images_out, \
-                    buffer_dests, buffer_srces, nbytes_image, \
+                    dsts_d, srcs_d, nbytes_image, \
                     blocking, command_queues, kernels, it_count)
         for (cl_uint n=0; n<NIMAGES; n++) {
             // Get the thread_id
@@ -230,19 +238,22 @@ int main(int argc, char** argv) {
             
             //// Begin Task 3 - Code to upload memory to the compute device buffer ////
             
+            // Uncomment the line below for the shortcut solution
+            // #include task3_answer.hpp
+
             // Upload memory from images_in at offset
-            // To buffer_srces[tid], using command_queues[tid]
-            h_errchk(clEnqueueWriteBuffer(
-                        command_queues[tid],
-                        buffer_srces[tid],
-                        blocking,
-                        0,
-                        nbytes_image,
-                        &images_in[offset],
-                        0,
-                        NULL,
-                        NULL), 
-                     "Writing to source buffer"
+            // To srcs_d[tid], using command_queues[tid]
+            H_ERRCHK(clEnqueueWriteBuffer(
+                    command_queues[tid],
+                    srcs_d[tid],
+                    blocking,
+                    0,
+                    nbytes_image,
+                    &images_in[offset],
+                    0,
+                    NULL,
+                    NULL
+                ) 
             );
 
             //// End Task 3 ///////////////////////////////////////////////////////////
@@ -251,38 +262,44 @@ int main(int argc, char** argv) {
             
             //// Begin Task 5 - Code to enqueue the kernel ///////////////////////////
             
+            // Uncomment the line below for the shortcut solution
+            // #include task5_answer.hpp
+            
             // Enqueue the kernel kernels[tid] using command_queues[tid]
             // work_dim, local_size, and global_size
-            h_errchk(clEnqueueNDRangeKernel(
-                        command_queues[tid],
-                        kernels[tid],
-                        work_dim,
-                        NULL,
-                        global_size,
-                        local_size,
-                        0, 
-                        NULL,
-                        NULL), 
-                     "Running the xcorr kernel"
+            H_ERRCHK(clEnqueueNDRangeKernel(
+                    command_queues[tid],
+                    kernels[tid],
+                    work_dim,
+                    NULL,
+                    global_size,
+                    local_size,
+                    0, 
+                    NULL,
+                    NULL
+                ) 
             );
             
             //// End Task 5 ///////////////////////////////////////////////////////////
             
             //// Begin Task 6 - Code to download memory from the compute device buffer
             
+            // Uncomment the line below for the shortcut solution
+            // #include task6_answer.hpp
+
             //// Download memory buffers_dests[tid] to hosts allocation
             //// images_out at offset
-            h_errchk(clEnqueueReadBuffer(
-                        command_queues[tid],
-                        buffer_dests[tid],
-                        blocking,
-                        0,
-                        nbytes_image,
-                        &images_out[offset],
-                        0,
-                        NULL,
-                        NULL), 
-                     "Writing to buffer"
+            H_ERRCHK(clEnqueueReadBuffer(
+                    command_queues[tid],
+                    dsts_d[tid],
+                    blocking,
+                    0,
+                    nbytes_image,
+                    &images_out[offset],
+                    0,
+                    NULL,
+                    NULL
+                ) 
             );
             
             //// End Task 6 ///////////////////////////////////////////////////////////
@@ -307,8 +324,7 @@ int main(int argc, char** argv) {
     h_write_binary(images_out, "images_out.dat", nbytes_output);
     
     // Free allocated memory
-    free(source);
-    free(image_kernel);
+    free(kernel_source);
     free(images_in);
     free(images_out);
     free(it_count);
@@ -318,17 +334,17 @@ int main(int argc, char** argv) {
 
     // Release programs and kernels
     for (cl_uint n=0; n<num_devices; n++) {
-        h_errchk(clReleaseKernel(kernels[n]), "Releasing kernel");
-        h_errchk(clReleaseProgram(programs[n]), "Releasing program");
-        h_errchk(clReleaseMemObject(buffer_srces[n]),"Releasing sources buffer");
-        h_errchk(clReleaseMemObject(buffer_dests[n]),"Releasing dests buffer");
-        h_errchk(clReleaseMemObject(buffer_kerns[n]),"Releasing image kernels buffer");
+        H_ERRCHK(clReleaseKernel(kernels[n]));
+        H_ERRCHK(clReleaseProgram(programs[n]));
+        H_ERRCHK(clReleaseMemObject(srcs_d[n]));
+        H_ERRCHK(clReleaseMemObject(dsts_d[n]));
+        H_ERRCHK(clReleaseMemObject(kerns_d[n]));
     }
 
     // Free memory
-    free(buffer_srces);
-    free(buffer_dests);
-    free(buffer_kerns);
+    free(srcs_d);
+    free(dsts_d);
+    free(kerns_d);
     free(programs);
     free(kernels);
 
