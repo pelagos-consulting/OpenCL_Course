@@ -30,10 +30,10 @@ Lessons are in the form of Jupyter notebooks which can be viewed on the student'
 
 ### Anaconda Python (optional)
 
-A recent version of [Anaconda Python](https://www.anaconda.com/products/distribution) is helpful for viewing the notebook files. A list of helpful packages for viewing the material may then be installed with this command when run from the **HIP_Course** folder. 
+A recent version of [Anaconda Python](https://www.anaconda.com/products/distribution) is helpful for viewing the notebook files. A list of helpful packages for viewing the material may then be installed with this command when run from the **OpenCL_Course** folder. 
 
 ```bash
-pip -r deployment/requirements.txt
+pip install -r deployment/requirements.txt
 ```
 
 then run 
