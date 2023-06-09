@@ -206,7 +206,7 @@ int main(int argc, char** argv) {
             B_h,
             0,
             NULL,
-            NULL
+            &io_event
         ) 
     );
     
