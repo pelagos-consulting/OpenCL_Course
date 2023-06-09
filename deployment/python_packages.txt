@@ -7,4 +7,5 @@ scikit-image
 scikit-learn
 ipywidgets
 ipympl
+jupyter
 jupyterlab
