@@ -50,7 +50,7 @@ A C++ compiler must be installed and available through the **CC** command.
 
 ### OpenCL
 
-Access to at least one OpenCL implementation is necessary. For teaching purposes it is preferred to have at least one CPU implementation and at least one GPU implementation installed, each with their `icd` files placed in **/etc/OpenCL/vendors**. The path to the OpenCL ICD loader **libOpenCL.so** must be in both **LIBRARY_PATH** and **LD_LIBRARY_PATH**. The location of the OpenCL headers, the **CL** directory (i.e where the file opencl.h lives) must be in **CPATH**. Khronos has a recent [ICD loader](https://github.com/KhronosGroup/OpenCL-ICD-Loader) and [headers](https://github.com/KhronosGroup/OpenCL-Headers) that can be used to compile with and link against. Alternatively the OpenCL headers and ICD loader may be installed through a package manager.
+Access to at least one OpenCL implementation is necessary. For teaching purposes it is preferred to have at least one CPU implementation and at least one GPU implementation installed, each with their `icd` files placed in **/etc/OpenCL/vendors**. The path to the OpenCL ICD loader **libOpenCL.so** must be in both **LIBRARY_PATH** and **LD_LIBRARY_PATH**. The location of the OpenCL headers, the **CL** directory (i.e where the file opencl.h lives) must be in **CPATH**. Khronos has a recent [ICD loader](https://github.com/KhronosGroup/OpenCL-ICD-Loader) and [headers](https://github.com/KhronosGroup/OpenCL-Headers) that can be used to compile with and link against. Alternatively a fairly recent package for the OpenCL headers and ICD loader may be installed through a package manager.
 
 #### OpenCL implementations
 
