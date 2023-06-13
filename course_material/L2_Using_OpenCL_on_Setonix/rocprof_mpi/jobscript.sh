@@ -28,5 +28,8 @@ make
 # Make the result directory
 mkdir -p rocprof_counters
 
+# Make sure permissions are good
+chmod u+x ./profile.sh
+
 # Run the profiling job
 srun -N $SLURM_JOB_NUM_NODES -n $SLURM_NTASKS -c $OMP_NUM_THREADS ./profile.sh
