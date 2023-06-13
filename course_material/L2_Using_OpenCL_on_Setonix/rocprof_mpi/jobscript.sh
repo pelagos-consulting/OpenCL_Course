@@ -11,9 +11,8 @@
 #SBATCH --mem=4000M                # Indicate the amount of memory per node when asking for share resources
 #SBATCH --time=01:00:00
 
-module swap PrgEnv-gnu PrgEnv-cray
-module load craype-accel-amd-gfx90a
-module load rocm
+module use /software/projects/courses01/setonix/opencl/modulefiles
+module load PrgEnv-opencl
 
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK   #To define the number of OpenMP threads available per MPI task, in this case it will be 8
 export OMP_PLACES=cores     #To bind to cores 
