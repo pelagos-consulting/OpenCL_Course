@@ -1,2 +1,2 @@
 "Name","Calls","TotalDurationNs","AverageNs","Percentage"
-"async-copy",3,392870,130956,100.0
+async-copy,3,165120,55040,100.0

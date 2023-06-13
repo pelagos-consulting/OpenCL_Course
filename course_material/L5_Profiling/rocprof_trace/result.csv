@@ -1,2 +1,2 @@
-"Index","KernelName","gpu-id","queue-id","queue-index","pid","tid","grd","wgr","lds","scr","arch_vgpr","accum_vgpr","sgpr","wave_size","sig","obj","DispatchNs","BeginNs","EndNs","CompleteNs","DurationNs"
-0,"mat_mult.kd",1,0,0,104906,104921,536640,64,0,0,16,0,128,32,"0x7f1a3e06c600","0x7f1a3cc2c7c0",10894939581687,10894940749435,10894942610068,10894942637159,1860633
+"Index","KernelName","gpu-id","queue-id","queue-index","pid","tid","grd","wgr","lds","scr","vgpr","sgpr","fbar","sig","obj","DispatchNs","BeginNs","EndNs","CompleteNs","DurationNs"
+0,"mat_mult.kd",0,0,0,30811,30832,536640,64,0,0,8,32,0,0x151a765d5400,0x151a4178d7c0,533384871608813,533384871630642,533384871987922,533384872022354,357280
