@@ -147,6 +147,9 @@ __kernel void mat_mult_local_vector (
     
     // Fill shared_B
     
+    // Temporary scratch vector
+    float8 temp=(float8)0.0f;
+    
     // Get the start and end lengths
     get_start_end(L0, N1_A_v, s0, &start, &end);
     // Fill the columns of shared with B
@@ -156,20 +159,26 @@ __kernel void mat_mult_local_vector (
             __global float* Bn=&B[i1+n*8*N1_C];
             // SBn is the starting location for shared_B
             __local float8* SBn=&shared_B[s1*N1_A_v+n];
-            // Fill individual components of the vector
-            (*SBn).s0 = Bn[0*N1_C]; (*SBn).s1 = Bn[1*N1_C];
-            (*SBn).s2 = Bn[2*N1_C]; (*SBn).s3 = Bn[3*N1_C];            
-            (*SBn).s4 = Bn[4*N1_C]; (*SBn).s5 = Bn[5*N1_C];
-            (*SBn).s6 = Bn[6*N1_C]; (*SBn).s7 = Bn[7*N1_C];              
+            // Fill individual components of the vector            
+            temp.s0=Bn[0*N1_C];
+            temp.s1=Bn[1*N1_C];
+            temp.s2=Bn[2*N1_C];
+            temp.s3=Bn[3*N1_C];
+            temp.s4=Bn[4*N1_C];
+            temp.s5=Bn[5*N1_C];
+            temp.s6=Bn[6*N1_C];
+            temp.s7=Bn[7*N1_C];
+            
+            // Insert the temporary variable into place
+            *SBn=temp;          
         }
     }
-    
-    // Temporary scratch vector
-    float8 temp=(float8)(0.0f);
     
     // Enqueue a local barrier to make sure all the work items finish
     barrier(CLK_LOCAL_MEM_FENCE);
 
+    temp=(float8)0.0f;
+    
     // Guard mechanism to make sure we do not go
     // outside the boundaries of matrix C
     if ((i0<N0_C) && (i1<N1_C)) {

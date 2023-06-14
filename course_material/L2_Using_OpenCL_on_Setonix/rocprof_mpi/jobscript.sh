@@ -3,7 +3,6 @@
 #SBATCH --account=<account>-gpu    # your account
 #SBATCH --partition=gpu            # Using the gpu partition
 #SBATCH --ntasks=2                 # Total number of tasks
-#SBATCH --ntasks-per-node=2        # Set this for 1 mpi task per compute device
 #SBATCH --cpus-per-task=8          # How many OpenMP threads per MPI task
 #SBATCH --threads-per-core=1       # How many omp threads per core
 #SBATCH --gpus-per-task=1          # How many HIP compute devices to allocate to a task
