@@ -14590,13 +14590,13 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p>In previous lessons we have looked at straightforward ways in which memory was allocated on the host and then copied to the device for use as global memory by the kernel. In the introduction we briefly covered the five different memory spaces that are accessible to an OpenCL Program.</p>
+<p>In previous lessons we have looked at straightforward ways in which memory was allocated on the host and then copied to the device for use as global memory by the kernel. In the introduction we briefly covered the five different memory spaces that are available to an OpenCL Program and if they can be accessed from the host or the kernel.</p>
 <ul>
-<li>Host memory</li>
-<li>Global memory</li>
-<li>Local (shared) memory</li>
-<li>Private memory</li>
-<li>Constant memory</li>
+<li>Host </li>
+<li>Global</li>
+<li>Local </li>
+<li>Private </li>
+<li>Constant </li>
 </ul>
 
 </div>
@@ -14609,7 +14609,7 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p><strong>Host memory</strong> is usually the largest memory space on the host, and <strong>global memory</strong> is the largest and slowest memory space available on the compute device. <strong>Local</strong> and <strong>Constant</strong> memory is usually located in the small and fast caches on the compute device. <strong>Private memory</strong> is usually located in the registers, which are normally the fastest and smallest memory spaces available on the compute device. A programmer has some degree of control over where memory is stored during the operation of an OpenCL program. The diagram below shows what memory is available for access by both host and kernel threads (work-items) at runtime.</p>
+<p><strong>Host memory</strong> is usually the largest and slowest memory space on the host, and <strong>global memory</strong> is the largest and slowest memory space available on the compute device. <strong>Local</strong> and <strong>Constant</strong> memory is usually located in the small and fast caches on the compute device. <strong>Private memory</strong> is usually located in the registers, which are the fastest and smallest memory spaces available on the compute device. A programmer has some degree of control over where memory is stored during the operation of an OpenCL program. The diagram below shows what memory is available for access by both host and kernel threads (work-items) at runtime.</p>
 
 </div>
 </div>
@@ -14647,8 +14647,8 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h2 id="Memory-access-from-the-host">Memory access from the host<a class="anchor-link" href="#Memory-access-from-the-host">&#182;</a></h2><p>From the introduction we know that Buffers are allocated on the host and they are migrated in and out of the compute device when they are needed. Here are some ways we can create Buffers and transfer memory in and out of them.</p>
-<h3 id="Buffer-creation">Buffer creation<a class="anchor-link" href="#Buffer-creation">&#182;</a></h3><p>Thus far we have been creating Buffers with the <a href="https://www.khronos.org/registry/OpenCL/sdk/3.0/docs/man/html/clCreateBuffer.html">clCreateBuffer</a> function using the <strong>CL_MEM_READ_WRITE</strong> memory flag. For example, this code creates a Buffer that has read-write access from the kernel, but no additional functionality.</p>
+<h2 id="Memory-access-from-the-host">Memory access from the host<a class="anchor-link" href="#Memory-access-from-the-host">&#182;</a></h2><p>From the introduction we know that buffers are allocated on the host and they are migrated in and out of the compute device when they are needed. Here are some ways we can create buffers and transfer memory in and out of them.</p>
+<h3 id="Buffer-creation">Buffer creation<a class="anchor-link" href="#Buffer-creation">&#182;</a></h3><p>Thus far we have been creating buffers with the <a href="https://www.khronos.org/registry/OpenCL/sdk/3.0/docs/man/html/clCreateBuffer.html">clCreateBuffer</a> function using the <strong>CL_MEM_READ_WRITE</strong> memory flag. For example, this code creates a buffer that has read-write access from the kernel, but no additional functionality.</p>
 <div class="highlight"><pre><span></span><span class="n">cl_mem</span><span class="w"> </span><span class="n">buffer_C</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">clCreateBuffer</span><span class="p">(</span><span class="n">context</span><span class="p">,</span><span class="w"> </span>
 <span class="w">                                     </span><span class="n">CL_MEM_READ_WRITE</span><span class="p">,</span><span class="w"> </span>
 <span class="w">                                     </span><span class="n">nbytes_C</span><span class="p">,</span><span class="w"> </span>
@@ -14690,7 +14690,7 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 </tbody>
 </table>
 <p>Common-sense rules apply in the use of these flags. For example <strong>CL_MEM_WRITE_ONLY</strong> is incompatible with <strong>CL_MEM_READ_WRITE</strong>, and behaviour is undefined if one tries to write to a buffer that has been set as <strong>CL_MEM_READ_ONLY</strong>.</p>
-<h4 id="Using-host-memory">Using host memory<a class="anchor-link" href="#Using-host-memory">&#182;</a></h4><p>In addition to IO permission flags, there are flags that determine how memory is allocated in a Buffer.</p>
+<h4 id="Buffer-allocation-flags">Buffer allocation flags<a class="anchor-link" href="#Buffer-allocation-flags">&#182;</a></h4><p>In addition to IO permission flags, there are flags that determine how memory is allocated in a buffer.</p>
 <table>
 <thead><tr>
 <th style="text-align:left"><strong>Allocation flag</strong></th>
@@ -14711,17 +14711,16 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 <td style="text-align:left">Copy from host memory during creation of a buffer</td>
 </tr>
 <tr>
-<td style="text-align:left">CL_MEM_USE_PERISTENT_MEM_AMD</td>
+<td style="text-align:left">CL_MEM_USE_PERSISTENT_MEM_AMD</td>
 <td style="text-align:left">AMD-specific, create a zero-copy buffer that resides on the device</td>
 </tr>
 </tbody>
 </table>
-<p>The flag <strong>CL_MEM_USE_HOST_PTR</strong> allows the Buffer to use host memory as the backing store for a Buffer. One must make sure that there is enough host memory allocated to cover the memory used by the buffer and that the host memory is not de-allocated while the buffer is using it. OpenCL implementations are free to allocate caches on the compute device for temporary usage and then synchronize as required. Memory synchronization can be explicitly done using <strong>mapping</strong>, which will be discussed shortly.</p>
-<blockquote><p>I personally would <strong>refrain</strong> from using <strong>CL_MEM_USE_HOST_PTR</strong> for buffer allocations unless special care is taken with how the memory allocation is aligned. The memory has to be specifically aligned to the type of memory access. For example you are accessing memory as <strong>float8</strong> vector elements, then the memory must be aligned to a (8x4=32) byte boundary. OpenCL buffers that don't use <strong>CL_MEM_USE_HOST_PTR</strong> are aligned properly by default. During creation of this course I found this out the hard way. Usage of <strong>CL_MEM_USE_HOST_PTR</strong> with unaligned memory that was used as <strong>float8</strong> resulted in a random segfault - a bug that is <strong>notoriously hard to fix</strong>. Allocation of aligned memory for use in OpenCL buffers via <strong>CL_MEM_USE_HOST_PTR</strong> may be safely conducted using something like the helper function <strong>h_alloc</strong>, which uses the C11 function <strong>aligned_alloc</strong> to allocate memory that is aligned to the largest OpenCL datatype <strong>cl_long16</strong>.</p>
-</blockquote>
+<h5 id="Host-memory-as-the-backing-store-for-buffers">Host memory as the backing store for buffers<a class="anchor-link" href="#Host-memory-as-the-backing-store-for-buffers">&#182;</a></h5><p>The flag <strong>CL_MEM_USE_HOST_PTR</strong> allows the buffer to use host memory as a backing store. One must make sure that there is enough host memory allocated to cover the memory used by the buffer and that the host memory is not de-allocated while the buffer is using it. OpenCL implementations are free to allocate caches on the compute device for temporary usage and then synchronize as required. Memory synchronization can be explicitly done using <strong>mapping</strong>, which will be discussed shortly.</p>
+<p>There is a danger in using <strong>CL_MEM_USE_HOST_PTR</strong> for buffer allocations unless <strong>special care</strong> is taken with how the memory allocation is aligned. The memory has to be <strong>specifically aligned</strong> to the type of memory access. For example you are accessing memory as <strong>float8</strong> vector elements, then the memory must be aligned to a 32 byte boundary which is the size of the float8 vector. OpenCL buffers that don't use <strong>CL_MEM_USE_HOST_PTR</strong> are aligned properly by default. During creation of this course I found this out the hard way. Usage of <strong>CL_MEM_USE_HOST_PTR</strong> with unaligned memory that was used in a buffer as <strong>float8</strong> resulted in a random segfault. When the backing memory allocation on the host <strong>happened</strong> to be 32-byte aligned there was no issue, but when it was not aligned then the program crashed. It was a bug that was <strong>very hard</strong> to find. Allocation of aligned memory for use in OpenCL buffers via <strong>CL_MEM_USE_HOST_PTR</strong> may be safely conducted using something like the helper function <strong>h_alloc</strong>, which uses the C11 function <strong>aligned_alloc</strong> to allocate memory that is aligned to the largest OpenCL datatype <strong>cl_long16</strong> or 128 bytes.</p>
 <p>Similarly, the flag <strong>CL_MEM_COPY_HOST_PTR</strong> creates an OpenCL buffer but copies memory from a host pointer during buffer creation. After the copy finishes, the host pointer is then available for use.</p>
 <p>Both <strong>CL_MEM_USE_HOST_PTR</strong> and <strong>CL_MEM_COPY_HOST_PTR</strong> require a host pointer to be passed into the call to <a href="https://www.khronos.org/registry/OpenCL/sdk/3.0/docs/man/html/clCreateBuffer.html">clCreateBuffer</a>.</p>
-<p>In the source code of <a href="mat_mult_local.cpp">mat_mult_local.cpp</a> we create an OpenCL Buffer <strong>A_d</strong> by copying from <strong>A_h</strong> with the <strong>CL_MEM_COPY_HOST_PTR</strong> flag.</p>
+<h5 id="Copy-from-host-memory-on-buffer-creation">Copy from host memory on buffer creation<a class="anchor-link" href="#Copy-from-host-memory-on-buffer-creation">&#182;</a></h5><p>In the source code of <a href="mat_mult_local.cpp">mat_mult_local.cpp</a> we create an OpenCL Buffer <strong>A_d</strong> by copying from <strong>A_h</strong> with the <strong>CL_MEM_COPY_HOST_PTR</strong> flag.</p>
 <div class="highlight"><pre><span></span><span class="c1">// Make buffer_A using array_A as the backing store</span>
 <span class="w">    </span><span class="c1">// Make A_d by copying from A_h</span>
 <span class="w">    </span><span class="n">cl_mem</span><span class="w"> </span><span class="n">A_d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">clCreateBuffer</span><span class="p">(</span><span class="w"></span>
@@ -14733,7 +14732,7 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 <span class="w">    </span><span class="p">);</span><span class="w"></span>
 <span class="w">    </span><span class="n">H_ERRCHK</span><span class="p">(</span><span class="n">errcode</span><span class="p">);</span><span class="w"></span>
 </pre></div>
-<h4 id="Creating-buffers-with-pinned-memory-for-fast-IO">Creating buffers with pinned memory for fast IO<a class="anchor-link" href="#Creating-buffers-with-pinned-memory-for-fast-IO">&#182;</a></h4><p>Pinned memory is host memory that cannot be paged out to swap. It enables fast and efficient Direct Memory Access (DMA) transfers from the host, however for OS health reasons the amount of pinned memory is usually limited to a fraction of the available memory. The flag <strong>CL_MEM_ALLOC_HOST_PTR</strong> passed in during buffer creation allocates pinned memory on the host as the backing store for the OpenCL buffer. In <a href="mat_mult_local.cpp">mat_mult_local.cpp</a> we create <strong>C_d</strong> from pinned host memory by adding the <strong>CL_MEM_ALLOC_HOST_PTR</strong> flag.</p>
+<h5 id="Creating-buffers-with-pinned-memory-for-fast-IO">Creating buffers with pinned memory for fast IO<a class="anchor-link" href="#Creating-buffers-with-pinned-memory-for-fast-IO">&#182;</a></h5><p>Pinned memory is host memory that cannot be paged out to swap. It enables fast and efficient Direct Memory Access (DMA) transfers from the host, however for OS health reasons the amount of pinned memory is usually limited to a fraction of the available memory. The flag <strong>CL_MEM_ALLOC_HOST_PTR</strong> passed in during buffer creation allocates pinned memory on the host as the backing store for the OpenCL buffer. In <a href="mat_mult_local.cpp">mat_mult_local.cpp</a> we create <strong>C_d</strong> from pinned host memory by adding the <strong>CL_MEM_ALLOC_HOST_PTR</strong> flag.</p>
 <div class="highlight"><pre><span></span><span class="c1">// Allocate buffer C from pinned host memory</span>
 <span class="w">    </span><span class="n">cl_mem</span><span class="w"> </span><span class="n">C_d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">clCreateBuffer</span><span class="p">(</span><span class="w"></span>
 <span class="w">        </span><span class="n">context</span><span class="p">,</span><span class="w"> </span>
@@ -14744,9 +14743,9 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 <span class="w">    </span><span class="p">);</span><span class="w"></span>
 <span class="w">    </span><span class="n">H_ERRCHK</span><span class="p">(</span><span class="n">errcode</span><span class="p">);</span><span class="w"></span>
 </pre></div>
-<p>Both <strong>CL_MEM_COPY_HOST_PTR</strong> and <strong>CL_MEM_ALLOC_HOST_PTR</strong> may be used together, but there doesn't appear to be a valid reason why this is useful. Only <strong>CL_MEM_USE_HOST_PTR</strong> and <strong>CL_MEM_ALLOC_HOST_PTR</strong> are mutually exclusive.</p>
-<p>On AMD platforms the three <strong>*HOST_PTR</strong> flags allocate buffers that reside on the host. If you specify <strong>CL_MEM_USE_PERISTENT_MEM_AMD</strong> during buffer creation, then it creates an on-device zero-copy buffer whose contents may be efficiently mapped back to the host.</p>
-<h4 id="Summary-of-memory-allocation-flags">Summary of memory allocation flags<a class="anchor-link" href="#Summary-of-memory-allocation-flags">&#182;</a></h4><table>
+<p>Both <strong>CL_MEM_COPY_HOST_PTR</strong> and <strong>CL_MEM_ALLOC_HOST_PTR</strong> may be used together. Only <strong>CL_MEM_USE_HOST_PTR</strong> and <strong>CL_MEM_ALLOC_HOST_PTR</strong> are mutually exclusive.</p>
+<p>On AMD platforms the three <strong>*HOST_PTR</strong> flags allocate buffers that reside on the host. If you specify <strong>CL_MEM_USE_PERSISTENT_MEM_AMD</strong> during buffer creation, then it creates an on-device zero-copy buffer whose contents may be efficiently mapped back to the host.</p>
+<h5 id="Summary-of-memory-allocation-flags">Summary of memory allocation flags<a class="anchor-link" href="#Summary-of-memory-allocation-flags">&#182;</a></h5><table>
 <thead><tr>
 <th style="text-align:left"><strong>Allocation flag</strong></th>
 <th style="text-align:left"><strong>Functionality</strong></th>
