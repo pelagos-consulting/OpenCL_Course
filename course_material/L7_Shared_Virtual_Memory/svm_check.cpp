@@ -35,6 +35,7 @@ int main(int argc, char** argv) {
 
     // Pointer to an array of contexts
     cl_context *contexts = NULL;
+
     
     // Helper function to acquire devices
     h_acquire_devices(target_device,
@@ -54,7 +55,7 @@ int main(int argc, char** argv) {
     
     // Report on the device in use
     h_report_on_device(device);
-    
+   
     // Check if the device supports coarse-grained SVM
     cl_device_svm_capabilities svm;
     errcode = clGetDeviceInfo(

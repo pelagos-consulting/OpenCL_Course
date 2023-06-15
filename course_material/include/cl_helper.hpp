@@ -305,6 +305,46 @@ void h_acquire_devices(
     *contexts_out = contexts;
 }
 
+/// Get the OpenCL version that a compute device supports
+cl_float h_get_device_ver(cl_device_id device) {
+    
+    // Get the Opencl device version 
+    size_t nbytes_version; 
+    H_ERRCHK(
+        clGetDeviceInfo(
+            device, 
+            CL_DEVICE_VERSION, 
+            0, 
+            NULL, 
+            &nbytes_version
+        )
+    );
+
+    // Allocate memory for the versionn
+    char* version=new char[nbytes_version+1];
+
+    // Don't forget the NULL character terminator
+    version[nbytes_version] = '\0';
+
+    // Second call is to fill the allocated name
+    H_ERRCHK(
+        clGetDeviceInfo(
+            device, 
+            CL_DEVICE_VERSION, 
+            nbytes_version, 
+            version, 
+            NULL
+        )
+    );
+     
+    // Turn the version text into a number
+    char *token = std::strtok(version, " ");
+    cl_float ver = std::atof(std::strtok(NULL, " "));
+
+    delete [] version;
+    return ver;
+}
+
 /// Create an array of command queues
 cl_command_queue* h_create_command_queues(
         // Create a list of command queues
@@ -325,6 +365,9 @@ cl_command_queue* h_create_command_queues(
         // sent to the command queues
         cl_bool profiling_enable) {
     
+    cl_device_id device;
+    cl_context context;
+
     // Return code for error checking
     cl_int errcode;   
 
@@ -340,15 +383,44 @@ cl_command_queue* h_create_command_queues(
     // Allocate memory for the command queues
     cl_command_queue *command_queues = (cl_command_queue*)calloc(num_command_queues, sizeof(cl_command_queue));
 
-    // Fill command queues in a Round-Robin fashion
+    // Fill command queues in a Round-Robin way
     for (cl_uint n=0; n<num_command_queues; n++) {
-        command_queues[n] = clCreateCommandQueue(
-            contexts[n % num_devices],
-            devices[n % num_devices],
-            queue_properties,
-            &errcode    
-        );
-        h_errchk(errcode, "Creating a command queue");        
+        // Get the context and device
+        context = contexts[n % num_devices];
+        device = devices[n % num_devices];
+
+#ifdef CL_VERSION_2_0
+        // Check to see what version the device supports
+        cl_float device_ver = h_get_device_ver(device);
+
+        if (device_ver>=2.0) {
+            // Create the command queue the OpenCL 2.0 way
+            cl_queue_properties queue2_props[] = {
+                CL_QUEUE_PROPERTIES, queue_properties,
+                0
+            };
+            // Use the OpenCL 2.0 API    
+            command_queues[n] = clCreateCommandQueueWithProperties(
+                context,
+                device,
+                queue2_props,
+                &errcode    
+            );
+            h_errchk(errcode, "Creating an OpenCL 2.0 command queue with properties");  
+
+        } else 
+#endif
+        { 
+            // Create the command queue the OpenCL 1.2 way
+            command_queues[n] = clCreateCommandQueue(
+                context,
+                device,
+                queue_properties,
+                &errcode    
+            );
+
+            h_errchk(errcode, "Creating an OpenCL 1.2 command queue");  
+        }
     }
             
     return command_queues;
@@ -596,6 +668,33 @@ void h_report_on_device(cl_device_id device) {
     );
     std::printf("\t%20s %s \n","name:", name);
 
+    // Get the Opencl device version 
+    size_t nbytes_version; 
+    H_ERRCHK(
+        clGetDeviceInfo(
+                device, 
+                CL_DEVICE_VERSION, 
+                0, 
+                NULL, 
+                &nbytes_version
+        )
+    );
+    // Allocate memory for the version
+    char* version=new char[nbytes_version+1];
+    // Don't forget the NULL character terminator
+    version[nbytes_version] = '\0';
+    // Second call is to fill the allocated name
+    H_ERRCHK(
+        clGetDeviceInfo(
+                device, 
+                CL_DEVICE_VERSION, 
+                nbytes_version, 
+                version, 
+                NULL
+        )
+    );
+    std::printf("\t%20s %s \n","Device version:", version);
+ 
     // Fetch the global memory size
     cl_ulong mem_size;
     h_errchk(
@@ -665,6 +764,8 @@ void h_report_on_device(cl_device_id device) {
     // Clean up
     delete [] max_size;
     delete [] name;
+    delete [] version;
+
 }
 
 /// Release command queues
