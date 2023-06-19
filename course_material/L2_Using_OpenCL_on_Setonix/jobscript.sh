@@ -9,7 +9,7 @@
 #SBATCH --gpus-per-task=1          # How many OpenCL compute devices to allocate to a  task
 #SBATCH --gpu-bind=closest         # Bind each MPI taks to the nearest GPU
 #SBATCH --mem=4000M                # Indicate the amount of memory per node when asking for shared resources
-#SBATCH --time=01:00:00            # Estimated time in HH:MM:SS
+#SBATCH --time=00:05:00            # Estimated time in HH:MM:SS
 
 module use /software/projects/courses01/setonix/opencl/modulefiles
 module load PrgEnv-opencl
