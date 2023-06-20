@@ -217,6 +217,11 @@ int main(int argc, char** argv) {
         ) 
     );
 
+    
+    //// Exercise: Replace the code below 
+    //// with code to perform A rectangular 
+    //// copy from F_d to F_h
+    
     H_ERRCHK(
         clEnqueueReadBuffer(
             command_queue,
@@ -231,6 +236,8 @@ int main(int argc, char** argv) {
         )
     );
 
+    //// End code ////
+    
     // Check the answer against a known solution
     float* F_answer_h = (float*)calloc(nbytes_F, 1);
     float* F_residual_h = (float*)calloc(nbytes_F, 1);
