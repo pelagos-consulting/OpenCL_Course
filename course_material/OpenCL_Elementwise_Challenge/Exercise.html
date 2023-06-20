@@ -14585,14 +14585,14 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 <figcaption style="text-align:lower; margin:1em; float:bottom; vertical-align:bottom;">Elementwise multiplication of matrices D and E to get F.</figcaption>
 </figure><p>The source code is located in <a href="mat_elementwise.cpp">mat_elementwise.cpp</a> and is similar to the matrix multiplication example <a href="../L3_Matrix_Multiplication/mat_mult.cpp">mat_mult.cpp</a> in almost every aspect. The steps are:</p>
 <ol>
-<li>Device discovery and selection.</li>
-<li>Command queues created.</li>
-<li>Matrices <strong>D_h</strong> and <strong>E_h</strong> allocated on the host and filled with random numbers.</li>
-<li>Matrices <strong>D_d</strong> and <strong>E_d</strong> allocated on the compute device.</li>
-<li>Programs built, kernels created and kernel arguments selected.</li>
-<li>Matrices <strong>D_h</strong> and <strong>E_h</strong> uploaded to device allocations <strong>D_d</strong> and <strong>E_d</strong>.</li>
-<li>The kernel <strong>mat_elementwise</strong> is run on the device to compute <strong>F_d</strong> from <strong>D_d</strong> and <strong>E_d</strong>.</li>
-<li><strong>F_d</strong> is copied to <strong>F_h</strong> and compared with the solution <strong>F_answer_h</strong> from sequential CPU code.</li>
+<li>Device discovery and selection</li>
+<li>Command queues created</li>
+<li>Matrices <strong>D_h</strong> and <strong>E_h</strong> allocated on the host and filled with random numbers</li>
+<li>Matrices <strong>D_d</strong> and <strong>E_d</strong> allocated on the compute device</li>
+<li>Programs built, kernels created and kernel arguments selected</li>
+<li>Matrices <strong>D_h</strong> and <strong>E_h</strong> uploaded to device allocations <strong>D_d</strong> and <strong>E_d</strong></li>
+<li>The kernel <strong>mat_elementwise</strong> is run on the device to compute <strong>F_d</strong> from <strong>D_d</strong> and <strong>E_d</strong></li>
+<li><strong>F_d</strong> is copied to <strong>F_h</strong> and compared with the solution <strong>F_answer_h</strong> from sequential CPU code</li>
 <li>Memory and device cleanup</li>
 </ol>
 
@@ -14645,6 +14645,7 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 CC -g -fopenmp -O2 -I../include mat_elementwise.cpp -o mat_elementwise.exe -lOpenCL
 CC -g -fopenmp -O2 -I../include mat_elementwise_answer.cpp -o mat_elementwise_answer.exe -lOpenCL
 	               name: gfx1035 
+	     Device version: OpenCL 2.0  
 	 global memory size: 536 MB
 	    max buffer size: 456 MB
 	     max local size: (1024,1024,1024)
@@ -14747,6 +14748,7 @@ Maximum error (infinity norm) is: 0
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
 <pre>make: Nothing to be done for &#39;all&#39;.
 	               name: gfx1035 
+	     Device version: OpenCL 2.0  
 	 global memory size: 536 MB
 	    max buffer size: 456 MB
 	     max local size: (1024,1024,1024)
@@ -14800,7 +14802,7 @@ Maximum error (infinity norm) is: 0.9
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p>As you can see the residual is non-zero, which means that the output is incorrect. The challenge is to edit <a href="mat_elementwise.cpp">mat_elementwise.cpp</a> so that it produces the same result as the solution <a href="mat_elementwise_answer.cpp">mat_elementwise_answer.cpp</a>.</p>
+<p>As you can see the residual is non-zero, which means that the output is incorrect. The challenge is to edit the sources <a href="mat_elementwise.cpp">mat_elementwise.cpp</a> and <a href="kernels_elementwise.c">kernels_elementwise.c</a> so the program <strong>mat_elementwise.exe</strong> produces the same result as the solution <a href="mat_elementwise_answer.cpp">mat_elementwise_answer.cpp</a> and <a href="kernels_elementwise_answer.c">kernels_elementwise_answer.c</a>.</p>
 
 </div>
 </div>
@@ -14812,12 +14814,12 @@ Maximum error (infinity norm) is: 0.9
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h2 id="Choose-your-own-coding-adventure!">Choose your own coding adventure!<a class="anchor-link" href="#Choose-your-own-coding-adventure!">&#182;</a></h2><p>As it stands the exercise <a href="mat_elementwise.cpp">mat_elementwise.cpp</a> is missing a number of <strong>crucial</strong> steps. Each step is clearly marked out in the code using quadruple comments. It may also be helpful to download the latest <a href="https://www.khronos.org/registry/OpenCL/specs/3.0-unified/pdf/OpenCL_C.pdf">OpenCL C specification</a> and have it ready before you start.</p>
+<h2 id="Choose-your-own-coding-adventure!">Choose your own coding adventure!<a class="anchor-link" href="#Choose-your-own-coding-adventure!">&#182;</a></h2><p>As it stands the exercise <a href="mat_elementwise.cpp">mat_elementwise.cpp</a> is missing a number of <strong>crucial</strong> steps. Each step is clearly marked out in the code using quadruple <code>////</code> comments. It may also be helpful to download the latest <a href="https://www.khronos.org/registry/OpenCL/specs/3.0-unified/pdf/OpenCL_C.pdf">OpenCL C specification</a> and have it ready before you start.</p>
 <ol>
-<li>Kernel code to perform the actual elementwise multiplication in <a href="kernels_elementwise.c">kernels_elementwise.c</a>.<ul>
+<li>Finish the kernel code to perform the actual elementwise multiplication in <a href="kernels_elementwise.c">kernels_elementwise.c</a>.<ul>
 <li>Make sure you have a guard statement in place so that you don't overrun the bounds of F. </li>
 <li>Use multi-dimensional indexing as shown in the Survival C++ Lesson to index into arrays.</li>
-<li>If you get stuck you can just use the kernel from the answer in <a href="kernels_elementwise_answer.c">kernels_elementwise_answer.c</a>.</li>
+<li>If you get stuck you can just copy the kernel from the answer in <a href="kernels_elementwise_answer.c">kernels_elementwise_answer.c</a>.</li>
 </ul>
 </li>
 <li>Create OpenCL buffers for matrices <strong>D_d</strong>, <strong>E_d</strong>, and <strong>F_d</strong>.<ul>
@@ -14903,11 +14905,12 @@ Maximum error (infinity norm) is: 0.9
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
 <pre>make: Nothing to be done for &#39;all&#39;.
-	               name: NVIDIA GeForce RTX 3060 Laptop GPU 
-	 global memory size: 6226 MB
-	    max buffer size: 1556 MB
-	     max local size: (1024,1024,64)
-	     max work-items: 1024
+	               name: gfx1035 
+	     Device version: OpenCL 2.0  
+	 global memory size: 536 MB
+	    max buffer size: 456 MB
+	     max local size: (1024,1024,1024)
+	     max work-items: 256
 The output array F_h (as computed with OpenCL) is
 ----
 |  0.00e+00  0.00e+00  0.00e+00  0.00e+00 |
@@ -14921,26 +14924,27 @@ The output array F_h (as computed with OpenCL) is
 ----
 The CPU solution (F_answer_h) is 
 ----
-|  2.34e-03  2.10e-02  4.17e-01  1.43e-01 |
-|  2.45e-01  2.19e-02  6.44e-02  1.36e-01 |
-|  2.11e-01  2.54e-01  1.18e-01  2.21e-02 |
-|  2.36e-01  2.55e-02  4.31e-01  1.91e-01 |
-|  6.82e-02  4.09e-02  4.07e-02  8.60e-01 |
-|  1.97e-02  1.57e-01  4.00e-02  8.61e-03 |
-|  5.51e-01  7.88e-03  5.50e-01  3.68e-02 |
-|  2.16e-01  3.93e-01  8.79e-02  3.56e-01 |
+|  4.50e-01  1.70e-01  2.77e-01  2.21e-02 |
+|  2.46e-02  3.48e-02  4.41e-02  2.05e-01 |
+|  7.57e-01  4.06e-03  3.90e-01  2.74e-01 |
+|  3.16e-01  3.38e-05  9.45e-02  9.03e-01 |
+|  1.60e-02  6.24e-03  9.69e-02  4.00e-01 |
+|  4.89e-01  4.12e-01  8.46e-01  8.93e-02 |
+|  3.23e-01  3.19e-02  2.84e-01  4.18e-01 |
+|  2.02e-02  3.38e-01  2.30e-01  1.49e-01 |
 ----
 The residual (F_answer_h-F_h) is
 ----
-|  2.34e-03  2.10e-02  4.17e-01  1.43e-01 |
-|  2.45e-01  2.19e-02  6.44e-02  1.36e-01 |
-|  2.11e-01  2.54e-01  1.18e-01  2.21e-02 |
-|  2.36e-01  2.55e-02  4.31e-01  1.91e-01 |
-|  6.82e-02  4.09e-02  4.07e-02  8.60e-01 |
-|  1.97e-02  1.57e-01  4.00e-02  8.61e-03 |
-|  5.51e-01  7.88e-03  5.50e-01  3.68e-02 |
-|  2.16e-01  3.93e-01  8.79e-02  3.56e-01 |
+|  4.50e-01  1.70e-01  2.77e-01  2.21e-02 |
+|  2.46e-02  3.48e-02  4.41e-02  2.05e-01 |
+|  7.57e-01  4.06e-03  3.90e-01  2.74e-01 |
+|  3.16e-01  3.38e-05  9.45e-02  9.03e-01 |
+|  1.60e-02  6.24e-03  9.69e-02  4.00e-01 |
+|  4.89e-01  4.12e-01  8.46e-01  8.93e-02 |
+|  3.23e-01  3.19e-02  2.84e-01  4.18e-01 |
+|  2.02e-02  3.38e-01  2.30e-01  1.49e-01 |
 ----
+Maximum error (infinity norm) is: 0.9
 </pre>
 </div>
 </div>

@@ -13,7 +13,7 @@ __kernel void mat_elementwise (
     size_t i0=get_global_id(1); 
     size_t i1=get_global_id(0); 
 
-    /// Insert missing kernel code ///
+    /// Step 1. Insert missing kernel code ///
     /// To perform Hadamard matrix multiplication ///
 
 } 

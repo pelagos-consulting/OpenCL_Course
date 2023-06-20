@@ -107,6 +107,10 @@ int main(int argc, char** argv) {
     // Uncomment for the shortcut answer
     // #include "step2_create_buffers.cpp"
 
+    
+    
+    
+    
     //// End code: ////
 
     // Now specify the kernel source and read it in
@@ -127,6 +131,10 @@ int main(int argc, char** argv) {
     // Uncomment for the shortcut answer
     // #include "step3_create_kernel.cpp"
 
+    
+    
+    
+    
     //// End code: ////
 
     // Write memory from the host
@@ -141,6 +149,10 @@ int main(int argc, char** argv) {
     
     // Uncomment for the shortcut answer
     // #include "step4_write_buffers.cpp"
+    
+    
+    
+    
     
     //// End code: ////
     
@@ -170,6 +182,10 @@ int main(int argc, char** argv) {
     // Uncomment for the shortcut answer
     // #include "step5_enqueue_kernel.cpp"
     
+    
+    
+    
+    
     //// End code: ////
 
     //// Step 6. Read memory from F_d back to F_h on the host ////
@@ -178,6 +194,10 @@ int main(int argc, char** argv) {
     // Uncomment for the shortcut answer
     // #include "step6_read_buffer.cpp"
 
+    
+    
+    
+    
     //// End code: ////
 
     // Check the answer against a known solution
@@ -213,6 +233,10 @@ int main(int argc, char** argv) {
 
     // Uncomment for the shortcut answer
     // #include "step7_release_memobjects.cpp"
+    
+    
+    
+    
     
     //// End code: ////
 
