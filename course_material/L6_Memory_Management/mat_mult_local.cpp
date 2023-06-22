@@ -293,6 +293,16 @@ int main(int argc, char** argv) {
     // Write C_h to disk
     h_write_binary(C_h, "array_C.dat", nbytes_C);
     
+    //// Step 11. Test the answer against a known solution
+    //// And write the contents of the matrices out to disk
+   
+    // Compute the serial solution using the matrix helper library
+    float* C_answer_h = (float*)calloc(nbytes_C, 1);
+    m_mat_mult(A_h, B_h, C_answer_h, N1_A, N0_C, N1_C);
+
+    // Print the maximum error between matrices
+    float max_err = m_max_error(C_h, C_answer_h, N0_C, N1_C);
+
     // Unmap C_d so we can release it
     H_ERRCHK(
         clEnqueueUnmapMemObject(
@@ -305,16 +315,6 @@ int main(int argc, char** argv) {
         )
     );
     
-    //// Step 11. Test the answer against a known solution
-    //// And write the contents of the matrices out to disk
-   
-    // Compute the serial solution using the matrix helper library
-    float* C_answer_h = (float*)calloc(nbytes_C, 1);
-    m_mat_mult(A_h, B_h, C_answer_h, N1_A, N0_C, N1_C);
-
-    // Print the maximum error between matrices
-    float max_err = m_max_error(C_h, C_answer_h, N0_C, N1_C);
-
     // Write out the host arrays to file
     h_write_binary(A_h, "array_A.dat", nbytes_A);
     h_write_binary(B_h, "array_B.dat", nbytes_B);

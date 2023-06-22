@@ -14651,10 +14651,10 @@ CC -g -fopenmp -O2 -I../include mat_elementwise_answer.cpp -o mat_elementwise_an
 	    max buffer size: 456 MB
 	     max local size: (1024,1024,1024)
 	     max work-items: 256
-Time for event &#34;Uploading Buffer D&#34;: 0.186 ms (11571.19 MB/s)
-Time for event &#34;Uploading Buffer E&#34;: 0.186 ms (11526.39 MB/s)
-Time for event &#34;Kernel execution&#34;: 0.154 ms
-Time for event &#34;Downloading Buffer F&#34;: 0.136 ms (15740.01 MB/s)
+Time for event &#34;Uploading Buffer D&#34;: 0.185 ms (11573.69 MB/s)
+Time for event &#34;Uploading Buffer E&#34;: 0.138 ms (15530.02 MB/s)
+Time for event &#34;Kernel execution&#34;: 0.122 ms
+Time for event &#34;Downloading Buffer F&#34;: 0.153 ms (14065.93 MB/s)
 Maximum error (infinity norm) is: 0
 </pre>
 </div>
@@ -14693,7 +14693,7 @@ Maximum error (infinity norm) is: 0
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[3]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[2]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>make mat_elementwise.exe<span class="p">;</span> ./mat_elementwise.exe
@@ -14718,7 +14718,7 @@ Maximum error (infinity norm) is: 0
 
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>make: &#39;mat_elementwise.exe&#39; is up to date.
+<pre>CC -g -fopenmp -O2 -I../include mat_elementwise.cpp -o mat_elementwise.exe -lOpenCL
 	               name: gfx1035 
 	     Device version: OpenCL 2.0  
 	 global memory size: 536 MB
