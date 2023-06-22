@@ -15,6 +15,9 @@ module use /software/projects/courses01/setonix/opencl/modulefiles
 module load PrgEnv-opencl
 module load craype-accel-amd-gfx90a
 
+# Recompile the software
+make clean; make
+
 export MPICH_GPU_SUPPORT_ENABLED=1 # Enable GPU support with MPI
 
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK   #To define the number of OpenMP threads available per MPI task, in this case it will be 8

@@ -14602,27 +14602,41 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 <span class="w">    </span><span class="c1">// Do we enable profiling?</span>
 <span class="w">    </span><span class="n">cl_bool</span><span class="w"> </span><span class="n">profiling</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CL_TRUE</span><span class="p">;</span><span class="w"></span>
 </pre></div>
-<p>Then from within <strong>h_create_command_queues</strong> in <a href="../include/cl_helper.hpp">cl_helper.hpp</a>, the profiling flag <strong>CL_QUEUE_PROFILING_ENABLE</strong> is incorporated into the command queue properties and passed to <a href="https://www.khronos.org/registry/OpenCL/sdk/3.0/docs/man/html/clCreateCommandQueue.html">clCreateCommandQueue</a>.</p>
+<p>Then from within <strong>h_create_command_queues</strong> in <a href="../include/cl_helper.hpp">cl_helper.hpp</a>, the profiling flag <strong>CL_QUEUE_PROFILING_ENABLE</strong> is incorporated into the command queue properties and passed to either <a href="https://www.khronos.org/registry/OpenCL/sdk/3.0/docs/man/html/clCreateCommandQueue.html">clCreateCommandQueue</a> from the OpenCL 1.2 API or <a href="https://www.khronos.org/registry/OpenCL/sdk/3.0/docs/man/html/clCreateCommandQueueWithProperties.html">clCreateCommandQueueWithProperties</a> from the OpenCL 2.0 API.</p>
 <div class="highlight"><pre><span></span><span class="c1">// cl_helper.hpp source</span>
 
-<span class="w">    </span><span class="c1">// Manage bit fields for the command queue properties</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">profiling_enable</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">CL_TRUE</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">        </span><span class="n">queue_properties</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">queue_properties</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">CL_QUEUE_PROFILING_ENABLE</span><span class="p">;</span><span class="w">    </span>
-<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="cp">#ifdef CL_VERSION_2_0</span>
+<span class="w">        </span><span class="c1">// Check to see what version the device supports</span>
+<span class="w">        </span><span class="n">cl_float</span><span class="w"> </span><span class="n">device_ver</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">h_get_device_ver</span><span class="p">(</span><span class="n">device</span><span class="p">);</span><span class="w"></span>
 
-<span class="w">    </span><span class="c1">// Allocate memory for the command queues</span>
-<span class="w">    </span><span class="n">cl_command_queue</span><span class="w"> </span><span class="o">*</span><span class="n">command_queues</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">cl_command_queue</span><span class="o">*</span><span class="p">)</span><span class="n">calloc</span><span class="p">(</span><span class="n">num_command_queues</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">cl_command_queue</span><span class="p">));</span><span class="w"></span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">device_ver</span><span class="o">&gt;=</span><span class="mf">2.0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">            </span><span class="c1">// Create the command queue the OpenCL 2.0 way</span>
+<span class="w">            </span><span class="n">cl_queue_properties</span><span class="w"> </span><span class="n">queue2_props</span><span class="p">[]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">                </span><span class="n">CL_QUEUE_PROPERTIES</span><span class="p">,</span><span class="w"> </span><span class="n">queue_properties</span><span class="p">,</span><span class="w"></span>
+<span class="w">                </span><span class="mi">0</span><span class="w"></span>
+<span class="w">            </span><span class="p">};</span><span class="w"></span>
+<span class="w">            </span><span class="c1">// Use the OpenCL 2.0 API    </span>
+<span class="w">            </span><span class="n">command_queues</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">clCreateCommandQueueWithProperties</span><span class="p">(</span><span class="w"></span>
+<span class="w">                </span><span class="n">context</span><span class="p">,</span><span class="w"></span>
+<span class="w">                </span><span class="n">device</span><span class="p">,</span><span class="w"></span>
+<span class="w">                </span><span class="n">queue2_props</span><span class="p">,</span><span class="w"></span>
+<span class="w">                </span><span class="o">&amp;</span><span class="n">errcode</span><span class="w">    </span>
+<span class="w">            </span><span class="p">);</span><span class="w"></span>
+<span class="w">            </span><span class="n">h_errchk</span><span class="p">(</span><span class="n">errcode</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Creating an OpenCL 2.0 command queue with properties&quot;</span><span class="p">);</span><span class="w">  </span>
 
-<span class="w">    </span><span class="c1">// Fill command queues in a Round-Robin fashion</span>
-<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">cl_uint</span><span class="w"> </span><span class="n">n</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">n</span><span class="o">&lt;</span><span class="n">num_command_queues</span><span class="p">;</span><span class="w"> </span><span class="n">n</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">        </span><span class="n">command_queues</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">clCreateCommandQueue</span><span class="p">(</span><span class="w"></span>
-<span class="w">            </span><span class="n">contexts</span><span class="p">[</span><span class="n">n</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="n">num_devices</span><span class="p">],</span><span class="w"></span>
-<span class="w">            </span><span class="n">devices</span><span class="p">[</span><span class="n">n</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="n">num_devices</span><span class="p">],</span><span class="w"></span>
-<span class="w">            </span><span class="n">queue_properties</span><span class="p">,</span><span class="w"></span>
-<span class="w">            </span><span class="o">&amp;</span><span class="n">errcode</span><span class="w">    </span>
-<span class="w">        </span><span class="p">);</span><span class="w"></span>
-<span class="w">        </span><span class="n">h_errchk</span><span class="p">(</span><span class="n">errcode</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Creating a command queue&quot;</span><span class="p">);</span><span class="w">        </span>
-<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span>
+<span class="cp">#endif</span>
+<span class="w">        </span><span class="p">{</span><span class="w"> </span>
+<span class="w">            </span><span class="c1">// Create the command queue the OpenCL 1.2 way</span>
+<span class="w">            </span><span class="n">command_queues</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">clCreateCommandQueue</span><span class="p">(</span><span class="w"></span>
+<span class="w">                </span><span class="n">context</span><span class="p">,</span><span class="w"></span>
+<span class="w">                </span><span class="n">device</span><span class="p">,</span><span class="w"></span>
+<span class="w">                </span><span class="n">queue_properties</span><span class="p">,</span><span class="w"></span>
+<span class="w">                </span><span class="o">&amp;</span><span class="n">errcode</span><span class="w">    </span>
+<span class="w">            </span><span class="p">);</span><span class="w"></span>
+
+<span class="w">            </span><span class="n">h_errchk</span><span class="p">(</span><span class="n">errcode</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Creating an OpenCL 1.2 command queue&quot;</span><span class="p">);</span><span class="w">  </span>
+<span class="w">        </span><span class="p">}</span><span class="w"></span>
 </pre></div>
 <p>The function <a href="https://www.khronos.org/registry/OpenCL/sdk/3.0/docs/man/html/clGetEventProfilingInfo.html">clGetEventProfilingInfo</a> extracts information such as start and end walltimes (in nanoseconds) for an OpenCL event associated with a queued command. We use the helper function <strong>h_get_event_time_ms</strong> in <a href="../include/cl_helper.hpp">cl_helper.hpp</a> to extract the elapsed time.</p>
 <div class="highlight"><pre><span></span><span class="c1">// cl_helper.hpp source</span>
