@@ -14702,12 +14702,12 @@ Maximum error (infinity norm) is: 0
 <li>Add a check so that the progam will crash out if the runtime is not capable of using CL_DEVICE_SVM_FINE_GRAIN_BUFFER (copy paste this from <a href="mat_mult_fine_buffer_svm.cpp">mat_mult_fine_buffer_svm.cpp</a>).</li>
 <li>Allocate memory for <strong>F_svm</strong> using <a href="https://www.khronos.org/registry/OpenCL/sdk/3.0/docs/man/html/clSVMAlloc.html">clSVMAlloc</a> instead. Don't forget the additional <strong>CL_MEM_SVM_FINE_GRAIN_BUFFER</strong> flag.</li>
 <li>Remove the code that creates a buffer for <strong>F_d</strong>.</li>
-<li>Remove the code that allocates and frees memory for <strong>F_h</strong></li>
+<li>Remove all code that allocates and frees memory for <strong>F_h</strong></li>
 <li>Replace clSetKernelArg with <a href="https://www.khronos.org/registry/OpenCL/sdk/3.0/docs/man/html/clSetKernelArgSVMPointer.html">clSetKernelArgSVMPointer</a> for setting argument 2 in the kernel.</li>
 <li>Remove the read of <strong>F_d</strong> back to the host.</li>
-<li>When checking the solution use <strong>F_svm</strong> instead of <strong>F_h</strong>.</li>
+<li>Use <strong>F_svm</strong> everywhere instead of <strong>F_h</strong>.</li>
 <li>Remove the call to clReleaseMemObject for <strong>F_d</strong>.</li>
-<li>Use <a href="https://www.khronos.org/registry/OpenCL/sdk/3.0/docs/man/html/clSVMFree.html">clSVMFree</a> to free memory for <strong>F_svm</strong> instead of <strong>free(F_h)</strong>.</li>
+<li>Use <a href="https://www.khronos.org/registry/OpenCL/sdk/3.0/docs/man/html/clSVMFree.html">clSVMFree</a> to free memory for <strong>F_svm</strong>.</li>
 </ol>
 
 </div>
@@ -14730,7 +14730,7 @@ Maximum error (infinity norm) is: 0
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[2]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[3]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>make mat_elementwise_svm_answer.exe<span class="p">;</span> ./mat_elementwise_svm_answer.exe -cpu
