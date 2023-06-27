@@ -10,4 +10,4 @@
 #define R1 2
 
 // Number of times to iterate over the stack of images
-#define NITERS 1
+#define NITERS 10
