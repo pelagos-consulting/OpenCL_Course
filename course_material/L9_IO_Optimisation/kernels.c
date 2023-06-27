@@ -36,7 +36,7 @@ __kernel void wave2d_4o (
     float temp0=0.0f, temp1=0.0f;
     float tempV=V[offset];
     
-    // Calculate the Laplacian
+    // Calculate the Laplacian, the sum of spatial derivatives
     #pragma unroll
     for (long n=0; n<ncoeffs; n++) {
         // Stride in dim0 is N1        

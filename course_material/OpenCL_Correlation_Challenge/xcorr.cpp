@@ -99,7 +99,7 @@ int main(int argc, char** argv) {
                                 -1,-1,-1};
 
     // Read kernel sources 
-    const char* filename = "kernels_answers.c";
+    const char* filename = "kernels.c";
     char* kernel_source = (char*)h_read_binary(filename, &nbytes);
 
     // Create Programs and kernels for all devices 
@@ -123,7 +123,7 @@ int main(int argc, char** argv) {
     // Create input buffers for every device
     for (cl_uint n=0; n<num_devices; n++) {
         
-        //// Begin Task 1 - Code to create the OpenCL buffers for each thread ////
+        //// Begin Task 2 - Code to create the OpenCL buffers for each thread ////
         
         // Fill srcs_d[n], dsts_d[n], kerns_d[n] 
         // with buffers created by clCreateBuffer 
@@ -137,25 +137,25 @@ int main(int argc, char** argv) {
         // memory for the image kernel
         
         // Uncomment the line below for the shortcut solution
-        // #include "task1_answer.hpp"
-        
-
-
-        
-        //// End Task 1 //////////////////////////////////////////////////////////
-        
-        // Just for kernel arguments
-        cl_uint len0_src = N0, len1_src = N1, pad0_l = L0, pad0_r = R0, pad1_l = L1, pad1_r = R1;
-
-        //// Begin Task 2 - Code to set kernel arguments for each thread /////////
-        
-        // Uncomment the line below for the shortcut solution
         // #include "task2_answer.hpp"
         
 
 
         
         //// End Task 2 //////////////////////////////////////////////////////////
+        
+        // Just for kernel arguments
+        cl_uint len0_src = N0, len1_src = N1, pad0_l = L0, pad0_r = R0, pad1_l = L1, pad1_r = R1;
+
+        //// Begin Task 3 - Code to set kernel arguments for each thread /////////
+        
+        // Uncomment the line below for the shortcut solution
+        // #include "task3_answer.hpp"
+        
+
+
+        
+        //// End Task 3 //////////////////////////////////////////////////////////
     }
     
     // Start the timer
@@ -189,17 +189,16 @@ int main(int argc, char** argv) {
             // Load memory from images in using the offset
             size_t offset = n*N0*N1;
             
-            //// Begin Task 3 - Code to upload memory to the compute device buffer ////
+            //// Begin Task 4 - Code to upload memory to the compute device buffer ////
             
             // Uncomment the line below for the shortcut solution
-            // #include "task3_answer.hpp"
+            // #include "task4_answer.hpp"
 
 
 
             
-            //// End Task 3 ///////////////////////////////////////////////////////////
+            //// End Task 4 ///////////////////////////////////////////////////////////
             
-            //// Task 4 is to complete the kernel in kernels.cl
             
             //// Begin Task 5 - Code to enqueue the kernel ///////////////////////////
             

@@ -269,7 +269,7 @@ int main(int argc, char** argv) {
         }
     }
 
-    // Make sure all work is done
+    // Make sure all work is done on all queues
     for (int i=0; i<nscratch; i++) {
         H_ERRCHK(clFinish(command_queues[i]));
     }
