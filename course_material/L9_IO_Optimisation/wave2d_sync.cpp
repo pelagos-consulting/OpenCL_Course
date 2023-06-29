@@ -242,7 +242,7 @@ int main(int argc, char** argv) {
             ) 
         );
           
-        // Read memory from the buffer to the host in an asynchronous manner
+        // Read memory from the buffer to the host in an synchronous manner
         H_ERRCHK(
             clEnqueueReadBuffer(
                 compute_queue,

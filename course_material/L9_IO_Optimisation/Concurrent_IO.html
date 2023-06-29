@@ -14787,7 +14787,7 @@ $$\textbf{U}_{2}=\textbf{F}(\textbf{U}_0, \textbf{U}_1, \textbf{V}, f_{1})$$<blo
 
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>CC -g -fopenmp -O2 -I../include wave2d_async.cpp -o wave2d_async.exe -lOpenCL
+<pre>make: Nothing to be done for &#39;all&#39;.
 </pre>
 </div>
 </div>
@@ -14833,7 +14833,7 @@ $$\textbf{U}_{2}=\textbf{F}(\textbf{U}_0, \textbf{U}_1, \textbf{V}, f_{1})$$<blo
 	     max work-items: 256
 dt=0.001166, Vmax=343.000000
 dt=0.00116618, fm=34.3, Vmax=343, dt2=1.35998e-06
-The synchronous calculation took 44 milliseconds.
+The synchronous calculation took 49 milliseconds.
 </pre>
 </div>
 </div>
@@ -14859,7 +14859,7 @@ The synchronous calculation took 44 milliseconds.
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[11]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[4]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>./make_traces.sh
@@ -14891,11 +14891,11 @@ The synchronous calculation took 44 milliseconds.
 	     max work-items: 256
 dt=0.001166, Vmax=343.000000
 dt=0.00116618, fm=34.3, Vmax=343, dt2=1.35998e-06
-device id: -2075146768.
-command id: 94856572924608.
+device id: 2003625488.
+command id: 94770457383648.
 vendor id: 0.
 Got a bogus start! 2 .TAU application
-The synchronous calculation took 42 milliseconds.
+The synchronous calculation took 58 milliseconds.
 /opt/tau/2.31.1/x86_64/bin/tau_merge -m tau.edf -e events.0.edf events.0.edf events.0.edf tautrace.0.0.0.trc tautrace.0.0.1.trc tautrace.0.0.2.trc tau.trc
 tautrace.0.0.0.trc: 18909 records read.
 tautrace.0.0.1.trc: 6 records read.
@@ -14908,31 +14908,31 @@ tautrace.0.0.2.trc: 8326 records read.
 	     max work-items: 256
 dt=0.001166, Vmax=343.000000
 dt=0.00116618, fm=34.3, Vmax=343, dt2=1.35998e-06
-device id: -243452400.
-command id: 94214169339856.
+device id: 431793856.
+command id: 94494017460928.
 vendor id: 0.
 Got a bogus start! 2 .TAU application
-device id: -243452400.
-command id: 94214159524576.
+device id: 431793856.
+command id: 94494007644880.
 vendor id: 0.
 Got a bogus start! 4 .TAU application
-device id: -243452400.
-command id: 94214167240528.
+device id: 431793856.
+command id: 94494015361040.
 vendor id: 0.
 Got a bogus start! 6 .TAU application
-device id: -243452400.
-command id: 94214159019312.
+device id: 431793856.
+command id: 94494007139536.
 vendor id: 0.
 Got a bogus start! 8 .TAU application
-device id: -243452400.
-command id: 94214169291168.
+device id: 431793856.
+command id: 94494017412304.
 vendor id: 0.
 Got a bogus start! 10 .TAU application
-device id: -243452400.
-command id: 94214169147664.
+device id: 431793856.
+command id: 94494017269040.
 vendor id: 0.
 Got a bogus start! 12 .TAU application
-The asynchronous calculation took 44 milliseconds./opt/tau/2.31.1/x86_64/bin/tau_merge -m tau.edf -e events.0.edf events.0.edf events.0.edf events.0.edf events.0.edf events.0.edf events.0.edf events.0.edf events.0.edf events.0.edf events.0.edf events.0.edf events.0.edf tautrace.0.0.0.trc tautrace.0.0.1.trc tautrace.0.0.10.trc tautrace.0.0.11.trc tautrace.0.0.12.trc tautrace.0.0.2.trc tautrace.0.0.3.trc tautrace.0.0.4.trc tautrace.0.0.5.trc tautrace.0.0.6.trc tautrace.0.0.7.trc tautrace.0.0.8.trc tautrace.0.0.9.trc tau.trc
+The asynchronous calculation took 51 milliseconds./opt/tau/2.31.1/x86_64/bin/tau_merge -m tau.edf -e events.0.edf events.0.edf events.0.edf events.0.edf events.0.edf events.0.edf events.0.edf events.0.edf events.0.edf events.0.edf events.0.edf events.0.edf events.0.edf tautrace.0.0.0.trc tautrace.0.0.1.trc tautrace.0.0.10.trc tautrace.0.0.11.trc tautrace.0.0.12.trc tautrace.0.0.2.trc tautrace.0.0.3.trc tautrace.0.0.4.trc tautrace.0.0.5.trc tautrace.0.0.6.trc tautrace.0.0.7.trc tautrace.0.0.8.trc tautrace.0.0.9.trc tau.trc
 tau.trc exists; override [y]? tautrace.0.0.0.trc: 20258 records read.
 tautrace.0.0.1.trc: 6 records read.
 tautrace.0.0.10.trc: 1414 records read.
@@ -15088,7 +15088,7 @@ tautrace.0.0.9.trc: 6 records read.
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[8]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[5]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>make
@@ -15113,7 +15113,7 @@ tautrace.0.0.9.trc: 6 records read.
 
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>make: Nothing to be done for &#39;all&#39;.
+<pre>CC -g -fopenmp -O2 -I../include wave2d_sync.cpp -o wave2d_sync.exe -lOpenCL
 </pre>
 </div>
 </div>
@@ -15127,7 +15127,7 @@ tautrace.0.0.9.trc: 6 records read.
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[10]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[6]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>./wave2d_async.exe -gpu
@@ -15160,7 +15160,7 @@ tautrace.0.0.9.trc: 6 records read.
 	     max work-items: 256
 dt=0.001166, Vmax=343.000000
 dt=0.00116618, fm=34.3, Vmax=343, dt2=1.35998e-06
-The asynchronous calculation took 27 milliseconds.</pre>
+The asynchronous calculation took 32 milliseconds.</pre>
 </div>
 </div>
 
@@ -15198,7 +15198,7 @@ The asynchronous calculation took 27 milliseconds.</pre>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[12]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[7]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Read the outputfile back in for display</span>

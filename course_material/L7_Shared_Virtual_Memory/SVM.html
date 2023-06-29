@@ -14606,7 +14606,7 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 </ul>
 <p><strong>Coarse-grained buffer SVM</strong> is the most basic level of SVM support and the only one that is <strong>technically required</strong> by the OpenCL 2.0 standard. Coarse-grained buffer SVM doesn't appear to be much different from standard OpenCL buffers, though it might make use of memory transfer optimisations. Coarse-grained SVM enables one to allocate and de-allocate memory on the host using special SVM functions <a href="https://www.khronos.org/registry/OpenCL/sdk/3.0/docs/man/html/clSVMAlloc.html">clSVMAlloc</a> and <a href="https://www.khronos.org/registry/OpenCL/sdk/3.0/docs/man/html/clSVMFree.html">clSVMFree</a>, and then the ability to use the allocated pointer in a kernel invocation instead of an OpenCL buffer. There may be synchronisation between host and device, however the allocation must still be <strong>explicitly mapped</strong> to the host for host access and then <strong>un-mapped</strong> when host access is no longer required.</p>
 <p><strong>Fine-grained buffer SVM</strong> removes the requirement to map and unmap memory, but it still needs the special SVM functions <a href="https://www.khronos.org/registry/OpenCL/sdk/3.0/docs/man/html/clSVMAlloc.html">clSVMAlloc</a> and <a href="https://www.khronos.org/registry/OpenCL/sdk/3.0/docs/man/html/clSVMFree.html">clSVMFree</a> to allocate and de-allocate shared memory. At runtime the code must notify the kernel of any SVM pointers that are to be used, either directly as kernel arguments or indirectly used (i.e through pointers in data structures accessed by the kernel). This can be extra work for the programmer. Unlike coarse-grained SVM, both host and device can access a fine-grained buffer at the <strong>same time</strong>. Consistency between host and device is guaranteed if host and device are writing to different bytes in the allocation. If there is a need for host and device to read what the other has written, then memory can be explicitly synchronised by <strong>waiting for the compute device to finish work</strong> on the buffer. <strong>No mapping or unmapping steps are required</strong>. If host and device must read and update the <strong>same bytes in the allocation</strong>, then atomic data types (if supported) and special synchronisation functions can be used to maintain coherency.</p>
-<p><strong>Fine-grained system SVM</strong> further removes the requirement to use <a href="https://www.khronos.org/registry/OpenCL/sdk/3.0/docs/man/html/clSVMAlloc.html">clSVMAlloc</a> and <a href="https://www.khronos.org/registry/OpenCL/sdk/3.0/docs/man/html/clSVMFree.html">clSVMFree</a> to allocate and de-allocate shared memory. System functions (such as <strong>malloc</strong>) allocate memory on the host, and the associated pointer is available for use in kernels. Only pointers directly used by the kernel must be passed in as kernel arguments. Pointers used indirectly can be accessed without having to notify the kernel of their existence. As with fine-grained buffer SVM, if host and device must read and update the <strong>same bytes in the allocation</strong>, then atomic data types (if supported) and special synchronisation functions can be used to maintain coherency.</p>
+<p><strong>Fine-grained system SVM</strong> further removes the requirement to use <a href="https://www.khronos.org/registry/OpenCL/sdk/3.0/docs/man/html/clSVMAlloc.html">clSVMAlloc</a> and <a href="https://www.khronos.org/registry/OpenCL/sdk/3.0/docs/man/html/clSVMFree.html">clSVMFree</a> to allocate and de-allocate shared memory. System functions (such as <strong>malloc</strong>) allocate memory on the host, and the associated pointer is available for use in kernels. We only need to let the kernel know we are using SVM memory during the setting of kernel arguments. As with fine-grained buffer SVM, if host and device must read and update the <strong>same bytes in the allocation</strong>, then atomic data types (if supported) and special synchronisation functions can be used to maintain coherency.</p>
 <h3 id="Checking-to-see-what-kind-of-shared-virtual-memory-your-system-supports">Checking to see what kind of shared virtual memory your system supports<a class="anchor-link" href="#Checking-to-see-what-kind-of-shared-virtual-memory-your-system-supports">&#182;</a></h3><p>The OpenCL function <a href="https://www.khronos.org/registry/OpenCL/sdk/3.0/docs/man/html/clGetDeviceInfo.html">clGetDeviceInfo</a> can query the SVM capabilities of the compute device. In the file <a href="svm_check.cpp">svm_check.cpp</a> we use <a href="https://www.khronos.org/registry/OpenCL/sdk/3.0/docs/man/html/clGetDeviceInfo.html">clGetDeviceInfo</a> along with the key <strong>CL_DEVICE_SVM_CAPABILITIES</strong> to get a return code. The key <strong>CL_DEVICE_SVM_CAPABILITIES</strong> is only available with OpenCL 2.0+ implementations, so the following code will <strong>not even compile</strong> with an old OpenCL implementation.</p>
 <div class="highlight"><pre><span></span><span class="c1">// Check if the device supports coarse-grained SVM</span>
 <span class="w">    </span><span class="n">cl_device_svm_capabilities</span><span class="w"> </span><span class="n">svm</span><span class="p">;</span><span class="w"></span>
@@ -14953,10 +14953,10 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[2]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[1]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>make<span class="p">;</span> ./mat_mult_coarse_buffer_svm.exe -gpu 
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>make<span class="p">;</span> ./mat_mult_coarse_buffer_svm.exe -gpu <span class="m">1</span>
 </pre></div>
 
      </div>
@@ -14978,13 +14978,13 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>make: Nothing to be done for &#39;all&#39;.
-	               name: gfx1035 
-	     Device version: OpenCL 2.0  
-	 global memory size: 536 MB
-	    max buffer size: 456 MB
-	     max local size: (1024,1024,1024)
-	     max work-items: 256
+<pre>CC -g -fopenmp -O2 -I../include mat_mult_coarse_buffer_svm.cpp -o mat_mult_coarse_buffer_svm.exe -lOpenCL
+	               name: NVIDIA GeForce RTX 3060 Laptop GPU 
+	     Device version: OpenCL 3.0 CUDA 
+	 global memory size: 6226 MB
+	    max buffer size: 1556 MB
+	     max local size: (1024,1024,64)
+	     max work-items: 1024
 Device supports coarse-grained buffer SVM
 Maximum error (infinity norm) is: 2.28882e-05
 </pre>
@@ -15000,7 +15000,7 @@ Maximum error (infinity norm) is: 2.28882e-05
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[3]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[2]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
@@ -15142,10 +15142,10 @@ Maximum error (infinity norm) is: 2.28882e-05
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[5]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[3]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>make mat_mult_fine_buffer_svm.exe<span class="p">;</span> ./mat_mult_fine_buffer_svm.exe -cpu
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>make mat_mult_fine_buffer_svm.exe<span class="p">;</span> ./mat_mult_fine_buffer_svm.exe -gpu <span class="m">0</span>
 </pre></div>
 
      </div>
@@ -15167,13 +15167,13 @@ Maximum error (infinity norm) is: 2.28882e-05
 
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>make: &#39;mat_mult_fine_buffer_svm.exe&#39; is up to date.
-	               name: AMD Ryzen 7 6800H with Radeon Graphics          
-	     Device version: OpenCL 3.0 (Build 0) 
-	 global memory size: 32865 MB
-	    max buffer size: 16432 MB
-	     max local size: (8192,8192,8192)
-	     max work-items: 8192
+<pre>CC -g -fopenmp -O2 -I../include mat_mult_fine_buffer_svm.cpp -o mat_mult_fine_buffer_svm.exe -lOpenCL
+	               name: gfx1035 
+	     Device version: OpenCL 2.0  
+	 global memory size: 536 MB
+	    max buffer size: 456 MB
+	     max local size: (1024,1024,1024)
+	     max work-items: 256
 Device supports fine-grained buffer SVM
 Maximum error (infinity norm) is: 2.28882e-05
 </pre>
@@ -15189,7 +15189,7 @@ Maximum error (infinity norm) is: 2.28882e-05
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[6]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[4]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">mat_mul</span><span class="o">.</span><span class="n">load_data</span><span class="p">()</span>
@@ -15309,7 +15309,7 @@ Maximum error (infinity norm) is: 2.28882e-05
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[7]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[5]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>make<span class="p">;</span> ./mat_mult_fine_system_svm.exe -cpu
@@ -15356,7 +15356,7 @@ Maximum error (infinity norm) is: 2.28882e-05
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[8]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[6]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">mat_mul</span><span class="o">.</span><span class="n">load_data</span><span class="p">()</span>

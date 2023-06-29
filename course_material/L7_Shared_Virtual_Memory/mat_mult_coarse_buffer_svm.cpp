@@ -165,7 +165,7 @@ int main(int argc, char** argv) {
     // Allocate coarse-grained SVM memory for C_svm
     cl_float *C_svm = (cl_float*)clSVMAlloc(
         context,
-        CL_MEM_WRITE_ONLY,
+        CL_MEM_READ_WRITE,
         nbytes_C,
         0
     );

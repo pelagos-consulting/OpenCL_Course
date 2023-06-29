@@ -154,7 +154,7 @@ int main(int argc, char** argv) {
     // Allocate SVM memory for matrix C using a fine-grained buffer
     cl_float *C_svm = (cl_float*)clSVMAlloc(
         context,
-        CL_MEM_WRITE_ONLY | CL_MEM_SVM_FINE_GRAIN_BUFFER,
+        CL_MEM_READ_WRITE | CL_MEM_SVM_FINE_GRAIN_BUFFER,
         nbytes_C,
         0
     );
